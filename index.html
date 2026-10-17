@@ -194,7 +194,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   <div class="filters">
     <label for="fStream">Потік MPNP<select id="fStream"></select></label>
     <label for="fEe">Тип подачі<select id="fEe"></select></label>
-    <label for="fSec">Security check<select id="fSec"></select></label>
+    <label for="fSec">Тип security check<select id="fSec"></select></label>
     <label for="fAdr">ADR<select id="fAdr"></select></label>
     <label for="fYear">Рік подачі на PR<select id="fYear"></select></label>
     <span class="count" id="count"></span>
@@ -254,7 +254,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
       <label class="field"><span>Нік або коротка назва (необов'язково)</span><input id="iNick" maxlength="40" placeholder="напр. Сім'я з 2, retail supervisor"></label>
       <label class="field"><span>Потік MPNP</span><select id="iStream"></select></label>
       <label class="field"><span>Тип подачі в IRCC</span><select id="iEe"></select></label>
-      <label class="field"><span>Comprehensive security check</span><select id="iSec"></select></label>
+      <label class="field"><span>Тип security check</span><select id="iSec"></select></label>
     </div>
     <div>
       <div class="group-title" style="margin-top:0">Дати етапів (заповніть ті, що вже пройшли)</div>
@@ -334,26 +334,31 @@ const STAGES = [
   {k:'med',  l:'Medicals cleared'},
   {k:'bio',  l:'Biometrics complete'},
   {k:'pal',  l:'PAL'},
-  {k:'sec',  l:'Comprehensive started'},
+  {k:'sec',  l:'Security check started'},
+  {k:'secdone', l:'Security check completed'},
   {k:'fd',   l:'Final decision'},
   {k:'p1',   l:'Portal 1'},
   {k:'p2',   l:'Portal 2'},
   {k:'ecopr',l:'eCoPR'}
 ];
 const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
-const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Biometrics',sec:'Comprehensive',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Biometrics',sec:'Security started',secdone:'Security completed',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
 const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
-const SECS = [['yes','Так, була'],['no','Ні']];
+const SECS = [['no','Стандартна'],['yes','Comprehensive']];
 const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
 
 const SEG_A = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor']];
-const SEG_AOR = [['aor','med'],['aor','bio'],['aor','pal']];   // порядок цих трьох довільний, тому міряємо від AOR
-const SEG_B = [['pal','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
+// порядок етапів після AOR довільний, тому міряємо від AOR; security check ділимо на стандартну і Comprehensive
+const SEG_AOR = [['aor','med'],['aor','bio'],['aor','pal'],['aor','sec'],['sec','secdone','std'],['sec','secdone','comp'],['aor','secdone','std'],['aor','secdone','comp']];
+const SEG_B = [['pal','fd'],['secdone','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
 const SEG_STEP = [...SEG_A, ...SEG_AOR, ...SEG_B];
-const SEG_PR = [['pr','aor'],['pr','med'],['pr','bio'],['pr','pal'],['pr','sec'],['pr','fd'],['pr','p1'],['pr','ecopr']];
-const SEG_TOTAL = [['mpnp','nom'],['sec','fd'],['mpnp','ecopr'],['eoi','ecopr']];
-const segLabel = ([a,b]) => SHORT[a]+' → '+SHORT[b];
+const SEG_PR = [['pr','aor'],['pr','med'],['pr','bio'],['pr','pal'],['pr','fd'],['pr','p1'],['pr','ecopr'],['pr','ecopr','std'],['pr','ecopr','comp']];
+const SEG_TOTAL = [['mpnp','nom'],['mpnp','ecopr'],['eoi','ecopr']];
+const TYPE_L = {std:'стандартна', comp:'Comprehensive'};
+const segLabel = ([a,b,t]) => SHORT[a]+' → '+SHORT[b]+(t?` · ${TYPE_L[t]}`:'');
+const isComp = c => c.security==='yes';
+const byType = (list,t) => !t ? list : list.filter(c => t==='comp' ? isComp(c) : !isComp(c));
 
 /* ===== Утиліти ===== */
 const $ = s => document.querySelector(s);
@@ -383,9 +388,12 @@ function demoCases(){
       idx++; if(idx>stop) break; const [a,b]=typical[k];
       const nd=add(d, Math.round(a+rnd()*(b-a))); if(D(nd)>D(todayISO())) break; d=nd; s[k]=d;
     }
+    const comp = rnd()<.25;
+    if(s.aor){ const st=add(s.aor, 3+Math.floor(rnd()*20)); if(D(st)<=D(todayISO())){ s.sec=st; const dn=add(st, comp?150+Math.floor(rnd()*150):10+Math.floor(rnd()*40)); if(D(dn)<=D(todayISO())) s.secdone=dn; } }
+    if(s.fd && s.secdone && D(s.secdone)>D(s.fd)) s.secdone=s.fd; if(s.fd && !s.secdone && s.sec) s.secdone=s.fd;
     const adr = (s.aor && rnd()<.35) ? [add(s.aor, 20+Math.floor(rnd()*40))].filter(x=>D(x)<=D(todayISO())) : [];
     const ghost = (s.aor && rnd()<.4) ? [add(s.aor, 10+Math.floor(rnd()*60))].filter(x=>D(x)<=D(todayISO())) : [];
-    out.push({id:'demo'+i, nick:'Демо-кейс '+(i+1), stream:streams[i], ee: rnd()<.75?'base':'ee', security: rnd()<.2?'yes':(rnd()<.5?'no':''), notes:'Згенерований приклад для демо.', s, adr, ghost});
+    out.push({id:'demo'+i, nick:'Демо-кейс '+(i+1), stream:streams[i], ee: rnd()<.75?'base':'ee', security: comp?'yes':(rnd()<.7?'no':''), notes:'Згенерований приклад для демо.', s, adr, ghost});
   }
   return out;
 }
@@ -413,7 +421,7 @@ function fillSelect(el, opts, all){ el.innerHTML = `<option value="">${all}</opt
 function initFilters(){
   fillSelect($('#fStream'), STREAMS, 'Усі потоки');
   fillSelect($('#fEe'), EES, 'Усі');
-  fillSelect($('#fSec'), [['yes','Була'],['no','Не було'],['unk','Не вказано']], 'Усі');
+  fillSelect($('#fSec'), [['no','Стандартна'],['yes','Comprehensive'],['unk','Не вказано']], 'Усі');
   fillSelect($('#fAdr'), [['yes','Був ADR'],['no','Без ADR']], 'Усі');
   [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fAdr','adr'],['#fYear','year']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
 }
@@ -431,7 +439,7 @@ function filtered(){
     return true;
   });
 }
-function segStats(list, seg){ const v=[]; for(const c of list){ const d=diff(c.s[seg[0]], c.s[seg[1]]); if(d!=null) v.push(d); } return stats(v); }
+function segStats(list, seg){ const v=[]; for(const c of byType(list, seg[2])){ const d=diff(c.s[seg[0]], c.s[seg[1]]); if(d!=null) v.push(d); } return stats(v); }
 
 /* ===== Рендер ===== */
 function render(){
@@ -484,10 +492,10 @@ function initTrend(){
 }
 let TREND_PTS=[];
 function renderTrend(list){
-  const [a,b] = $('#trendSeg').value.split('-');
-  const pts = list.map(c=>({c, x:D(c.s[a]), y:diff(c.s[a],c.s[b])})).filter(p=>p.x!=null&&p.y!=null).sort((p,q)=>p.x-q.x);
+  const [a,b,t] = $('#trendSeg').value.split('-');
+  const pts = byType(list,t).map(c=>({c, x:D(c.s[a]), y:diff(c.s[a],c.s[b])})).filter(p=>p.x!=null&&p.y!=null).sort((p,q)=>p.x-q.x);
   TREND_PTS = pts;
-  if(!pts.length){ $('#trend').innerHTML = `<div class="empty-state">Для етапу «${segLabel([a,b])}» поки немає кейсів з обома датами.</div>`; return; }
+  if(!pts.length){ $('#trend').innerHTML = `<div class="empty-state">Для етапу «${segLabel([a,b,t])}» поки немає кейсів з обома датами.</div>`; return; }
   const narrow = ($('#trend').clientWidth||720) < 560;
   const W=narrow?380:720, H=narrow?260:280, L=40, R=12, T=14, B=32;
   let x0=Math.min(...pts.map(p=>p.x)), x1=Math.max(...pts.map(p=>p.x));
@@ -504,7 +512,7 @@ function renderTrend(list){
   const st=stats(pts.map(p=>p.y));
   g+=`<line class="medline" x1="${L}" x2="${W-R}" y1="${Y(st.med)}" y2="${Y(st.med)}"/><text class="ml" x="${W-R}" y="${Y(st.med)-6}" text-anchor="end">медіана ${dd(st.med)} дн</text>`;
   pts.forEach((p,i)=>{ g+=`<circle class="dot" cx="${X(p.x)}" cy="${Y(p.y)}" r="5"/><circle class="hit" data-i="${i}" cx="${X(p.x)}" cy="${Y(p.y)}" r="12"/>`; });
-  $('#trend').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Тривалість етапу ${esc(segLabel([a,b]))} за датою початку">${g}</svg>`;
+  $('#trend').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Тривалість етапу ${esc(segLabel([a,b,t]))} за датою початку">${g}</svg>`;
 }
 
 /* --- таблиця --- */
@@ -524,7 +532,7 @@ function renderTable(list){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mine">мій</span>':''}${c.security==='yes'?' <span class="pill sec">security check</span>':''}${c.adr?.length?` <span class="pill adr">ADR${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}</td>
+      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mine">мій</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">ADR${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}</td>
       <td>${esc(lookup(STREAMS,c.stream)||'—')}</td>
       <td>${c.ee==='ee'?'EE':c.ee==='base'?'Non-EE':'—'}</td>
       <td class="num">${fmtDate(c.s.pr)}</td>
@@ -585,7 +593,7 @@ function openForm(id,key){
 function readForm(){
   const s={}, bad=[]; STAGES.forEach(st=>{ const v=fromDMY($('#d_'+st.k).value); if(v===null) bad.push(st.l); else if(v) s[st.k]=v; });
   const adr=readMulti('adr',bad,'ADR'), ghost=readMulti('ghost',bad,'Ghost update');
-  return {c:{nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security: s.sec ? 'yes' : $('#iSec').value, notes:$('#iNotes').value.trim(), s, adr, ghost}, bad};
+  return {c:{nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security: $('#iSec').value, notes:$('#iNotes').value.trim(), s, adr, ghost}, bad};
 }
 /* --- поле дати ДД.ММ.РРРР з календарем --- */
 const CAL_SVG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
@@ -632,7 +640,7 @@ function validate(c){
   const t=D(todayISO()); for(const k of ks){ if(D(c.s[k])>t) return `Дата «${SL[k]}» у майбутньому.`; }
   let prev=null, prevK=null;
   for(const k of ['adr','ghost']){ for(const v of c[k]){ if(D(v)>t) return `Дата ${k==='adr'?'ADR':'ghost update'} у майбутньому.`; } }
-  for(const s of STAGES){ if(s.k==='verif'||s.k==='med'||s.k==='sec'||s.k==='bio') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
+  for(const s of STAGES){ if(['verif','med','bio','sec','secdone'].includes(s.k)) continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
   return null;
 }
 $('#form').addEventListener('submit', async e=>{
