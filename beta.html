@@ -528,7 +528,8 @@ const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
 const SECS = [['no','Стандартна'],['yes','Comprehensive']];
 const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
 
-const SEG_A = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor']];
+// LAA → MPNP і Номінація → Подача на PR не показуємо: ці строки залежать від самого апліканта
+const SEG_A = [['eoi','laa'],['mpnp','nom'],['pr','aor']];
 // порядок етапів після AOR довільний, тому міряємо від AOR; security check ділимо на стандартну і Comprehensive
 const SEG_AOR = [['aor','med'],['aor','bio'],['aor','pal'],['aor','sec'],['sec','secdone','std'],['sec','secdone','comp'],['aor','secdone','std'],['aor','secdone','comp']];
 const SEG_B = [['pal','fd'],['secdone','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
@@ -791,7 +792,9 @@ function miniTl(c, top, ref){
 }
 function renderTable(list){
   const my = new Set(mine().map(m=>m.id));
-  const rows = [...list].sort((p,q)=>(D(q.s.pr)||D(q.s.mpnp)||0)-(D(p.s.pr)||D(p.s.mpnp)||0));
+  // сортування за днями від подачі на PR: найдовші внизу, кейси без дати подачі в кінці
+  const daysOf = c => c.s.pr ? diff(c.s.pr, c.s.ecopr || todayISO()) : null;
+  const rows = [...list].sort((p,q)=>{ const a=daysOf(p), b=daysOf(q); if(a==null && b==null) return 0; if(a==null) return 1; if(b==null) return -1; return a-b; });
   if(!rows.length){ $('#tbody').innerHTML = `<tr><td colspan="7" class="empty-state">${CASES.length?'Немає кейсів за цими фільтрами.':'Поки що жодного кейсу. Натисніть «Додати свій кейс», щоб стати першим.'}</td></tr>`; return; }
   const top = Math.max(60, ...rows.filter(c=>c.s.pr).map(c=>diff(c.s.pr, c.s.ecopr||todayISO())||0));
   const refSt = segStats(list,['pr','ecopr']); const ref = refSt ? refSt.med : null;
