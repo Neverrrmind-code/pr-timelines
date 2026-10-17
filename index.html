@@ -407,13 +407,27 @@ let editing = null; // {id,key}
 const mine = () => LS.get('prdash_mine', []);
 
 /* ===== API ===== */
+async function readJson(r){
+  const t = await r.text();
+  try{ return JSON.parse(t); }
+  catch(_){ console.warn('Відповідь сервера не JSON:', r.status, t.slice(0,300)); const e=new Error('Сервер Google тимчасово відповів помилкою'); e.notJson=true; throw e; }
+}
 async function apiGet(){
-  const r = await fetch(API_URL + (API_URL.includes('?')?'&':'?') + 't=' + Date.now());
-  const j = await r.json(); if(!j.ok) throw new Error(j.error||'Помилка завантаження'); return j.cases||[];
+  for(let i=0;;i++){
+    try{
+      const r = await fetch(API_URL + (API_URL.includes('?')?'&':'?') + 't=' + Date.now());
+      const j = await readJson(r); if(!j.ok) throw new Error(j.error||'Помилка завантаження'); return j.cases||[];
+    }catch(e){ if(i<2){ await new Promise(res=>setTimeout(res,1500*(i+1))); continue; } throw e; }
+  }
 }
 async function apiPost(body){
-  const r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
-  const j = await r.json(); if(!j.ok) throw new Error(j.error||'Помилка збереження'); return j;
+  let r;
+  try{ r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}); }
+  catch(_){ throw new Error('Немає зв\'язку із сервером. Перевірте інтернет і спробуйте ще раз.'); }
+  let j;
+  try{ j = await readJson(r); }
+  catch(e){ throw new Error('Сервер Google тимчасово відповів помилкою. Зачекайте хвилину й натисніть «Зберегти» ще раз'+(body.action==='create'?' (якщо кейс уже з\'явився в таблиці, повторно не зберігайте)':'')+'.'); }
+  if(!j.ok) throw new Error(j.error||'Помилка збереження'); return j;
 }
 
 /* ===== Фільтри ===== */
