@@ -54,3 +54,27 @@ const API_URL = '';
 ## Оновлення бекенду
 
 Якщо змінюєте `Code.gs`: **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. URL при цьому не змінюється.
+
+
+## Імпорт з Telegram (адмін)
+
+Сторінка: `…/pr-timelines/#import` (на основному сайті) або `…/beta.html#import` (тестова версія). Вхід за паролем.
+
+Три способи: вставити текст постів, завантажити `result.json` з експорту Telegram Desktop, або скріншоти (перетягнути / Ctrl+V). ШІ розпізнає дати, ви перевіряєте картки й додаєте вибрані. Імпортовані кейси мають `source = telegram` у таблиці та позначку TG на сайті.
+
+### Script Properties (Apps Script → ⚙ Project Settings → Script properties)
+
+| Властивість | Що це |
+|---|---|
+| `ADMIN_PASSWORD` | пароль сторінки імпорту |
+| `AI_PROVIDER` | `gemini` (за замовчуванням), `openai` (будь-який OpenAI-сумісний), `anthropic` |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | для Gemini |
+| `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | для `openai` (OpenRouter: `https://openrouter.ai/api/v1`, Groq: `https://api.groq.com/openai/v1`) та `anthropic` |
+
+Після першого збереження коду запустіть функцію `authorize` (Run), щоб дозволити звернення до ШІ.
+
+## Розгортання: основне і тестове
+
+- `index.html` — основний сайт, працює з основним розгортанням Apps Script.
+- `beta.html` — тестова версія для нових покращень. Поки бекенд не змінюється, вона працює з тим самим розгортанням.
+- Щоб перевірити зміни бекенду, не чіпаючи основного: збережіть новий код → **Deploy → New deployment** (окрема адреса) → вставте її в `beta.html`. Основне розгортання оновлюйте (**Manage deployments → ✏️ → New version**) лише після перевірки.

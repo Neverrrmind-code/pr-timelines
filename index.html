@@ -30,6 +30,7 @@
   --good:#5CC48C; --good-soft:#163527; --bad:#F07A6E; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .wrap{max-width:1080px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
@@ -236,6 +237,49 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .paxis{position:relative;height:24px;font-size:11px;color:var(--muted);font-family:var(--f-mono)}
 .paxis span{position:absolute;top:7px;transform:translateX(-50%);white-space:nowrap}
 .paxis span:first-child{transform:none}
+.pill.tg{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px}
+/* імпорт */
+.adm-tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start;background:var(--surface)}
+.adm-tabs button{border:0;background:none;padding:8px 14px;cursor:pointer;color:var(--ink2)}
+.adm-tabs button+button{border-left:1px solid var(--line)}
+.adm-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.adm-text{width:100%;min-height:200px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font:13.5px/1.5 var(--f-mono);resize:vertical}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:150px;border:2px dashed var(--line);border-radius:12px;padding:22px 18px;text-align:center;color:var(--ink2);background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{color:var(--ink);font-weight:500;font-size:15px}
+.drop .hint{font-size:13px;color:var(--muted);max-width:56ch}
+.drop .pick{margin-top:6px;pointer-events:none}
+.drop input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.drop svg{color:var(--muted)}
+.adm-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.adm-sticky{position:sticky;bottom:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;box-shadow:0 -4px 16px rgba(0,0,0,.06);margin-bottom:env(safe-area-inset-bottom,0px)}
+.icard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.icard.off{opacity:.55}
+.icard.done{border-color:var(--good)}
+.ihead{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ihead .isel{width:18px;height:18px;accent-color:var(--accent)}
+.ihead .inum{font-family:var(--f-mono);color:var(--muted)}
+.ihead input[type=text]{flex:1;min-width:180px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.ihead select{padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:100%}
+.igrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 12px}
+@media (max-width:900px){.igrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.igrid{grid-template-columns:minmax(0,1fr)}}
+.igrid .field > label{font-size:12px}
+.igrid .dwrap .dtext{padding-block:6px}
+.dwrap.amb .dtext{border-color:var(--mark);background:color-mix(in srgb,var(--mark) 12%,var(--bg))}
+.igrid .field.empty{opacity:.6}
+.ilists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+@media (max-width:520px){.ilists{grid-template-columns:minmax(0,1fr)}}
+.ilists input,.icard textarea{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.icard textarea{min-height:48px;resize:vertical}
+.iwarn{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.iwarn .w{color:var(--ink)}
+.iwarn .w::before{content:"⚠ ";color:var(--mark)}
+.iwarn .e{color:var(--bad)}
+.iwarn .e::before{content:"✕ "}
+.isrc summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
+.isrc pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--f-mono);background:var(--bg);border-radius:8px;padding:8px 10px;margin:6px 0 0;color:var(--ink2)}
 /* мотивація */
 .goal{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
 .goal .gl{display:flex;flex-direction:column;gap:6px;min-width:220px;flex:1 1 260px}
@@ -254,6 +298,12 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .chip.good{background:var(--good-soft);color:var(--good)}
 .chip.warn{background:color-mix(in srgb,var(--mark) 18%,transparent);color:var(--ink)}
 .fc-lock{font-size:12.5px;color:var(--muted);margin:10px 0 0;padding-top:10px;border-top:1px dashed var(--line)}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.thumbs:empty{display:none}
+.thumb{position:relative;width:96px;height:128px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.thumb button{position:absolute;top:4px;right:4px;border:0;border-radius:50%;width:24px;height:24px;background:rgba(10,16,24,.7);color:#fff;cursor:pointer;line-height:24px;padding:0;font-size:14px}
+.thumb span{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;background:rgba(10,16,24,.6);color:#fff;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 #tip b{font-weight:600}
 .empty-state{padding:28px 8px;text-align:center;color:var(--muted)}
@@ -264,7 +314,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 </head>
 <body>
 <!--BODY-START-->
-<div class="wrap">
+<div class="wrap" id="mainView">
   <header>
     <div>
       <h1>Таймлайни PR&nbsp;· MPNP</h1>
@@ -299,6 +349,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <label for="fSec">Тип security check<select id="fSec"></select></label>
     <label for="fAdr">Дозапити<select id="fAdr"></select></label>
     <label for="fYear">Рік подачі на PR<select id="fYear"></select></label>
+    <label for="fSrc">Джерело<select id="fSrc"></select></label>
     <span class="count" id="count"></span>
   </div>
 
@@ -361,6 +412,69 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   </section>
 
   <footer>Дані вносять самі учасники, вони не перевіряються. Не вказуйте ПІБ, номери заявок (UCI, application number) та інші особисті дані. Тут статистика спільноти, а не офіційні строки IRCC чи MPNP.</footer>
+</div>
+
+<div class="wrap" id="adminView" hidden>
+  <header>
+    <div>
+      <h1>Імпорт з Telegram</h1>
+      <p>Вставте пости з таймлайнами або завантажте експорт чату. ШІ розпізнає дати, ви перевіряєте й додаєте кейси в базу.</p>
+    </div>
+    <div class="actions"><a class="btn" href="#" id="admBack" style="text-decoration:none">До дашборду</a></div>
+  </header>
+
+  <section class="panel" id="admLogin" style="padding:18px;max-width:420px">
+    <form id="admLoginForm" class="dlg" style="padding:0" novalidate>
+      <label class="field"><span>Пароль адміністратора</span><input type="password" id="admPw" autocomplete="current-password"></label>
+      <div id="admLoginMsg" hidden></div>
+      <div><button class="btn primary" type="submit">Увійти</button></div>
+    </form>
+  </section>
+
+  <section id="admMain" hidden style="gap:16px">
+    <div class="adm-tabs" role="group" aria-label="Джерело тексту">
+      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button>
+    </div>
+    <div id="admPaste">
+      <textarea id="admText" class="adm-text" placeholder="Вставте один або кілька постів з таймлайнами. Пости краще розділяти порожнім рядком."></textarea>
+    </div>
+    <div id="admFileBox" hidden style="position:relative">
+      <label class="drop" id="admDrop" for="admFile">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <b>Перетягніть сюди result.json</b>
+        <span class="hint">Telegram Desktop → чат → ⋮ → Export chat history → формат JSON, без фото та відео</span>
+        <span class="btn pick">Вибрати файл</span>
+        <input type="file" id="admFile" accept=".json,application/json">
+      </label>
+      <p class="muted" id="admFileInfo" style="font-size:13.5px;margin:8px 0 0"></p>
+    </div>
+    <div id="admImgBox" hidden style="position:relative">
+      <label class="drop" id="admImgDrop" for="admImgFile">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <b>Перетягніть сюди скріншоти або вставте з буфера (Ctrl+V)</b>
+        <span class="hint">JPG, PNG, WebP. Перед надсиланням зображення зменшуються.</span>
+        <span class="btn pick">Вибрати зображення</span>
+        <input type="file" id="admImgFile" accept="image/png,image/jpeg,image/webp" multiple>
+      </label>
+      <div class="thumbs" id="admThumbs"></div>
+      <label class="chk" style="margin-top:12px;align-items:flex-start"><input type="checkbox" id="admOneCase" checked style="margin-top:2px"><span><b style="font-weight:500;color:var(--ink)">Усі скріншоти — один кейс</b> (до 6 зображень)<br><span class="muted" style="font-size:13px">Вимкніть, якщо на скріншотах різні люди: тоді кожне зображення розпізнається окремо.</span></span></label>
+    </div>
+    <div class="adm-bar">
+      <button class="btn primary" type="button" id="admParse">Розпізнати</button>
+      <span class="muted" id="admProg" style="font-size:13.5px"></span>
+      <span class="muted num" id="admAi" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div id="admMsg" hidden></div>
+    <div id="admResults" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="adm-sticky" id="admBar" hidden>
+      <span id="admSel" style="font-size:14px"></span>
+      <div class="actions">
+        <button class="btn" type="button" id="admClear">Очистити</button>
+        <button class="btn primary" type="button" id="admImport">Додати вибрані</button>
+      </div>
+    </div>
+    <footer>Текст постів надсилається у вибраний ШІ-сервіс (налаштовується в Script Properties) для розпізнавання. Імена, @нікнейми та номери заявок у базу не потрапляють. Посилання на повідомлення зберігається лише в Google Таблиці, щоб той самий пост не імпортувався двічі.</footer>
+  </section>
 </div>
 
 <dialog id="dlg">
@@ -436,7 +550,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
 <script>
 /* ===== Налаштування ===== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbwxGAdhfoaTUbpTXEx62cdE2PtzH2hJs74kJdEES-b6SNeYisdzwlobEWeEyn5DNYHr/exec'; // ← вставте сюди URL вашого Apps Script Web App (…/exec)
+const API_URL = 'https://script.google.com/macros/s/AKfycbz8i-2-94dTBDcdTKGrlpCv80TSglECR4A4rGJU8Na-LQLyIMdtyWNDEeZBKIWUygTD/exec'; // ← вставте сюди URL вашого Apps Script Web App (…/exec)
 
 /* ===== Довідники ===== */
 const STAGES = [
@@ -526,7 +640,7 @@ function demoCases(){
 /* ===== Стан ===== */
 let CASES = [];
 const DEMO = !API_URL;
-const F = {stream:'', ee:'', sec:'', adr:'', year:''};
+const F = {stream:'', ee:'', sec:'', adr:'', year:'', src:''};
 let openId = null;
 let editing = null; // {id,key}
 const mine = () => LS.get('prdash_mine', []);
@@ -562,7 +676,8 @@ function initFilters(){
   fillSelect($('#fEe'), EES, 'Усі');
   fillSelect($('#fSec'), [['no','Стандартна'],['yes','Comprehensive'],['unk','Не вказано']], 'Усі');
   fillSelect($('#fAdr'), [['yes','Був дозапит'],['no','Без дозапиту']], 'Усі');
-  [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fAdr','adr'],['#fYear','year']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
+  fillSelect($('#fSrc'), [['form','Форма на сайті'],['telegram','Імпорт з Telegram']], 'Усі');
+  [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fAdr','adr'],['#fYear','year'],['#fSrc','src']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
 }
 function refreshYears(){
   const ys=[...new Set(CASES.map(c=>c.s.pr&&c.s.pr.slice(0,4)).filter(Boolean))].sort().reverse();
@@ -575,6 +690,7 @@ function filtered(){
     if(F.sec==='unk' ? !!c.security : (F.sec && c.security!==F.sec)) return false;
     if(F.adr && (F.adr==='yes') !== !!(c.adr&&c.adr.length)) return false;
     if(F.year && !(c.s.pr||'').startsWith(F.year)) return false;
+    if(F.src && (c.source==='telegram'?'telegram':'form')!==F.src) return false;
     return true;
   });
 }
@@ -737,7 +853,7 @@ function renderTable(list){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mytag" title="Ваш кейс">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}</td>
+      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mytag" title="Ваш кейс">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':''}</td>
       <td>${esc(lookup(STREAMS,c.stream)||'—')}<span class="sub2">${c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':''}</span></td>
       <td class="num">${fmtDate(c.s.pr)}</td>
       <td class="minicell">${miniTl(c, top, ref)}</td>
@@ -959,6 +1075,283 @@ $('#btnCodeGo').addEventListener('click',()=>{
   $('#dlgCode').close(); openForm(id,key);
 });
 
+/* ===== Імпорт з Telegram (адмін) ===== */
+const ADM = { pw:'', refs:new Set(), items:[], running:false, stop:false, src:'paste', fileMsgs:[], images:[] };
+const SS = { get(k){ try{ return sessionStorage.getItem(k)||''; }catch(e){ return ''; } }, set(k,v){ try{ v?sessionStorage.setItem(k,v):sessionStorage.removeItem(k); }catch(e){} } };
+async function admPost(body){
+  let r;
+  try{ r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}); }
+  catch(_){ throw new Error('Немає зв\'язку із сервером.'); }
+  let j; try{ j = await readJson(r); }catch(e){ throw new Error('Сервер Google тимчасово відповів помилкою. Спробуйте ще раз.'); }
+  if(!j.ok) throw new Error(j.error||'Помилка сервера'); return j;
+}
+function route(){
+  const adm = location.hash==='#import';
+  $('#mainView').hidden = adm; $('#adminView').hidden = !adm;
+  if(adm) admEnter();
+}
+async function admEnter(){
+  if(DEMO){ setMsg($('#admLoginMsg'),'Імпорт працює лише з підключеною базою (API_URL).'); return; }
+  const pw = SS.get('prdash_admpw');
+  if(pw && !ADM.pw){ try{ await admLogin(pw); }catch(_){ SS.set('prdash_admpw',''); } }
+}
+async function admLogin(pw){
+  const j = await admPost({action:'adminCheck', password:pw});
+  ADM.pw = pw; SS.set('prdash_admpw', pw);
+  ADM.refs = new Set(j.refs||[]);
+  $('#admLogin').hidden = true; $('#admMain').hidden = false;
+  setMsg($('#admMsg'), j.hasKey ? '' : `Ключ ШІ ще не налаштовано для провайдера «${j.provider||'gemini'}». Див. коментар на початку Code.gs.`, 'warn');
+  $('#admAi').textContent = j.provider ? `ШІ: ${j.provider}${j.model?' · '+j.model:''}` : '';
+}
+$('#admLoginForm').addEventListener('submit', async e=>{
+  e.preventDefault(); setMsg($('#admLoginMsg'),'Перевіряю…','ok');
+  try{ await admLogin($('#admPw').value); setMsg($('#admLoginMsg'),''); $('#admPw').value=''; }
+  catch(ex){ setMsg($('#admLoginMsg'), ex.message); }
+});
+document.querySelectorAll('[data-src]').forEach(b=>b.addEventListener('click',()=>{
+  ADM.src=b.dataset.src; document.querySelectorAll('[data-src]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  $('#admPaste').hidden = ADM.src!=='paste'; $('#admFileBox').hidden = ADM.src!=='file'; $('#admImgBox').hidden = ADM.src!=='img';
+}));
+
+/* --- експорт Telegram --- */
+const flatText = t => typeof t==='string' ? t : Array.isArray(t) ? t.map(x=>typeof x==='string'?x:(x&&x.text)||'').join('') : '';
+function looksLikeTimeline(t){
+  const kw=(t.match(/(AOR|PAL|e?CoPR|EOI|LAA|MPNP|nominat|biometric|portal|final decision|medical|ADR|ghost|номінац|біометр|портал|подал|подача)/gi)||[]).length;
+  const dates=(t.match(/\b\d{1,2}[.\/-]\d{1,2}(?:[.\/-]\d{2,4})?\b|\b\d{4}-\d{2}-\d{2}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}\b/gi)||[]).length;
+  return kw>=2 && dates>=2;
+}
+function readExport(json){
+  const chat = String(json.id||json.name||'chat');
+  const all = (json.messages||[]).filter(m=>m.type==='message');
+  const msgs = all.map(m=>({ref:`tg:${chat}/${m.id}`, date:String(m.date||'').slice(0,10), text:flatText(m.text).trim()})).filter(m=>m.text && looksLikeTimeline(m.text));
+  return {total:all.length, msgs};
+}
+async function handleFile(f){
+  if(!f) return;
+  try{
+    const json = JSON.parse(await f.text());
+    const {total,msgs} = readExport(json);
+    ADM.fileMsgs = msgs.filter(m=>!ADM.refs.has(m.ref));
+    const old = msgs.length-ADM.fileMsgs.length;
+    $('#admFileInfo').textContent = `У файлі ${plural(total,'повідомлення','повідомлення','повідомлень')}. Схожих на таймлайни: ${msgs.length}${old?`, з них ${old} уже імпортовано раніше`:''}. До розпізнавання: ${ADM.fileMsgs.length}.`;
+  }catch(e){ ADM.fileMsgs=[]; $('#admFileInfo').textContent='Не вдалося прочитати файл. Потрібен result.json з експорту Telegram у форматі JSON.'; }
+}
+$('#admFile').addEventListener('change', e=>handleFile(e.target.files[0]));
+const drop=$('#admDrop');
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault(); drop.classList.add('over');}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault(); drop.classList.remove('over');}));
+drop.addEventListener('drop', e=>handleFile(e.dataTransfer.files[0]));
+
+/* --- скріншоти --- */
+async function shrinkImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image(); await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error('bad image')); img.src=url; });
+    const k=Math.min(1, 1200/img.naturalWidth, 3200/img.naturalHeight);
+    const w=Math.max(1,Math.round(img.naturalWidth*k)), h=Math.max(1,Math.round(img.naturalHeight*k));
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,w,h); cx.drawImage(img,0,0,w,h);
+    const dataUrl=cv.toDataURL('image/jpeg',0.85);
+    return { mime:'image/jpeg', data:dataUrl.split(',')[1], url:dataUrl };
+  } finally { URL.revokeObjectURL(url); }
+}
+async function addImages(files){
+  const list=[...files].filter(f=>/^image\/(png|jpe?g|webp)$/.test(f.type));
+  if(!list.length) return;
+  for(const f of list){
+    try{
+      const sm=await shrinkImage(f);
+      const name=f.name && f.name!=='image.png' ? f.name : `скріншот-${ADM.images.length+1}`;
+      ADM.images.push(Object.assign(sm,{name, ref:`img:${(f.name||'paste')}:${f.size}:${f.lastModified||0}`}));
+    }catch(e){ setMsg($('#admMsg'), `Не вдалося прочитати зображення ${f.name||''}.`); }
+  }
+  renderThumbs();
+}
+function renderThumbs(){
+  $('#admThumbs').innerHTML = ADM.images.map((im,i)=>`<div class="thumb"><img src="${im.url}" alt="${esc(im.name)}"><button type="button" data-rmimg="${i}" aria-label="Прибрати ${esc(im.name)}">×</button><span>${esc(im.name)}</span></div>`).join('');
+}
+$('#admThumbs').addEventListener('click', e=>{ const b=e.target.closest('[data-rmimg]'); if(!b) return; ADM.images.splice(+b.dataset.rmimg,1); renderThumbs(); });
+$('#admImgFile').addEventListener('change', e=>{ addImages(e.target.files); e.target.value=''; });
+const idrop=$('#admImgDrop');
+['dragenter','dragover'].forEach(t=>idrop.addEventListener(t,e=>{e.preventDefault(); idrop.classList.add('over');}));
+['dragleave','drop'].forEach(t=>idrop.addEventListener(t,e=>{e.preventDefault(); idrop.classList.remove('over');}));
+idrop.addEventListener('drop', e=>addImages(e.dataTransfer.files));
+document.addEventListener('paste', e=>{
+  if($('#adminView').hidden || $('#admMain').hidden) return;
+  const files=[...(e.clipboardData?.items||[])].filter(it=>it.kind==='file' && it.type.startsWith('image/')).map(it=>it.getAsFile()).filter(Boolean);
+  if(!files.length) return;
+  e.preventDefault();
+  if(ADM.src!=='img') document.querySelector('[data-src="img"]').click();
+  addImages(files);
+});
+
+function makeChunks(){
+  const LIM=12000, out=[];
+  if(ADM.src==='img'){
+    const pack=(g,one)=>({ text: (one&&g.length>1?`ONE CASE: all ${g.length} screenshots below belong to the same applicant. Merge them into exactly one item.\n`:'') + g.map(im=>`### IMG ref=${im.ref} name=${im.name}`).join('\n'), images: g.map(im=>({mime:im.mime, data:im.data})) });
+    if($('#admOneCase').checked){
+      if(ADM.images.length>6){ out.error='Для одного кейсу можна додати до 6 скріншотів. Приберіть зайві або вимкніть «один кейс».'; return out; }
+      if(ADM.images.length) out.push(pack(ADM.images,true));
+    } else ADM.images.forEach(im=>out.push(pack([im],false)));
+    return out;
+  }
+  if(ADM.src==='file'){
+    let cur='';
+    for(const m of ADM.fileMsgs){ const b=`### MSG ref=${m.ref} date=${m.date}\n${m.text.slice(0,4000)}\n\n`; if(cur && cur.length+b.length>LIM){ out.push(cur); cur=''; } cur+=b; }
+    if(cur) out.push(cur);
+  } else {
+    const t=$('#admText').value.trim(); if(!t) return out;
+    if(t.length<=LIM) return [t];
+    let cur=''; for(const p of t.split(/\n\s*\n/)){ if(cur && cur.length+p.length>LIM){ out.push(cur); cur=''; } cur+=p+'\n\n'; }
+    if(cur) out.push(cur);
+  }
+  return out;
+}
+
+/* --- розпізнавання --- */
+const isIso = v => typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && D(v)!=null;
+function normItem(x){
+  const s={}; const src=(x&&x.s)||{};
+  STAGES.forEach(({k})=>{ if(isIso(src[k])) s[k]=src[k]; });
+  const arr=v=>Array.isArray(v)?v.filter(isIso):[];
+  const pick=(v,ok)=>ok.includes(v)?v:'';
+  return { s, adr:arr(x.adr), ghost:arr(x.ghost), nick:String(x.nick||'').slice(0,40), notes:String(x.notes||'').slice(0,500),
+    stream:pick(x.stream,STREAMS.map(a=>a[0])), ee:pick(x.ee,['ee','base']), security:pick(x.security,['yes','no']),
+    ambiguous:Array.isArray(x.ambiguous)?x.ambiguous.map(String):[], srcref:String(x.msgref||'').slice(0,200), msgdate:String(x.msgdate||''), quote:String(x.quote||'').slice(0,400) };
+}
+$('#admParse').addEventListener('click', async ()=>{
+  if(ADM.running){ ADM.stop=true; $('#admParse').textContent='Зупиняю…'; return; }
+  const chunks=makeChunks();
+  if(chunks.error){ setMsg($('#admMsg'), chunks.error); return; }
+  if(!chunks.length){ setMsg($('#admMsg'), ADM.src==='file'?'Спершу виберіть файл експорту з новими повідомленнями.':ADM.src==='img'?'Додайте скріншоти.':'Вставте текст постів.'); return; }
+  ADM.running=true; ADM.stop=false; $('#admParse').textContent='Зупинити'; setMsg($('#admMsg'),'');
+  const errs=[]; let found=0;
+  for(let i=0;i<chunks.length && !ADM.stop;i++){
+    $('#admProg').textContent = `Розпізнаю${chunks.length>1?` частину ${i+1} з ${chunks.length}`:''}… Це може тривати до хвилини.`;
+    try{
+      const ch=chunks[i];
+      const j = await admPost(typeof ch==='string' ? {action:'parse', password:ADM.pw, text:ch, today:todayISO()} : {action:'parse', password:ADM.pw, text:ch.text, images:ch.images, today:todayISO()});
+      const items=(j.items||[]).map(normItem).filter(it=>Object.keys(it.s).length>=1);
+      items.forEach(it=>ADM.items.push({data:it, sel:null, done:false, err:''})); found+=items.length;
+      renderImport();
+    }catch(ex){ errs.push(`Частина ${i+1}: ${ex.message}`); }
+  }
+  ADM.running=false; $('#admParse').textContent='Розпізнати';
+  $('#admProg').textContent = `${ADM.stop?'Зупинено. ':''}Знайдено таймлайнів: ${found}.`;
+  if(errs.length) setMsg($('#admMsg'), errs.join(' '));
+  if(ADM.src==='paste' && found) $('#admText').value='';
+  if(ADM.src==='img' && found && !errs.length){ ADM.images=[]; renderThumbs(); }
+});
+
+/* --- картки перевірки --- */
+function dupOf(c, selfIdx){
+  const keys=['eoi','laa','mpnp','nom','pr','aor','pal','fd','ecopr'];
+  const same=x=>keys.filter(k=>c.s[k] && x.s && x.s[k]===c.s[k]).length>=2;
+  const ex=CASES.find(same); if(ex) return `схоже на кейс «${ex.nick||'Без назви'}», що вже є в базі`;
+  const j=ADM.items.findIndex((it,i)=>i!==selfIdx && i<selfIdx && same(it.data)); if(j>=0) return `схоже на картку #${j+1} у цьому списку`;
+  return '';
+}
+function parseList(v,bad,label){ const out=[]; String(v||'').split(/[\s,;]+/).filter(Boolean).forEach(t=>{ const d=fromDMY(t); if(d===null) bad.push(label); else if(d) out.push(d); }); return out.sort(); }
+function readCard(i){
+  const card=document.querySelector(`.icard[data-i="${i}"]`); const it=ADM.items[i];
+  const s={}, bad=[];
+  STAGES.forEach(st=>{ const v=fromDMY($(`#imp_${i}_${st.k}`).value); if(v===null) bad.push(st.l); else if(v) s[st.k]=v; });
+  const q=sel=>card.querySelector(sel).value;
+  const c={ nick:q('.inick').trim(), stream:q('.istream'), ee:q('.iee'), security:q('.isec'), notes:q('.inotes').trim(), s,
+    adr:parseList(q('.iadr'),bad,'Дозапит'), ghost:parseList(q('.ighost'),bad,'Ghost update'), srcref:it.data.srcref };
+  return {c,bad};
+}
+function checkCard(i){
+  const {c,bad}=readCard(i); const it=ADM.items[i];
+  const errs=[], warns=[];
+  if(bad.length) errs.push(`дата «${bad[0]}» має бути у форматі ДД.ММ.РРРР`);
+  else { const v=validate(c); if(v) errs.push(v.replace(/\.$/,'')); }
+  const amb=it.data.ambiguous.filter(k=>c.s[k]||k==='adr'||k==='ghost');
+  if(amb.length) warns.push(`ШІ не впевнений у порядку день/місяць: ${amb.map(k=>SHORT[k]||k).join(', ')} (підсвічено)`);
+  const dup=dupOf(c,i); if(dup) warns.push('можливий дублікат: '+dup);
+  if(!bad.length){ const ow=outlierWarnings(c); if(ow.length) warns.push('незвично довгі проміжки: '+ow.join('; ')); }
+  if(it.data.msgdate && Object.values(c.s).some(d=>D(d)>D(it.data.msgdate))) warns.push(`є дата, пізніша за дату повідомлення (${fmtDate(it.data.msgdate)})`);
+  return {c,errs,warns,dup:!!dup};
+}
+function cardHtml(i){
+  const it=ADM.items[i], d=it.data;
+  const opts=(arr,v,empty)=>`<option value="">${empty}</option>`+arr.map(([k,l])=>`<option value="${k}"${k===v?' selected':''}>${esc(l)}</option>`).join('');
+  const dates=STAGES.map(st=>`<div class="field${d.s[st.k]?'':' empty'}"><label for="imp_${i}_${st.k}">${esc(st.l)}</label>${dateCtl('imp_'+i+'_'+st.k)}</div>`).join('');
+  return `<div class="icard${it.done?' done':''}" data-i="${i}">
+    <div class="ihead">
+      <input type="checkbox" class="isel" id="isel_${i}" aria-label="Імпортувати картку ${i+1}"${it.done?' disabled':''}>
+      <span class="inum">#${i+1}</span>
+      <input type="text" class="inick" maxlength="40" value="${esc(d.nick)}" aria-label="Назва кейсу" placeholder="Назва кейсу">
+      <select class="istream" aria-label="Потік">${opts(STREAMS,d.stream,'Потік?')}</select>
+      <select class="iee" aria-label="Тип подачі">${opts(EES,d.ee,'EE / Non-EE?')}</select>
+      <select class="isec" aria-label="Security check">${opts(SECS,d.security,'Security?')}</select>
+    </div>
+    <div class="igrid">${dates}</div>
+    <div class="ilists">
+      <label class="field"><span>Дозапити (дати через кому)</span><input type="text" class="iadr" value="${esc(d.adr.map(toDMY).join(', '))}"></label>
+      <label class="field"><span>Ghost updates (дати через кому)</span><input type="text" class="ighost" value="${esc(d.ghost.map(toDMY).join(', '))}"></label>
+    </div>
+    <label class="field"><span>Примітки</span><textarea class="inotes" maxlength="500">${esc(d.notes)}</textarea></label>
+    <div class="iwarn"></div>
+    <details class="isrc"><summary>Джерело${d.msgdate?` · ${fmtDate(d.msgdate)}`:''}${d.srcref?` · ${esc(d.srcref)}`:''}</summary><pre>${esc(d.quote||'(текст не повернуто)')}</pre></details>
+  </div>`;
+}
+function refreshCard(i){
+  const card=document.querySelector(`.icard[data-i="${i}"]`); if(!card) return;
+  const it=ADM.items[i];
+  if(it.done){ card.querySelector('.iwarn').innerHTML=`<span style="color:var(--good)">✓ ${esc(it.err||'Додано в базу')}</span>`; card.querySelector('.isel').checked=false; return; }
+  const {errs,warns,dup}=checkCard(i);
+  if(it.sel===null) it.sel = !errs.length && !dup;
+  if(errs.length){ if(it.sel) it.autoOff=true; it.sel=false; }
+  else if(it.autoOff){ it.autoOff=false; it.sel=!dup; }
+  if(it.sel===false && errs.length && !it.autoOff) it.autoOff=true;
+  const cb=card.querySelector('.isel'); cb.checked=it.sel; cb.disabled=!!errs.length;
+  card.classList.toggle('off', !it.sel);
+  card.querySelector('.iwarn').innerHTML = errs.map(e=>`<span class="e">${esc(e)}</span>`).join('') + warns.map(w=>`<span class="w">${esc(w)}</span>`).join('') + (it.err?`<span class="e">${esc(it.err)}</span>`:'');
+  updateSelCount();
+}
+function renderImport(){
+  const box=$('#admResults');
+  box.innerHTML = ADM.items.map((_,i)=>cardHtml(i)).join('');
+  ADM.items.forEach((it,i)=>{
+    STAGES.forEach(st=>{ const el=$(`#imp_${i}_${st.k}`); setD(el,it.data.s[st.k]); if(it.data.ambiguous.includes(st.k)) el.closest('.dwrap').classList.add('amb'); });
+    refreshCard(i);
+  });
+  $('#admBar').hidden = !ADM.items.length; updateSelCount();
+}
+function updateSelCount(){
+  const n=ADM.items.filter(it=>it.sel && !it.done).length, done=ADM.items.filter(it=>it.done).length;
+  $('#admSel').textContent = `Вибрано: ${n} з ${ADM.items.length - done}` + (done?` · уже додано: ${done}`:'');
+  $('#admImport').disabled = !n;
+}
+$('#admResults').addEventListener('change', e=>{
+  const card=e.target.closest('.icard'); if(!card) return; const i=+card.dataset.i;
+  if(e.target.classList.contains('isel')) ADM.items[i].sel=e.target.checked;
+  if(e.target.classList.contains('dtext')||e.target.classList.contains('dnative')) e.target.closest('.dwrap').classList.remove('amb');
+  refreshCard(i);
+});
+$('#admResults').addEventListener('input', e=>{ const card=e.target.closest('.icard'); if(card && e.target.classList.contains('isel')===false){ clearTimeout(card._t); card._t=setTimeout(()=>refreshCard(+card.dataset.i),400); } });
+$('#admClear').addEventListener('click',()=>{ ADM.items=[]; renderImport(); $('#admProg').textContent=''; });
+$('#admImport').addEventListener('click', async ()=>{
+  const idx=ADM.items.map((it,i)=>i).filter(i=>ADM.items[i].sel && !ADM.items[i].done);
+  const send=[], map=[];
+  for(const i of idx){ const {c,errs}=checkCard(i); if(errs.length) continue; send.push(c); map.push(i); }
+  if(!send.length) return;
+  const btn=$('#admImport'); btn.disabled=true; btn.textContent='Додаю…';
+  try{
+    for(let k=0;k<send.length;k+=100){
+      const j=await admPost({action:'import', password:ADM.pw, cases:send.slice(k,k+100)});
+      (j.added||[]).forEach(a=>{ const it=ADM.items[map[k+a.i]]; it.done=true; it.err=''; if(it.data.srcref) ADM.refs.add(it.data.srcref); });
+      (j.skipped||[]).forEach(i=>{ const it=ADM.items[map[k+i]]; it.done=true; it.err='Це повідомлення вже імпортовано раніше, пропущено'; });
+      (j.errors||[]).forEach(e=>{ ADM.items[map[k+e.i]].err='Сервер: '+e.error; });
+    }
+    const added=ADM.items.filter(it=>it.done && !it.err).length;
+    setMsg($('#admMsg'), `Готово. У базі оновлено дані, дашборд покаже їх після оновлення сторінки.`, 'ok');
+    renderImport(); load();
+  }catch(ex){ setMsg($('#admMsg'), ex.message); }
+  btn.textContent='Додати вибрані'; updateSelCount();
+});
+
 /* ===== Мотивація: лічильник, «Ваш кейс серед інших» ===== */
 const GOALS=[50,100,200,500,1000];
 const CMP=[['pr','aor'],['aor','med'],['aor','bio'],['aor','pal'],['aor','secdone'],['pal','fd'],['fd','ecopr'],['pr','ecopr']];
@@ -1023,6 +1416,7 @@ async function load(){
 }
 
 initFilters(); initTrend(); initForm(); initForecast(); initPath();
+addEventListener('hashchange', route); route();
 if(DEMO){ $('#demoBanner').hidden=false; CASES=demoCases(); afterData(); }
 else { afterData(); load(); }
 </script>
