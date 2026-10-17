@@ -292,6 +292,12 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .chip.good{background:var(--good-soft);color:var(--good)}
 .chip.warn{background:color-mix(in srgb,var(--mark) 18%,transparent);color:var(--ink)}
 .fc-lock{font-size:12.5px;color:var(--muted);margin:10px 0 0;padding-top:10px;border-top:1px dashed var(--line)}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.thumbs:empty{display:none}
+.thumb{position:relative;width:96px;height:128px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.thumb button{position:absolute;top:4px;right:4px;border:0;border-radius:50%;width:24px;height:24px;background:rgba(10,16,24,.7);color:#fff;cursor:pointer;line-height:24px;padding:0;font-size:14px}
+.thumb span{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;background:rgba(10,16,24,.6);color:#fff;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 #tip b{font-weight:600}
 .empty-state{padding:28px 8px;text-align:center;color:var(--muted)}
@@ -421,7 +427,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <section id="admMain" hidden style="gap:16px">
     <div class="adm-tabs" role="group" aria-label="Джерело тексту">
-      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button>
+      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button>
     </div>
     <div id="admPaste">
       <textarea id="admText" class="adm-text" placeholder="Вставте один або кілька постів з таймлайнами. Пости краще розділяти порожнім рядком."></textarea>
@@ -433,6 +439,15 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
         <input type="file" id="admFile" accept=".json,application/json" style="margin-top:10px">
       </label>
       <p class="muted" id="admFileInfo" style="font-size:13.5px;margin:8px 0 0"></p>
+    </div>
+    <div id="admImgBox" hidden>
+      <label class="drop" id="admImgDrop" for="admImgFile">
+        <b>Перетягніть сюди скріншоти</b> або вставте з буфера (Ctrl+V)<br>
+        <span class="muted" style="font-size:13px">JPG, PNG, WebP. Перед надсиланням зображення зменшуються.</span><br>
+        <input type="file" id="admImgFile" accept="image/png,image/jpeg,image/webp" multiple style="margin-top:10px">
+      </label>
+      <div class="thumbs" id="admThumbs"></div>
+      <label class="chk" style="margin-top:10px"><input type="checkbox" id="admOneCase" checked> Усі скріншоти — один кейс (до 6 зображень). Вимкніть, якщо на скріншотах різні люди: тоді кожне зображення розпізнається окремо.</label>
     </div>
     <div class="adm-bar">
       <button class="btn primary" type="button" id="admParse">Розпізнати</button>
@@ -1051,7 +1066,7 @@ $('#btnCodeGo').addEventListener('click',()=>{
 });
 
 /* ===== Імпорт з Telegram (адмін) ===== */
-const ADM = { pw:'', refs:new Set(), items:[], running:false, stop:false, src:'paste', fileMsgs:[] };
+const ADM = { pw:'', refs:new Set(), items:[], running:false, stop:false, src:'paste', fileMsgs:[], images:[] };
 const SS = { get(k){ try{ return sessionStorage.getItem(k)||''; }catch(e){ return ''; } }, set(k,v){ try{ v?sessionStorage.setItem(k,v):sessionStorage.removeItem(k); }catch(e){} } };
 async function admPost(body){
   let r;
@@ -1085,7 +1100,7 @@ $('#admLoginForm').addEventListener('submit', async e=>{
 });
 document.querySelectorAll('[data-src]').forEach(b=>b.addEventListener('click',()=>{
   ADM.src=b.dataset.src; document.querySelectorAll('[data-src]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
-  $('#admPaste').hidden = ADM.src!=='paste'; $('#admFileBox').hidden = ADM.src!=='file';
+  $('#admPaste').hidden = ADM.src!=='paste'; $('#admFileBox').hidden = ADM.src!=='file'; $('#admImgBox').hidden = ADM.src!=='img';
 }));
 
 /* --- експорт Telegram --- */
@@ -1117,8 +1132,59 @@ const drop=$('#admDrop');
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault(); drop.classList.remove('over');}));
 drop.addEventListener('drop', e=>handleFile(e.dataTransfer.files[0]));
 
+/* --- скріншоти --- */
+async function shrinkImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image(); await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error('bad image')); img.src=url; });
+    const k=Math.min(1, 1200/img.naturalWidth, 3200/img.naturalHeight);
+    const w=Math.max(1,Math.round(img.naturalWidth*k)), h=Math.max(1,Math.round(img.naturalHeight*k));
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,w,h); cx.drawImage(img,0,0,w,h);
+    const dataUrl=cv.toDataURL('image/jpeg',0.85);
+    return { mime:'image/jpeg', data:dataUrl.split(',')[1], url:dataUrl };
+  } finally { URL.revokeObjectURL(url); }
+}
+async function addImages(files){
+  const list=[...files].filter(f=>/^image\/(png|jpe?g|webp)$/.test(f.type));
+  if(!list.length) return;
+  for(const f of list){
+    try{
+      const sm=await shrinkImage(f);
+      const name=f.name && f.name!=='image.png' ? f.name : `скріншот-${ADM.images.length+1}`;
+      ADM.images.push(Object.assign(sm,{name, ref:`img:${(f.name||'paste')}:${f.size}:${f.lastModified||0}`}));
+    }catch(e){ setMsg($('#admMsg'), `Не вдалося прочитати зображення ${f.name||''}.`); }
+  }
+  renderThumbs();
+}
+function renderThumbs(){
+  $('#admThumbs').innerHTML = ADM.images.map((im,i)=>`<div class="thumb"><img src="${im.url}" alt="${esc(im.name)}"><button type="button" data-rmimg="${i}" aria-label="Прибрати ${esc(im.name)}">×</button><span>${esc(im.name)}</span></div>`).join('');
+}
+$('#admThumbs').addEventListener('click', e=>{ const b=e.target.closest('[data-rmimg]'); if(!b) return; ADM.images.splice(+b.dataset.rmimg,1); renderThumbs(); });
+$('#admImgFile').addEventListener('change', e=>{ addImages(e.target.files); e.target.value=''; });
+const idrop=$('#admImgDrop');
+['dragenter','dragover'].forEach(t=>idrop.addEventListener(t,e=>{e.preventDefault(); idrop.classList.add('over');}));
+['dragleave','drop'].forEach(t=>idrop.addEventListener(t,e=>{e.preventDefault(); idrop.classList.remove('over');}));
+idrop.addEventListener('drop', e=>addImages(e.dataTransfer.files));
+document.addEventListener('paste', e=>{
+  if($('#adminView').hidden || $('#admMain').hidden) return;
+  const files=[...(e.clipboardData?.items||[])].filter(it=>it.kind==='file' && it.type.startsWith('image/')).map(it=>it.getAsFile()).filter(Boolean);
+  if(!files.length) return;
+  e.preventDefault();
+  if(ADM.src!=='img') document.querySelector('[data-src="img"]').click();
+  addImages(files);
+});
+
 function makeChunks(){
   const LIM=12000, out=[];
+  if(ADM.src==='img'){
+    const pack=(g,one)=>({ text: (one&&g.length>1?`ONE CASE: all ${g.length} screenshots below belong to the same applicant. Merge them into exactly one item.\n`:'') + g.map(im=>`### IMG ref=${im.ref} name=${im.name}`).join('\n'), images: g.map(im=>({mime:im.mime, data:im.data})) });
+    if($('#admOneCase').checked){
+      if(ADM.images.length>6){ out.error='Для одного кейсу можна додати до 6 скріншотів. Приберіть зайві або вимкніть «один кейс».'; return out; }
+      if(ADM.images.length) out.push(pack(ADM.images,true));
+    } else ADM.images.forEach(im=>out.push(pack([im],false)));
+    return out;
+  }
   if(ADM.src==='file'){
     let cur='';
     for(const m of ADM.fileMsgs){ const b=`### MSG ref=${m.ref} date=${m.date}\n${m.text.slice(0,4000)}\n\n`; if(cur && cur.length+b.length>LIM){ out.push(cur); cur=''; } cur+=b; }
@@ -1146,13 +1212,15 @@ function normItem(x){
 $('#admParse').addEventListener('click', async ()=>{
   if(ADM.running){ ADM.stop=true; $('#admParse').textContent='Зупиняю…'; return; }
   const chunks=makeChunks();
-  if(!chunks.length){ setMsg($('#admMsg'), ADM.src==='file'?'Спершу виберіть файл експорту з новими повідомленнями.':'Вставте текст постів.'); return; }
+  if(chunks.error){ setMsg($('#admMsg'), chunks.error); return; }
+  if(!chunks.length){ setMsg($('#admMsg'), ADM.src==='file'?'Спершу виберіть файл експорту з новими повідомленнями.':ADM.src==='img'?'Додайте скріншоти.':'Вставте текст постів.'); return; }
   ADM.running=true; ADM.stop=false; $('#admParse').textContent='Зупинити'; setMsg($('#admMsg'),'');
   const errs=[]; let found=0;
   for(let i=0;i<chunks.length && !ADM.stop;i++){
     $('#admProg').textContent = `Розпізнаю${chunks.length>1?` частину ${i+1} з ${chunks.length}`:''}… Це може тривати до хвилини.`;
     try{
-      const j = await admPost({action:'parse', password:ADM.pw, text:chunks[i], today:todayISO()});
+      const ch=chunks[i];
+      const j = await admPost(typeof ch==='string' ? {action:'parse', password:ADM.pw, text:ch, today:todayISO()} : {action:'parse', password:ADM.pw, text:ch.text, images:ch.images, today:todayISO()});
       const items=(j.items||[]).map(normItem).filter(it=>Object.keys(it.s).length>=1);
       items.forEach(it=>ADM.items.push({data:it, sel:null, done:false, err:''})); found+=items.length;
       renderImport();
@@ -1162,6 +1230,7 @@ $('#admParse').addEventListener('click', async ()=>{
   $('#admProg').textContent = `${ADM.stop?'Зупинено. ':''}Знайдено таймлайнів: ${found}.`;
   if(errs.length) setMsg($('#admMsg'), errs.join(' '));
   if(ADM.src==='paste' && found) $('#admText').value='';
+  if(ADM.src==='img' && found && !errs.length){ ADM.images=[]; renderThumbs(); }
 });
 
 /* --- картки перевірки --- */

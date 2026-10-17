@@ -108,7 +108,7 @@ function doPost(e) {
       const ai = aiConf_();
       return json_({ ok: true, provider: ai.provider, model: ai.model, hasKey: !!ai.key, refs: refs });
     }
-    if (b.action === 'parse') { checkAdmin_(b.password); return json_(parse_(b.text, b.today)); }
+    if (b.action === 'parse') { checkAdmin_(b.password); return json_(parse_(b.text, b.today, b.images)); }
 
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
@@ -262,7 +262,20 @@ function fetchJson_(url, opts, who) {
   return j;
 }
 
-function callAi_(userText) {
+function cleanImages_(images) {
+  if (!Array.isArray(images) || !images.length) return [];
+  if (images.length > 6) throw new Error('За один раз можна надіслати до 6 зображень');
+  return images.map((im, i) => {
+    const mime = String(im && im.mime || '');
+    const data = String(im && im.data || '');
+    if (['image/jpeg', 'image/png', 'image/webp'].indexOf(mime) < 0) throw new Error('Зображення ' + (i + 1) + ': непідтримуваний формат');
+    if (!data || data.length > 6 * 1024 * 1024 || /[^A-Za-z0-9+/=]/.test(data)) throw new Error('Зображення ' + (i + 1) + ': завеликий або пошкоджений файл');
+    return { mime: mime, data: data };
+  });
+}
+
+function callAi_(userText, images) {
+  images = images || [];
   const ai = aiConf_();
   if (!ai.key) throw new Error('Ключ ШІ не налаштовано для провайдера «' + ai.provider + '» (див. коментар на початку Code.gs).');
   if (!ai.model) throw new Error('Не вказано модель (AI_MODEL) для провайдера «' + ai.provider + '».');
@@ -283,7 +296,9 @@ function callAi_(userText) {
         method: 'post', contentType: 'application/json',
         headers: { Authorization: 'Bearer ' + ai.key, 'HTTP-Referer': 'https://neverrrmind-code.github.io/pr-timelines/', 'X-Title': 'PR timelines import' },
         payload: JSON.stringify(Object.assign({ model: ai.model,
-          messages: [{ role: 'system', content: PROMPT_ }, { role: 'user', content: userText }] },
+          messages: [{ role: 'system', content: PROMPT_ }, { role: 'user', content: images.length
+            ? [{ type: 'text', text: userText }].concat(images.map(im => ({ type: 'image_url', image_url: { url: 'data:' + im.mime + ';base64,' + im.data } })))
+            : userText }] },
           v.t ? { temperature: 0 } : {}, v.rf ? { response_format: { type: 'json_object' } } : {}))
       }, 'ШІ (' + ai.model + ')'));
     const ch = (j.choices || [])[0] || {};
@@ -296,7 +311,9 @@ function callAi_(userText) {
         method: 'post', contentType: 'application/json',
         headers: { 'x-api-key': ai.key, 'anthropic-version': '2023-06-01' },
         payload: JSON.stringify(Object.assign({ model: ai.model, max_tokens: 8192, system: PROMPT_,
-          messages: [{ role: 'user', content: userText }] }, v.t ? { temperature: 0 } : {}))
+          messages: [{ role: 'user', content: images.length
+            ? images.map(im => ({ type: 'image', source: { type: 'base64', media_type: im.mime, data: im.data } })).concat([{ type: 'text', text: userText }])
+            : userText }] }, v.t ? { temperature: 0 } : {}))
       }, 'Claude (' + ai.model + ')'));
     return { model: ai.model, text: (j.content || []).map(p => p.text || '').join(''), stop: j.stop_reason };
   }
@@ -305,7 +322,7 @@ function callAi_(userText) {
     method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': ai.key },
     payload: JSON.stringify({
       systemInstruction: { parts: [{ text: PROMPT_ }] },
-      contents: [{ role: 'user', parts: [{ text: userText }] }],
+      contents: [{ role: 'user', parts: images.map(im => ({ inlineData: { mimeType: im.mime, data: im.data } })).concat([{ text: userText }]) }],
       generationConfig: { temperature: 0, responseMimeType: 'application/json' }
     })
   }, 'Gemini');
@@ -313,11 +330,12 @@ function callAi_(userText) {
   return { model: ai.model, text: ((cand.content && cand.content.parts) || []).map(p => p.text || '').join(''), stop: cand.finishReason };
 }
 
-function parse_(text, today) {
+function parse_(text, today, images) {
   text = String(text || '').slice(0, 60000);
-  if (!text.trim()) throw new Error('Порожній текст');
+  images = cleanImages_(images);
+  if (!text.trim() && !images.length) throw new Error('Порожній текст');
   today = /^\d{4}-\d{2}-\d{2}$/.test(String(today || '')) ? today : Utilities.formatDate(new Date(), 'UTC', 'yyyy-MM-dd');
-  const res = callAi_('TODAY: ' + today + '\n\nMESSAGES:\n' + text);
+  const res = callAi_('TODAY: ' + today + '\n\n' + (images.length ? 'SCREENSHOTS: ' + images.length + ' image(s) attached, in order. Read the timelines from them.\n' : '') + 'MESSAGES:\n' + text, images);
   const out = String(res.text || '').trim();
   if (!out) throw new Error('ШІ повернув порожню відповідь' + (res.stop ? ' (' + res.stop + ')' : ''));
   let data;
@@ -331,6 +349,7 @@ function parse_(text, today) {
 const PROMPT_ = [
   'You extract Canadian immigration (Manitoba MPNP -> IRCC permanent residence) timelines from Telegram messages written in Ukrainian, Russian or English.',
   'Each message in the input starts with a header line like "### MSG ref=<id> date=<YYYY-MM-DD>". Pasted text may have no headers; then treat the whole text as messages separated by blank lines.',
+  'Input may also contain screenshots of Telegram/WhatsApp messages. Read all text in them carefully (OCR). The text part then lists "### IMG ref=<id> name=<file>" lines in the same order as the images; use that ref as msgref for timelines read from that image. If one timeline continues across several consecutive screenshots, combine it into one item and use the ref of the first screenshot.',
   '',
   'Return ONLY JSON: {"items":[ ... ]}. One item per distinct applicant timeline that contains at least 2 dated milestones. Skip questions, congratulations, chit-chat and messages without dated milestones.',
   'Item fields:',
@@ -368,7 +387,27 @@ const PROMPT_ = [
   '- If still unclear, choose the interpretation that makes the milestones chronological (EOI < LAA < MPNP < nomination < PR < AOR < ... < eCoPR) and list the affected keys in "ambiguous".',
   '- If the year is missing, infer it from chronology and the message date; never produce dates after TODAY or after the message date.',
   '- Never invent milestones or dates that are not in the text. If a message lists two submissions of EOI, use the one that led to LAA and mention the other in notes.',
-  '- If a message is an update to an earlier timeline by the same person, still output it as its own item.'
+  '- If a message is an update to an earlier timeline by the same person, still output it as its own item.',
+  '',
+  'Express Entry and other traps:',
+  '- "EE draw", "ITA", "EE LAA", "invitation to apply" from IRCC/Express Entry are NOT the MPNP LAA. Do not put them into "laa"; mention them in notes (e.g. "IRCC ITA 2026-06-22"). The MPNP LAA is the invitation from Manitoba ("MPNP draw, LAA", "Letter of Advice to Apply").',
+  '- "Nomination to MPNP EE", "MPNP nomination", "provincial nomination" -> nom. A nomination for Express Entry means ee = "ee".',
+  '- "EE submitted", "eAPR submitted", "PR application submitted", "подали на PR" -> pr.',
+  '- One line can contain several milestones with the same date (e.g. "EE Submitted, AOR"): set each of them (pr and aor) to that date.',
+  '- "Biometric request", "BIL", "biometric instruction letter" is NOT bio; mention it in notes. "Biometrics completed/done/given" -> bio.',
+  '- "Medical exam passed", "medicals cleared", "medical passed" -> med. The date the exam was attended (without "passed") goes to notes.',
+  '- "Employer verification", "верифікація роботодавця", "call from MPNP" -> verif.',
+  '',
+  'Screenshots of tracker apps and other wording:',
+  '- "AOP" written with Cyrillic letters is a typo for AOR.',
+  '- Dates may be written with month names in Ukrainian/Russian/English ("23 апр. 2025 г.", "9 травня 2024", "Oct 27, 2024"). Convert them to ISO. Ignore relative counters like "534 days ago / дней назад / днів тому".',
+  '- Lists may be in reverse order (newest on top). Order does not matter, map each line by its meaning.',
+  '- "Apply for nomination", "MPNP application submitted" -> mpnp. "Submitted application" right after a nomination -> pr.',
+  '- "Pre Approval Letter", "Pre-arrival letter", "PAL" -> pal.',
+  '- "Medical exam" without "passed": put it into med and add "med" to "ambiguous".',
+  '- If the same milestone appears twice with different dates (e.g. two "Portal 1"), use the earliest date and mention the other one in notes.',
+  '- If the same milestone appears on several screenshots with the same date, it is the same milestone, not a second case.',
+  '- If the text part says ONE CASE, all screenshots belong to one applicant: return exactly one item that merges everything, with msgref = the ref of the first screenshot.'
 ].join('\n');
 
 /** Запустіть один раз вручну (Run → authorize), щоб надати скрипту дозвіл на звернення до Gemini. */
