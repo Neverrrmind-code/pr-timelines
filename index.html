@@ -333,8 +333,8 @@ const STAGES = [
   {k:'aor',  l:'AOR'},
   {k:'med',  l:'Medicals cleared'},
   {k:'bio',  l:'Biometrics complete'},
-  {k:'sec',  l:'Comprehensive security check started'},
   {k:'pal',  l:'PAL (Invitation to pre-arrival services)'},
+  {k:'sec',  l:'Comprehensive security check started'},
   {k:'fd',   l:'Final decision'},
   {k:'p1',   l:'Portal 1'},
   {k:'p2',   l:'Portal 2'},
@@ -348,7 +348,7 @@ const SECS = [['yes','Так, була'],['no','Ні']];
 const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
 
 const SEG_STEP = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor'],['aor','med'],['med','bio'],['bio','pal'],['pal','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
-const SEG_PR = [['pr','aor'],['pr','med'],['pr','bio'],['pr','sec'],['pr','pal'],['pr','fd'],['pr','p1'],['pr','ecopr']];
+const SEG_PR = [['pr','aor'],['pr','med'],['pr','bio'],['pr','pal'],['pr','sec'],['pr','fd'],['pr','p1'],['pr','ecopr']];
 const SEG_TOTAL = [['mpnp','nom'],['sec','fd'],['mpnp','ecopr'],['eoi','ecopr']];
 const segLabel = ([a,b]) => SHORT[a]+' → '+SHORT[b];
 
