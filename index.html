@@ -144,7 +144,16 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .mlist{display:flex;flex-direction:column;gap:6px}
 .mlist:empty{display:none}
 .mrow{display:flex;gap:8px;align-items:center}
-.mrow input{flex:1;min-width:0;max-width:220px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.mrow .dwrap{flex:1;min-width:0;max-width:220px}
+.field > label{font-size:13px;color:var(--ink2)}
+.dwrap{position:relative;display:flex}
+.dwrap .dtext{flex:1;min-width:0;width:100%;padding:8px 42px 8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-variant-numeric:tabular-nums}
+.dwrap .dtext::placeholder{color:var(--muted);letter-spacing:.04em}
+.dpick{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:32px;height:32px;display:grid;place-items:center;color:var(--muted);border-radius:6px;overflow:hidden}
+.dpick:hover{color:var(--accent);background:var(--accent-soft)}
+.dpick svg{pointer-events:none}
+.field .dpick .dnative,.dpick .dnative{position:absolute;inset:0;width:100%;height:100%;opacity:0;padding:0;border:0;margin:0;cursor:pointer;background:none}
+.dpick .dnative::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;cursor:pointer}
 .addm{align-self:flex-start;padding-left:0}
 .pill.adr{background:transparent;border:1px solid var(--accent);color:var(--accent)}
 .pill.ghost{background:transparent;border:1px dashed var(--muted);color:var(--ink2)}
@@ -187,7 +196,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <label for="fEe">Тип подачі<select id="fEe"></select></label>
     <label for="fSec">Security check<select id="fSec"></select></label>
     <label for="fAdr">ADR<select id="fAdr"></select></label>
-    <label for="fYear">Рік подачі PR<select id="fYear"></select></label>
+    <label for="fYear">Рік подачі на PR<select id="fYear"></select></label>
     <span class="count" id="count"></span>
   </div>
 
@@ -228,7 +237,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div class="tablewrap">
       <table>
         <thead><tr>
-          <th>Кейс</th><th>Потік</th><th>Тип</th><th>PR подано</th><th>Останній етап</th><th class="r">Днів від PR</th><th></th>
+          <th>Кейс</th><th>Потік</th><th>Тип</th><th>Подача на PR</th><th>Останній етап</th><th class="r">Днів від подачі на PR</th><th></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -320,7 +329,7 @@ const STAGES = [
   {k:'mpnp', l:'Заявку MPNP подано'},
   {k:'verif',l:'Дзвінок/перевірка роботи'},
   {k:'nom',  l:'Номінація'},
-  {k:'pr',   l:'PR-заявку подано (IRCC)'},
+  {k:'pr',   l:'Подача на PR'},
   {k:'aor',  l:'AOR'},
   {k:'bio',  l:'Біометрія'},
   {k:'sec',  l:'Comprehensive security check started'},
@@ -332,7 +341,7 @@ const STAGES = [
   {k:'ecopr',l:'eCoPR'}
 ];
 const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
-const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'PR',aor:'AOR',bio:'Біометрія',sec:'Security check',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Біометрія',sec:'Security check',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
 const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
 const SECS = [['yes','Так, була'],['no','Ні']];
@@ -434,8 +443,8 @@ function renderTiles(list){
   $('#tiles').innerHTML =
     `<div class="tile"><span class="k">Кейсів</span><span class="v num">${list.length}</span><span class="s">з eCoPR: <span class="num">${done}</span> · з ADR: <span class="num">${list.filter(c=>c.adr&&c.adr.length).length}</span></span></div>` +
     tile('MPNP → номінація', segStats(list,['mpnp','nom']), 'ще немає даних') +
-    tile('PR → AOR', segStats(list,['pr','aor']), 'ще немає даних') +
-    tile('PR → eCoPR', segStats(list,['pr','ecopr']), 'ще немає даних');
+    tile('Подача на PR → AOR', segStats(list,['pr','aor']), 'ще немає даних') +
+    tile('Подача на PR → eCoPR', segStats(list,['pr','ecopr']), 'ще немає даних');
 }
 
 function rangeGroup(title, segs, list){
@@ -460,7 +469,7 @@ let RANGE_DATA = {};
 function renderRanges(list){
   RANGE_DATA = {};
   for(const seg of [...SEG_STEP,...SEG_PR,...SEG_TOTAL]){ RANGE_DATA[seg.join('-')] = {seg, st:segStats(list,seg)}; }
-  $('#ranges').innerHTML = rangeGroup('Між сусідніми етапами', SEG_STEP, list) + rangeGroup('Від подачі PR-заявки', SEG_PR, list) + rangeGroup('Загальний шлях', SEG_TOTAL, list);
+  $('#ranges').innerHTML = rangeGroup('Між сусідніми етапами', SEG_STEP, list) + rangeGroup('Від подачі на PR', SEG_PR, list) + rangeGroup('Загальний шлях', SEG_TOTAL, list);
 }
 
 /* --- тренд --- */
@@ -556,7 +565,7 @@ function initForm(){
   fillSelect($('#iStream'), STREAMS, '— оберіть —');
   fillSelect($('#iEe'), EES, '— не знаю —');
   fillSelect($('#iSec'), SECS, '— не знаю —');
-  $('#dateFields').innerHTML = STAGES.map(s=>`<label class="field"><span>${esc(s.l)}</span><input type="date" id="d_${s.k}" min="2015-01-01" max="2035-12-31"></label>`).join('');
+  $('#dateFields').innerHTML = STAGES.map(s=>`<div class="field"><label for="d_${s.k}">${esc(s.l)}</label>${dateCtl('d_'+s.k)}</div>`).join('');
 }
 function setMsg(el, text, kind){ el.hidden=!text; el.className='msg '+(kind||'err'); el.textContent=text||''; }
 function openForm(id,key){
@@ -564,25 +573,55 @@ function openForm(id,key){
   const c = id ? CASES.find(x=>x.id===id) : null;
   $('#dlgTitle').textContent = c?'Редагування кейсу':'Новий кейс';
   $('#iNick').value=c?.nick||''; $('#iStream').value=c?.stream||''; $('#iEe').value=c?.ee||''; $('#iSec').value=c?.security||''; $('#iNotes').value=c?.notes||''; $('#iWebsite').value='';
-  STAGES.forEach(s=>$('#d_'+s.k).value=c?.s[s.k]||'');
+  STAGES.forEach(s=>setD($('#d_'+s.k), c?.s[s.k]));
   ['adr','ghost'].forEach(k=>{ $('#list_'+k).innerHTML=''; (c?.[k]||[]).forEach(v=>addMulti(k,v)); });
   $('#btnDel').hidden=!c; $('#btnDelConfirm').hidden=true;
   setMsg($('#formMsg'),''); $('#btnSave').disabled=false;
   $('#dlg').showModal();
 }
 function readForm(){
-  const s={}; STAGES.forEach(st=>{ const v=$('#d_'+st.k).value; if(v) s[st.k]=v; });
-  return {nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security: s.sec ? 'yes' : $('#iSec').value, notes:$('#iNotes').value.trim(), s, adr:readMulti('adr'), ghost:readMulti('ghost')};
+  const s={}, bad=[]; STAGES.forEach(st=>{ const v=fromDMY($('#d_'+st.k).value); if(v===null) bad.push(st.l); else if(v) s[st.k]=v; });
+  const adr=readMulti('adr',bad,'ADR'), ghost=readMulti('ghost',bad,'Ghost update');
+  return {c:{nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security: s.sec ? 'yes' : $('#iSec').value, notes:$('#iNotes').value.trim(), s, adr, ghost}, bad};
 }
+/* --- поле дати ДД.ММ.РРРР з календарем --- */
+const CAL_SVG='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+function dateCtl(id, aria){
+  return `<div class="dwrap"><input type="text" id="${id}" class="dtext" inputmode="numeric" autocomplete="off" placeholder="ДД.ММ.РРРР" maxlength="10"${aria?` aria-label="${esc(aria)}"`:''}><span class="dpick" title="Вибрати в календарі">${CAL_SVG}<input type="date" class="dnative" tabindex="-1" aria-hidden="true" min="2015-01-01" max="2035-12-31"></span></div>`;
+}
+const toDMY = iso => iso ? iso.split('-').reverse().join('.') : '';
+function fromDMY(t){
+  t=String(t||'').trim(); if(!t) return '';
+  const m=t.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/); if(!m) return null;
+  const iso=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  const dt=new Date(iso+'T00:00:00Z'); if(isNaN(dt) || dt.toISOString().slice(0,10)!==iso) return null;
+  return iso;
+}
+function setD(el, iso){ el.value = toDMY(iso||''); }
+function maskD(v){ const d=v.replace(/\D/g,'').slice(0,8); let o=d.slice(0,2); if(d.length>2) o+='.'+d.slice(2,4); if(d.length>4) o+='.'+d.slice(4); return o; }
+document.addEventListener('input', e=>{
+  const t=e.target;
+  if(t.classList?.contains('dtext')){ if(!(e.inputType||'').startsWith('delete') && /^[\d.]*$/.test(t.value)) t.value=maskD(t.value); t.classList.remove('bad'); }
+  else if(t.classList?.contains('dnative')){ const txt=t.closest('.dwrap').querySelector('.dtext'); if(t.value){ txt.value=toDMY(t.value); txt.classList.remove('bad'); } }
+});
+document.addEventListener('change', e=>{ const t=e.target; if(t.classList?.contains('dnative') && t.value){ const txt=t.closest('.dwrap').querySelector('.dtext'); txt.value=toDMY(t.value); txt.classList.remove('bad'); } });
+document.addEventListener('click', e=>{
+  const n=e.target.closest('.dnative'); if(!n) return;
+  const iso=fromDMY(n.closest('.dwrap').querySelector('.dtext').value); n.value=iso||'';
+  try{ n.showPicker && n.showPicker(); }catch(_){}
+});
 let mseq=0;
 function addMulti(kind,val){
   const id=`m_${kind}_${++mseq}`; const row=document.createElement('div'); row.className='mrow';
-  row.innerHTML=`<input type="date" id="${id}" min="2015-01-01" max="2035-12-31" aria-label="${kind==='adr'?'Дата ADR':'Дата ghost update'}"><button type="button" class="btn link" data-rm>Прибрати</button>`;
-  row.querySelector('input').value=val||''; $('#list_'+kind).append(row); return row;
+  row.innerHTML=dateCtl(id, kind==='adr'?'Дата ADR':'Дата ghost update')+`<button type="button" class="btn link" data-rm>Прибрати</button>`;
+  setD(row.querySelector('.dtext'), val); $('#list_'+kind).append(row); return row;
 }
-function readMulti(kind){ return [...document.querySelectorAll('#list_'+kind+' input')].map(i=>i.value).filter(Boolean).sort(); }
+function readMulti(kind,bad,label){
+  const out=[]; document.querySelectorAll('#list_'+kind+' .dtext').forEach(i=>{ const v=fromDMY(i.value); if(v===null) bad.push(label); else if(v) out.push(v); });
+  return out.sort();
+}
 $('#form').addEventListener('click', e=>{
-  const a=e.target.closest('[data-addmulti]'); if(a){ addMulti(a.dataset.addmulti).querySelector('input').focus(); return; }
+  const a=e.target.closest('[data-addmulti]'); if(a){ addMulti(a.dataset.addmulti).querySelector('.dtext').focus(); return; }
   const r=e.target.closest('[data-rm]'); if(r){ r.closest('.mrow').remove(); }
 });
 function validate(c){
@@ -595,7 +634,7 @@ function validate(c){
 }
 $('#form').addEventListener('submit', async e=>{
   e.preventDefault();
-  const c=readForm(); const err=validate(c); if(err){ setMsg($('#formMsg'),err); return; }
+  const {c,bad}=readForm(); const err= bad.length ? `Дата «${bad[0]}» має бути у форматі ДД.ММ.РРРР, наприклад 19.12.2025.` : validate(c); if(err){ setMsg($('#formMsg'),err); return; }
   $('#btnSave').disabled=true; setMsg($('#formMsg'),'Зберігаю…','ok');
   try{
     if(DEMO){
