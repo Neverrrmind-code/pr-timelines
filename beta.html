@@ -271,6 +271,24 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .iwarn .e::before{content:"✕ "}
 .isrc summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
 .isrc pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--f-mono);background:var(--bg);border-radius:8px;padding:8px 10px;margin:6px 0 0;color:var(--ink2)}
+/* мотивація */
+.goal{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.goal .gl{display:flex;flex-direction:column;gap:6px;min-width:220px;flex:1 1 260px}
+.goal .gt{font-size:14px;color:var(--ink2)}
+.goal .gt b{color:var(--ink);font-family:var(--f-mono);font-weight:500}
+.gbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;max-width:360px}
+.gbar i{display:block;height:100%;background:var(--good);border-radius:3px}
+.goal .gr{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--ink2);flex:1 1 320px;justify-content:flex-end}
+.goal .gr span{max-width:46ch}
+.mine{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:6px}
+.mine.teaser{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border-style:dashed}
+.mine-row{display:grid;grid-template-columns:minmax(0,230px) 80px minmax(0,1fr);gap:4px 14px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.mine-row .num{text-align:right}
+@media (max-width:620px){.mine-row{grid-template-columns:minmax(0,1fr) auto}.mine-row .vd{grid-column:1 / -1}}
+.chip{display:inline-block;font-size:12.5px;padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--ink);line-height:1.5}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.warn{background:color-mix(in srgb,var(--mark) 18%,transparent);color:var(--ink)}
+.fc-lock{font-size:12.5px;color:var(--muted);margin:10px 0 0;padding-top:10px;border-top:1px dashed var(--line)}
 #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 #tip b{font-weight:600}
 .empty-state{padding:28px 8px;text-align:center;color:var(--muted)}
@@ -296,6 +314,8 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   <div class="banner" id="demoBanner" hidden><b>Демо-режим.</b> Показано приклад даних, нові кейси не зберігаються. Щоб увімкнути спільну базу, вставте URL Apps Script у змінну <span class="num">API_URL</span> в index.html.</div>
   <div class="banner" id="errBanner" hidden></div>
 
+  <div class="goal" id="goal"></div>
+
   <section class="fc" id="fc" aria-labelledby="fcTitle">
     <div class="fc-in">
       <div><h2 id="fcTitle">Коли мені чекати?</h2><p class="lead">Вкажіть свої дати, і ми покажемо, коли зазвичай приходять наступні етапи.</p></div>
@@ -305,6 +325,8 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     </div>
     <div class="fc-out" id="fcOut"></div>
   </section>
+
+  <section class="mine teaser" id="mineBox" aria-label="Ваш кейс серед інших"></section>
 
   <div class="filters">
     <label for="fStream">Потік MPNP<select id="fStream"></select></label>
@@ -861,9 +883,9 @@ function renderForecast(){
     if(r.none) return `<div class="fc-row few"><span class="dot"></span><span class="nm">${nm}</span><span class="when muted">—</span><span class="sub">ще немає даних спільноти</span></div>`;
     const left = Math.round((D(r.d)-today)/864e5);
     const rel = left>0 ? `через ${durTxt(left)}` : left===0 ? 'приблизно сьогодні' : `медіана минула ${durTxt(-left)} тому`;
-    const range = r.st.n>1 ? `у половини ${fmtShort(r.lo)}–${fmtDate(r.hi)} · ` : '';
+    const range = (mc && r.st.n>1) ? `у половини ${fmtShort(r.lo)}–${fmtDate(r.hi)} · ` : '';
     return `<div class="fc-row${left<=0?' due':''}${r.st.n<FEW?' few':''}"><span class="dot"></span><span class="nm">${nm}</span><span class="when">≈ ${fmtDate(r.d)}</span><span class="sub">${rel} · ${range}${plural(r.st.n,'кейс','кейси','кейсів')}</span></div>`;
-  }).join('');
+  }).join('') + (mc ? '' : `<p class="fc-lock">Додайте свій кейс, щоб побачити діапазон дат «у половини людей» і порівняння з іншими. <button class="btn link" type="button" data-act="add" style="padding:0">Додати кейс</button></p>`);
   note.textContent = `Рахуємо від ${ak==='aor'?'AOR':'подачі на PR'} (${fmtDate(ad)}) за ${plural(others.length,'кейсом','кейсами','кейсами')} спільноти.` + ((mc && mc.s.pr===pr) ? ' Дати вашого кейсу підставлено автоматично.' : '');
 }
 
@@ -1248,8 +1270,62 @@ $('#admImport').addEventListener('click', async ()=>{
   btn.textContent='Додати вибрані'; updateSelCount();
 });
 
+/* ===== Мотивація: лічильник, «Ваш кейс серед інших» ===== */
+const GOALS=[50,100,200,500,1000];
+const CMP=[['pr','aor'],['aor','med'],['aor','bio'],['aor','pal'],['aor','secdone'],['pal','fd'],['fd','ecopr'],['pr','ecopr']];
+const pctTxt = x => Math.round(x*100)+'%';
+function renderGoal(mc){
+  const n=CASES.length, goal=GOALS.find(g=>g>n)||n;
+  const wk=CASES.filter(c=>c.created && Date.now()-Date.parse(c.created)<7*864e5).length;
+  let right;
+  if(mc){
+    const last=mc.updated||mc.created; const ago=last?Math.floor((Date.now()-Date.parse(last))/864e5):0;
+    right = (!mc.s.ecopr && ago>=30)
+      ? `<span>Минуло ${plural(ago,'день','дні','днів')} від останнього оновлення вашого кейсу. Є нові дати?</span><button class="btn" type="button" data-act="edit">Оновити кейс</button>`
+      : `<span>Дякуємо, ваш кейс уже в статистиці.</span>${mc.s.ecopr?'':'<button class="btn" type="button" data-act="edit">Додати нові дати</button>'}`;
+  } else {
+    right = `<span>Вже отримали eCoPR? Завершені таймлайни найцінніші для тих, хто ще чекає.</span><button class="btn primary" type="button" data-act="add">Додати свій кейс</button>`;
+  }
+  $('#goal').innerHTML = `<div class="gl"><span class="gt">Вже <b>${n}</b> ${plural(n,'кейс','кейси','кейсів').replace(/^\d+ /,'')}${wk?` · <b>+${wk}</b> за тиждень`:''} · наступна ціль <b>${goal}</b>. Що більше кейсів, то точніші прогнози.</span><div class="gbar" role="progressbar" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${n}"><i style="width:${Math.min(100,n/goal*100).toFixed(1)}%"></i></div></div><div class="gr">${right}</div>`;
+}
+function renderMine(mc){
+  const box=$('#mineBox');
+  if(!mc){
+    box.className='mine teaser';
+    box.innerHTML=`<div><h2 style="font-size:17px">Ваш кейс серед інших</h2><p class="muted" style="margin:4px 0 0;font-size:14px;max-width:64ch">Додайте свій кейс, і тут з'явиться, чи швидше ваш шлях за інших, чи не затримується наступний етап, а прогноз покаже повний діапазон дат.</p></div><button class="btn primary" type="button" data-act="add">Додати свій кейс</button>`;
+    return;
+  }
+  box.className='mine';
+  const others=CASES.filter(c=>c.id!==mc.id), today=todayISO(), rows=[];
+  for(const [a,b] of CMP){
+    if(!mc.s[a]) continue;
+    let pool=others;
+    if(b==='secdone'||b==='ecopr'){ const t=byType(others, isComp(mc)?'comp':'std'); const ts=segStats(t,[a,b]); if(ts && ts.n>=3) pool=t; }
+    const st=segStats(pool,[a,b]), label=segLabel([a,b]);
+    if(mc.s[b]){
+      const v=diff(mc.s[a],mc.s[b]); if(v==null) continue;
+      if(!st || st.n<3){ rows.push([label, v+' дн', '<span class="chip">мало даних для порівняння</span>']); continue; }
+      const longer=st.vals.filter(x=>x>v).length/st.n, shorter=st.vals.filter(x=>x<v).length/st.n;
+      rows.push([label, v+' дн', longer>=shorter ? `<span class="chip good">швидше, ніж у ${pctTxt(longer)} людей</span>` : `<span class="chip warn">довше, ніж у ${pctTxt(shorter)} людей</span>`]);
+    } else if(!mc.s.ecopr){
+      const el=diff(mc.s[a],today); if(el==null) continue;
+      if(!st || st.n<3){ rows.push([label, el+' дн…', '<span class="chip">чекаєте · мало даних для порівняння</span>']); continue; }
+      const q=st.vals.filter(x=>x<=el).length/st.n;
+      rows.push([label, el+' дн…', q>=0.75 ? `<span class="chip warn">затримується: у ${pctTxt(q)} людей уже настав би</span>` : `<span class="chip">чекаєте · у ${pctTxt(q)} людей настав би до цього часу · медіана ${dd(st.med)} дн</span>`]);
+    }
+  }
+  box.innerHTML = `<div class="sechead"><h2 style="font-size:17px">Ваш кейс серед інших${mc.nick?` <span class="muted" style="font:400 14px var(--f-body)">· ${esc(mc.nick)}</span>`:''}</h2><button class="btn link" type="button" data-act="edit">Оновити дати</button></div>` +
+    (rows.length ? rows.map(r=>`<div class="mine-row"><span>${esc(r[0])}</span><span class="num">${r[1]}</span><span class="vd">${r[2]}</span></div>`).join('') : '<p class="muted" style="margin:0">Додайте у свій кейс дату подачі на PR та наступні етапи, щоб побачити порівняння.</p>');
+}
+function renderEngage(){ const mc=myCase(); renderGoal(mc); renderMine(mc); }
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  if(a.dataset.act==='add') openForm();
+  else if(a.dataset.act==='edit'){ const mc=myCase(); const m=mc && mine().find(x=>x.id===mc.id); if(m) openForm(m.id,m.key); }
+});
+
 /* ===== Завантаження ===== */
-function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); prefillForecast(); renderForecast(); }
+function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); prefillForecast(); renderForecast(); renderEngage(); }
 async function load(){
   $('#errBanner').hidden=true;
   try{ CASES = await apiGet(); }
