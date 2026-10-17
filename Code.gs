@@ -2,14 +2,17 @@
  * Бекенд дашборду PR-таймлайнів.
  * Вставте цей код у Google Таблицю → Розширення → Apps Script,
  * потім Deploy → New deployment → Web app (Execute as: Me, Who has access: Anyone).
+ * Після змін коду: Deploy → Manage deployments → ✏️ → Version: New version → Deploy.
  */
 
 const SHEET_NAME = 'cases';
 const STAGES = ['eoi','laa','mpnp','verif','nom','pr','aor','bio','pal','med','fd','p1','p2','ecopr'];
 const META = ['nick','stream','ee','security','notes'];
-const HEADERS = ['id','key','created','updated'].concat(META, STAGES);
+const LISTS = ['adr','ghost'];           // багаторазові події, дати через пробіл
+const HEADERS = ['id','key','created','updated'].concat(META, STAGES, LISTS);
 const STREAMS = ['swm','swo','ies','bis','other'];
 const MAX_CREATES_PER_10_MIN = 30;
+const MAX_LIST = 20;
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -18,8 +21,21 @@ function sheet_() {
     sh = ss.insertSheet(SHEET_NAME);
     sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold');
     sh.setFrozenRows(1);
+    return sh;
+  }
+  // додати колонки, яких бракує (міграція старих таблиць)
+  const lastCol = Math.max(sh.getLastColumn(), 1);
+  const h = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+  const used = h.filter(Boolean).length;
+  const missing = HEADERS.filter(x => h.indexOf(x) < 0);
+  if (missing.length) {
+    sh.getRange(1, used + 1, 1, missing.length).setValues([missing]).setFontWeight('bold');
   }
   return sh;
+}
+
+function headers_(sh) {
+  return sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
 }
 
 function json_(o) {
@@ -51,6 +67,7 @@ function toCase_(o) {
   const c = { id: String(o.id), created: fmt_(o.created), updated: fmt_(o.updated), s: {} };
   META.forEach(k => c[k] = fmt_(o[k]));
   STAGES.forEach(k => { const d = fmt_(o[k]); if (d) c.s[k] = d; });
+  LISTS.forEach(k => c[k] = fmt_(o[k]).split(/[\s,;]+/).filter(Boolean));
   return c;
 }
 
@@ -77,32 +94,41 @@ function doPost(e) {
   }
 }
 
+function date_(d, what) {
+  d = String(d || '').trim();
+  if (!d) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error('Неправильна дата: ' + what);
+  const y = Number(d.slice(0, 4));
+  if (y < 2015 || y > 2035) throw new Error('Неправдоподібний рік: ' + d);
+  return d;
+}
+
 function clean_(c) {
   if (!c || typeof c !== 'object') throw new Error('Порожні дані');
   const s = c.s || {};
+  const o = {};
   let dates = 0;
-  const stageVals = STAGES.map(k => {
-    const d = String(s[k] || '').trim();
-    if (!d) return '';
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error('Неправильна дата: ' + k);
-    const y = Number(d.slice(0, 4));
-    if (y < 2015 || y > 2035) throw new Error('Неправдоподібний рік: ' + d);
-    dates++;
-    return d;
-  });
+  STAGES.forEach(k => { o[k] = date_(s[k], k); if (o[k]) dates++; });
   if (dates < 2) throw new Error('Вкажіть щонайменше дві дати етапів');
-  const nick = String(c.nick || '').trim().slice(0, 40);
-  const stream = STREAMS.indexOf(c.stream) >= 0 ? c.stream : '';
-  const ee = ['ee', 'base'].indexOf(c.ee) >= 0 ? c.ee : '';
-  const security = ['yes', 'no'].indexOf(c.security) >= 0 ? c.security : '';
-  const notes = String(c.notes || '').trim().slice(0, 500);
-  return [nick, stream, ee, security, notes].concat(stageVals);
+  LISTS.forEach(k => {
+    const arr = Array.isArray(c[k]) ? c[k] : [];
+    if (arr.length > MAX_LIST) throw new Error('Забагато дат у списку ' + k);
+    o[k] = arr.map(d => date_(d, k)).filter(Boolean).sort().join(' ');
+  });
+  o.nick = String(c.nick || '').trim().slice(0, 40);
+  o.stream = STREAMS.indexOf(c.stream) >= 0 ? c.stream : '';
+  o.ee = ['ee', 'base'].indexOf(c.ee) >= 0 ? c.ee : '';
+  o.security = ['yes', 'no'].indexOf(c.security) >= 0 ? c.security : '';
+  o.notes = String(c.notes || '').trim().slice(0, 500);
+  return o;
 }
 
-function writeRow_(row, values) {
-  const rg = sheet_().getRange(row, 1, 1, HEADERS.length);
+function writeRow_(row, obj) {
+  const sh = sheet_();
+  const h = headers_(sh);
+  const rg = sh.getRange(row, 1, 1, h.length);
   rg.setNumberFormat('@');
-  rg.setValues([values]);
+  rg.setValues([h.map(n => obj[n] == null ? '' : obj[n])]);
 }
 
 function create_(c) {
@@ -111,12 +137,12 @@ function create_(c) {
   if (n >= MAX_CREATES_PER_10_MIN) throw new Error('Забагато нових кейсів за короткий час, спробуйте пізніше');
   cache.put('creates', String(n + 1), 600);
 
-  const vals = clean_(c);
-  const id = Utilities.getUuid().replace(/-/g, '').slice(0, 8);
-  const key = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
-  const now = new Date().toISOString();
-  writeRow_(sheet_().getLastRow() + 1, [id, key, now, now].concat(vals));
-  return { ok: true, id: id, key: key };
+  const o = clean_(c);
+  o.id = Utilities.getUuid().replace(/-/g, '').slice(0, 8);
+  o.key = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+  o.created = o.updated = new Date().toISOString();
+  writeRow_(sheet_().getLastRow() + 1, o);
+  return { ok: true, id: o.id, key: o.key };
 }
 
 function find_(id, key) {
@@ -127,9 +153,10 @@ function find_(id, key) {
 
 function update_(id, key, c) {
   const r = find_(id, key);
-  const vals = clean_(c);
-  writeRow_(r._row, [r.id, r.key, fmt_(r.created), new Date().toISOString()].concat(vals));
-  return { ok: true, id: String(r.id) };
+  const o = clean_(c);
+  o.id = String(r.id); o.key = String(r.key); o.created = fmt_(r.created); o.updated = new Date().toISOString();
+  writeRow_(r._row, o);
+  return { ok: true, id: o.id };
 }
 
 function delete_(id, key) {

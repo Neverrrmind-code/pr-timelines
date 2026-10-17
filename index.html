@@ -140,6 +140,16 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);width:100%}
 .field textarea{min-height:70px;resize:vertical}
 .field.full{grid-column:1 / -1}
+.multi{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mlist{display:flex;flex-direction:column;gap:6px}
+.mlist:empty{display:none}
+.mrow{display:flex;gap:8px;align-items:center}
+.mrow input{flex:1;min-width:0;max-width:220px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.addm{align-self:flex-start;padding-left:0}
+.pill.adr{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+.pill.ghost{background:transparent;border:1px dashed var(--muted);color:var(--ink2)}
+.tl .ev-adr span:first-child{color:var(--accent)}
+.tl .ev-ghost span:first-child{color:var(--muted);font-style:italic}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .msg{font-size:14px;border-radius:8px;padding:10px 12px}
 .msg.err{background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
@@ -176,6 +186,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <label for="fStream">Потік MPNP<select id="fStream"></select></label>
     <label for="fEe">Тип подачі<select id="fEe"></select></label>
     <label for="fSec">Security check<select id="fSec"></select></label>
+    <label for="fAdr">ADR<select id="fAdr"></select></label>
     <label for="fYear">Рік подачі PR<select id="fYear"></select></label>
     <span class="count" id="count"></span>
   </div>
@@ -239,6 +250,19 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div>
       <div class="group-title" style="margin-top:0">Дати етапів (заповніть ті, що вже пройшли)</div>
       <div class="fgrid dates" id="dateFields"></div>
+      <p class="muted" style="font-size:12.5px;margin:6px 0 0">Medicals cleared — дата, коли офіцер зарахував медогляд. Вона може бути раніше за PAL.</p>
+    </div>
+    <div class="fgrid">
+      <div class="multi">
+        <div class="group-title" style="margin-top:0">Запити додаткових документів (ADR)</div>
+        <div class="mlist" id="list_adr"></div>
+        <button class="btn link addm" type="button" data-addmulti="adr">+ Додати дату ADR</button>
+      </div>
+      <div class="multi">
+        <div class="group-title" style="margin-top:0">Ghost updates</div>
+        <div class="mlist" id="list_ghost"></div>
+        <button class="btn link addm" type="button" data-addmulti="ghost">+ Додати ghost update</button>
+      </div>
     </div>
     <label class="field full"><span>Примітки (CELPIP/IELTS, бали EOI, NOC, зміна роботи тощо)</span><textarea id="iNotes" maxlength="500"></textarea></label>
     <div class="hp" aria-hidden="true"><label>Website<input id="iWebsite" tabindex="-1" autocomplete="off"></label></div>
@@ -302,20 +326,20 @@ const STAGES = [
   {k:'aor',  l:'AOR'},
   {k:'bio',  l:'Біометрія'},
   {k:'pal',  l:'PAL'},
-  {k:'med',  l:'Медогляд'},
+  {k:'med',  l:'Medicals cleared'},
   {k:'fd',   l:'Final decision'},
   {k:'p1',   l:'Portal 1'},
   {k:'p2',   l:'Portal 2'},
   {k:'ecopr',l:'eCoPR'}
 ];
 const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
-const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'PR',aor:'AOR',bio:'Біометрія',pal:'PAL',med:'Медогляд',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'PR',aor:'AOR',bio:'Біометрія',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
 const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
 const SECS = [['yes','Так, була'],['no','Ні']];
 const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
 
-const SEG_STEP = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor'],['aor','bio'],['bio','pal'],['pal','med'],['med','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
+const SEG_STEP = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor'],['aor','bio'],['bio','pal'],['pal','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
 const SEG_PR = [['pr','aor'],['pr','bio'],['pr','pal'],['pr','med'],['pr','fd'],['pr','p1'],['pr','ecopr']];
 const SEG_TOTAL = [['mpnp','nom'],['mpnp','ecopr'],['eoi','ecopr']];
 const segLabel = ([a,b]) => SHORT[a]+' → '+SHORT[b];
@@ -348,7 +372,9 @@ function demoCases(){
       idx++; if(idx>stop) break; const [a,b]=typical[k];
       const nd=add(d, Math.round(a+rnd()*(b-a))); if(D(nd)>D(todayISO())) break; d=nd; s[k]=d;
     }
-    out.push({id:'demo'+i, nick:'Демо-кейс '+(i+1), stream:streams[i], ee: rnd()<.75?'base':'ee', security: rnd()<.2?'yes':(rnd()<.5?'no':''), notes:'Згенерований приклад для демо.', s});
+    const adr = (s.aor && rnd()<.35) ? [add(s.aor, 20+Math.floor(rnd()*40))].filter(x=>D(x)<=D(todayISO())) : [];
+    const ghost = (s.aor && rnd()<.4) ? [add(s.aor, 10+Math.floor(rnd()*60))].filter(x=>D(x)<=D(todayISO())) : [];
+    out.push({id:'demo'+i, nick:'Демо-кейс '+(i+1), stream:streams[i], ee: rnd()<.75?'base':'ee', security: rnd()<.2?'yes':(rnd()<.5?'no':''), notes:'Згенерований приклад для демо.', s, adr, ghost});
   }
   return out;
 }
@@ -356,7 +382,7 @@ function demoCases(){
 /* ===== Стан ===== */
 let CASES = [];
 const DEMO = !API_URL;
-const F = {stream:'', ee:'', sec:'', year:''};
+const F = {stream:'', ee:'', sec:'', adr:'', year:''};
 let openId = null;
 let editing = null; // {id,key}
 const mine = () => LS.get('prdash_mine', []);
@@ -377,7 +403,8 @@ function initFilters(){
   fillSelect($('#fStream'), STREAMS, 'Усі потоки');
   fillSelect($('#fEe'), EES, 'Усі');
   fillSelect($('#fSec'), [['yes','Була'],['no','Не було'],['unk','Не вказано']], 'Усі');
-  [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fYear','year']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
+  fillSelect($('#fAdr'), [['yes','Був ADR'],['no','Без ADR']], 'Усі');
+  [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fAdr','adr'],['#fYear','year']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
 }
 function refreshYears(){
   const ys=[...new Set(CASES.map(c=>c.s.pr&&c.s.pr.slice(0,4)).filter(Boolean))].sort().reverse();
@@ -388,6 +415,7 @@ function filtered(){
     if(F.stream && c.stream!==F.stream) return false;
     if(F.ee && c.ee!==F.ee) return false;
     if(F.sec==='unk' ? !!c.security : (F.sec && c.security!==F.sec)) return false;
+    if(F.adr && (F.adr==='yes') !== !!(c.adr&&c.adr.length)) return false;
     if(F.year && !(c.s.pr||'').startsWith(F.year)) return false;
     return true;
   });
@@ -405,7 +433,7 @@ function renderTiles(list){
   const done = list.filter(c=>c.s.ecopr).length;
   const tile=(k,st,sub)=>`<div class="tile"><span class="k">${k}</span><span class="v num">${st?dd(st.med)+'<span style="font-size:15px"> дн</span>':'—'}</span><span class="s">${st?`медіана · ≈${mon(st.med)} міс · n=${st.n}`:sub}</span></div>`;
   $('#tiles').innerHTML =
-    `<div class="tile"><span class="k">Кейсів</span><span class="v num">${list.length}</span><span class="s">з них з eCoPR: <span class="num">${done}</span></span></div>` +
+    `<div class="tile"><span class="k">Кейсів</span><span class="v num">${list.length}</span><span class="s">з eCoPR: <span class="num">${done}</span> · з ADR: <span class="num">${list.filter(c=>c.adr&&c.adr.length).length}</span></span></div>` +
     tile('MPNP → номінація', segStats(list,['mpnp','nom']), 'ще немає даних') +
     tile('PR → AOR', segStats(list,['pr','aor']), 'ще немає даних') +
     tile('PR → eCoPR', segStats(list,['pr','ecopr']), 'ще немає даних');
@@ -469,7 +497,13 @@ function renderTrend(list){
 }
 
 /* --- таблиця --- */
-function lastStage(c){ for(let i=STAGES.length-1;i>=0;i--){ const k=STAGES[i].k; if(c.s[k]) return k; } return null; }
+function lastStage(c){ let best=null, bd=-Infinity; STAGES.forEach(({k})=>{ const d=D(c.s[k]); if(d!=null && d>=bd){ bd=d; best=k; } }); return best; }
+function events(c){
+  const ev=[]; STAGES.forEach((s,i)=>{ if(c.s[s.k]) ev.push({d:c.s[s.k], l:s.l, o:i, cls:''}); });
+  (c.adr||[]).forEach((d,i)=>ev.push({d, l:'ADR'+(c.adr.length>1?' #'+(i+1):''), o:99, cls:'ev-adr'}));
+  (c.ghost||[]).forEach(d=>ev.push({d, l:'Ghost update', o:99, cls:'ev-ghost'}));
+  return ev.sort((a,b)=>(D(a.d)-D(b.d))||(a.o-b.o));
+}
 function renderTable(list){
   const my = new Set(mine().map(m=>m.id));
   const rows = [...list].sort((p,q)=>(D(q.s.pr)||D(q.s.mpnp)||0)-(D(p.s.pr)||D(p.s.mpnp)||0));
@@ -479,7 +513,7 @@ function renderTable(list){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mine">мій</span>':''}${c.security==='yes'?' <span class="pill sec">security check</span>':''}</td>
+      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mine">мій</span>':''}${c.security==='yes'?' <span class="pill sec">security check</span>':''}${c.adr?.length?` <span class="pill adr">ADR${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}</td>
       <td>${esc(lookup(STREAMS,c.stream)||'—')}</td>
       <td>${c.ee==='ee'?'EE':c.ee==='base'?'Non-EE':'—'}</td>
       <td class="num">${fmtDate(c.s.pr)}</td>
@@ -488,7 +522,7 @@ function renderTable(list){
       <td class="r">${my.has(c.id)?`<button class="btn link" type="button" data-edit="${esc(c.id)}">Редагувати</button>`:''}</td></tr>`;
     if(openId===c.id){
       let tl=''; let prev=null;
-      for(const s of STAGES){ const v=c.s[s.k]; if(!v) continue; const d=prev?diff(prev,v):null; tl+=`<div><span>${esc(s.l)}</span><span class="num">${fmtDate(v)} ${d!=null?`<span class="d">+${d}</span>`:''}</span></div>`; prev=v; }
+      for(const e of events(c)){ const d=prev?diff(prev,e.d):null; tl+=`<div class="${e.cls}"><span>${esc(e.l)}</span><span class="num">${fmtDate(e.d)} ${d!=null?`<span class="d">+${d}</span>`:''}</span></div>`; prev=e.d; }
       h += `<tr class="detail"><td colspan="7"><div class="tl">${tl}</div>${c.notes?`<p class="notes">${esc(c.notes)}</p>`:''}</td></tr>`;
     }
   }
@@ -532,19 +566,32 @@ function openForm(id,key){
   $('#dlgTitle').textContent = c?'Редагування кейсу':'Новий кейс';
   $('#iNick').value=c?.nick||''; $('#iStream').value=c?.stream||''; $('#iEe').value=c?.ee||''; $('#iSec').value=c?.security||''; $('#iNotes').value=c?.notes||''; $('#iWebsite').value='';
   STAGES.forEach(s=>$('#d_'+s.k).value=c?.s[s.k]||'');
+  ['adr','ghost'].forEach(k=>{ $('#list_'+k).innerHTML=''; (c?.[k]||[]).forEach(v=>addMulti(k,v)); });
   $('#btnDel').hidden=!c; $('#btnDelConfirm').hidden=true;
   setMsg($('#formMsg'),''); $('#btnSave').disabled=false;
   $('#dlg').showModal();
 }
 function readForm(){
   const s={}; STAGES.forEach(st=>{ const v=$('#d_'+st.k).value; if(v) s[st.k]=v; });
-  return {nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security:$('#iSec').value, notes:$('#iNotes').value.trim(), s};
+  return {nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security:$('#iSec').value, notes:$('#iNotes').value.trim(), s, adr:readMulti('adr'), ghost:readMulti('ghost')};
 }
+let mseq=0;
+function addMulti(kind,val){
+  const id=`m_${kind}_${++mseq}`; const row=document.createElement('div'); row.className='mrow';
+  row.innerHTML=`<input type="date" id="${id}" min="2015-01-01" max="2035-12-31" aria-label="${kind==='adr'?'Дата ADR':'Дата ghost update'}"><button type="button" class="btn link" data-rm>Прибрати</button>`;
+  row.querySelector('input').value=val||''; $('#list_'+kind).append(row); return row;
+}
+function readMulti(kind){ return [...document.querySelectorAll('#list_'+kind+' input')].map(i=>i.value).filter(Boolean).sort(); }
+$('#form').addEventListener('click', e=>{
+  const a=e.target.closest('[data-addmulti]'); if(a){ addMulti(a.dataset.addmulti).querySelector('input').focus(); return; }
+  const r=e.target.closest('[data-rm]'); if(r){ r.closest('.mrow').remove(); }
+});
 function validate(c){
   const ks=Object.keys(c.s); if(ks.length<2) return 'Вкажіть щонайменше дві дати етапів.';
   const t=D(todayISO()); for(const k of ks){ if(D(c.s[k])>t) return `Дата «${SL[k]}» у майбутньому.`; }
   let prev=null, prevK=null;
-  for(const s of STAGES){ if(s.k==='verif') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
+  for(const k of ['adr','ghost']){ for(const v of c[k]){ if(D(v)>t) return `Дата ${k==='adr'?'ADR':'ghost update'} у майбутньому.`; } }
+  for(const s of STAGES){ if(s.k==='verif'||s.k==='med') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
   return null;
 }
 $('#form').addEventListener('submit', async e=>{
@@ -598,7 +645,7 @@ $('#btnCodeGo').addEventListener('click',()=>{
 });
 
 /* ===== Завантаження ===== */
-function afterData(){ refreshYears(); render(); }
+function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); }
 async function load(){
   $('#errBanner').hidden=true;
   try{ CASES = await apiGet(); }
