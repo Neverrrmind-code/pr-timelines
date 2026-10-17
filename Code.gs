@@ -7,7 +7,7 @@
  * Для імпорту з Telegram потрібні Script Properties (⚙ Project Settings → Script properties):
  *   ADMIN_PASSWORD  — пароль сторінки імпорту
  *   GEMINI_API_KEY  — ключ з https://aistudio.google.com/apikey
- *   GEMINI_MODEL    — (необов'язково) назва моделі, за замовчуванням gemini-2.5-flash
+ *   GEMINI_MODEL    — (необов'язково) назва моделі, за замовчуванням gemini-3.8-flash
  * Після першого збереження виберіть функцію authorize і натисніть Run, щоб дозволити звернення до Gemini.
  */
 
@@ -21,7 +21,7 @@ const STREAMS = ['swm','swo','ies','bis','other'];
 const MAX_CREATES_PER_10_MIN = 30;
 const MAX_LIST = 20;
 const MAX_IMPORT = 100;
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-3.8-flash';
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
