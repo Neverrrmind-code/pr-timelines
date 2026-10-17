@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--ARTIFACT-START-->
+<title>Таймлайни PR Манітоба</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one centered column; summary tiles → stage ranges → trend → case table; form in a dialog */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#132031; --ink2:#46546A; --muted:#748196;
+  --line:#DCE2EA; --accent:#1F5FA6; --accent-soft:#D6E4F4; --mark:#A86A12;
+  --good:#23794C; --good-soft:#DDF0E5; --bad:#B4372C;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E141B; --surface:#161F29; --ink:#E5EBF2; --ink2:#A8B4C2; --muted:#7E8B9A;
+  --line:#283442; --accent:#6EA6E6; --accent-soft:#1D3350; --mark:#E2B356;
+  --good:#5CC48C; --good-soft:#163527; --bad:#F07A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141B; --surface:#161F29; --ink:#E5EBF2; --ink2:#A8B4C2; --muted:#7E8B9A;
+  --line:#283442; --accent:#6EA6E6; --accent-soft:#1D3350; --mark:#E2B356;
+  --good:#5CC48C; --good-soft:#163527; --bad:#F07A6E; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(22px,4vw,32px);line-height:1.15}
+h2{font-size:17px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+header p{margin:6px 0 0;color:var(--ink2);max-width:60ch}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.link{border:none;background:none;padding:4px 6px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.banner{border:1px dashed var(--mark);color:var(--ink2);border-radius:var(--r);padding:10px 14px;font-size:14px}
+.banner b{color:var(--mark)}
+
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filters label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+.filters select{min-width:150px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}
+.filters .count{margin-left:auto;font-size:14px;color:var(--ink2);align-self:flex-end;padding-bottom:6px}
+
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tile .v{font-family:var(--f-display);font-size:26px;font-weight:500;line-height:1.2}
+.tile .s{font-size:13px;color:var(--ink2)}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+section{display:flex;flex-direction:column;gap:12px}
+.sechead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.sechead p{margin:0;color:var(--muted);font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 16px 14px}
+
+.group-title{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:14px 0 4px}
+.rrow{display:grid;grid-template-columns:200px 34px minmax(0,1fr) 210px;gap:12px;align-items:center;padding:7px 0;border-top:1px solid var(--line);cursor:default}
+.rrow:hover{background:color-mix(in srgb,var(--accent-soft) 35%,transparent)}
+.rrow .lbl{font-size:14px;min-width:0}
+.rrow .n{font-size:12px;color:var(--muted);text-align:right}
+.rrow .nums{font-size:12.5px;color:var(--ink2);text-align:right;white-space:nowrap}
+.rrow .nums b{color:var(--ink);font-weight:500}
+.track{position:relative;height:22px}
+.track .base{position:absolute;left:0;right:0;top:10px;height:2px;background:var(--line);border-radius:2px}
+.track .rng{position:absolute;top:6px;height:10px;background:var(--accent-soft);border-radius:4px;min-width:3px}
+.track .tick{position:absolute;top:5px;width:1.5px;height:12px;background:var(--accent);opacity:.55}
+.track .med{position:absolute;top:1px;width:3px;height:20px;background:var(--mark);border-radius:2px;margin-left:-1.5px}
+.track .mean{position:absolute;top:7px;width:8px;height:8px;border-radius:50%;background:var(--surface);border:2px solid var(--accent);margin-left:-4px}
+.rrow.empty .track{opacity:.4}
+.axis{display:grid;grid-template-columns:200px 34px minmax(0,1fr) 210px;gap:12px;padding-top:4px}
+.axis .scale{position:relative;height:16px;font-size:11px;color:var(--muted)}
+.axis .scale span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--ink2);padding:6px 0 2px}
+.legend i{display:inline-block;vertical-align:middle;margin-right:6px}
+.lg-rng{width:22px;height:10px;background:var(--accent-soft);border-radius:3px}
+.lg-med{width:3px;height:14px;background:var(--mark);border-radius:2px}
+.lg-mean{width:8px;height:8px;border-radius:50%;border:2px solid var(--accent)}
+.lg-tick{width:1.5px;height:12px;background:var(--accent);opacity:.55}
+@media (max-width:760px){
+  .rrow,.axis{grid-template-columns:minmax(0,1fr) 30px;row-gap:4px}
+  .rrow .track,.axis .scale{grid-column:1 / -1;order:3}
+  .rrow .nums{grid-column:1 / -1;order:4;text-align:left}
+  .axis > :not(.scale){display:none}
+}
+
+.trend svg{width:100%;height:auto;display:block}
+.trend .gl{stroke:var(--line);stroke-width:1}
+.trend .al{fill:var(--muted);font:11px var(--f-mono)}
+.trend .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.trend .dot.hot{fill:var(--mark)}
+.trend .hit{fill:transparent;cursor:pointer}
+.trend .medline{stroke:var(--mark);stroke-width:1.5;stroke-dasharray:4 4}
+.trend .ml{fill:var(--mark);font:11px var(--f-mono)}
+.trend select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--surface);position:sticky;top:0}
+tbody tr.case{cursor:pointer}
+tbody tr.case:hover td{background:color-mix(in srgb,var(--accent-soft) 35%,transparent)}
+td.r,th.r{text-align:right}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--ink);white-space:nowrap}
+.pill.done{background:var(--good-soft);color:var(--good)}
+.pill.sec{background:transparent;border:1px solid var(--mark);color:var(--mark)}
+.detail td{background:var(--bg)}
+.tl{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 18px;font-size:13px}
+.tl div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:2px 0}
+.tl .d{color:var(--muted);font-size:12px}
+.notes{margin:10px 0 0;color:var(--ink2);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.mine{font-size:11px;color:var(--accent);margin-left:6px}
+
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(10,16,24,.55)}
+.dlg{padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.dlg h2{font-size:18px}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px}
+.fgrid.dates{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:620px){.fgrid,.fgrid.dates{grid-template-columns:minmax(0,1fr)}}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field span{font-size:13px;color:var(--ink2)}
+.field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.field.full{grid-column:1 / -1}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.msg{font-size:14px;border-radius:8px;padding:10px 12px}
+.msg.err{background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
+.msg.ok{background:var(--good-soft);color:var(--ink)}
+.code{font-family:var(--f-mono);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;user-select:all;overflow-wrap:anywhere}
+.dlg-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+
+#tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+#tip b{font-weight:600}
+.empty-state{padding:28px 8px;text-align:center;color:var(--muted)}
+footer{font-size:12.5px;color:var(--muted);max-width:75ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<!--HEAD-END-->
+</head>
+<body>
+<!--BODY-START-->
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Таймлайни PR&nbsp;· MPNP</h1>
+      <p>Спільнота ділиться датами етапів: від EOI до eCoPR. Дашборд рахує середні, медіанні, мінімальні та максимальні строки кожного етапу.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnCode" type="button">Редагувати за кодом</button>
+      <button class="btn primary" id="btnAdd" type="button">Додати свій кейс</button>
+    </div>
+  </header>
+
+  <div class="banner" id="demoBanner" hidden><b>Демо-режим.</b> Показано приклад даних, нові кейси не зберігаються. Щоб увімкнути спільну базу, вставте URL Apps Script у змінну <span class="num">API_URL</span> в index.html.</div>
+  <div class="banner" id="errBanner" hidden></div>
+
+  <div class="filters">
+    <label for="fStream">Потік MPNP<select id="fStream"></select></label>
+    <label for="fEe">Тип подачі<select id="fEe"></select></label>
+    <label for="fSec">Security check<select id="fSec"></select></label>
+    <label for="fYear">Рік подачі PR<select id="fYear"></select></label>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section>
+    <div class="sechead">
+      <h2>Строки етапів</h2>
+      <p>У днях. Рахуємо лише кейси, де вказані обидві дати.</p>
+    </div>
+    <div class="panel">
+      <div class="legend">
+        <span><i class="lg-rng"></i>мін–макс</span>
+        <span><i class="lg-med"></i>медіана</span>
+        <span><i class="lg-mean"></i>середнє</span>
+        <span><i class="lg-tick"></i>окремий кейс</span>
+      </div>
+      <div id="ranges"></div>
+    </div>
+  </section>
+
+  <section class="trend">
+    <div class="sechead">
+      <h2>Чи змінюється швидкість</h2>
+      <label class="muted" for="trendSeg" style="font-size:13px;display:flex;gap:8px;align-items:center">Етап <select id="trendSeg"></select></label>
+    </div>
+    <div class="panel" style="padding:14px 12px 8px">
+      <div id="trend"></div>
+      <p class="muted" style="font-size:12.5px;margin:4px 6px 4px">По горизонталі дата початку етапу, по вертикалі скільки днів він тривав. Пунктир показує медіану.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Кейси</h2>
+      <p>Натисніть рядок, щоб побачити всі дати.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Кейс</th><th>Потік</th><th>Тип</th><th>PR подано</th><th>Останній етап</th><th class="r">Днів від PR</th><th></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Дані вносять самі учасники, вони не перевіряються. Не вказуйте ПІБ, номери заявок (UCI, application number) та інші особисті дані. Тут статистика спільноти, а не офіційні строки IRCC чи MPNP.</footer>
+</div>
+
+<dialog id="dlg">
+  <form class="dlg" id="form" novalidate>
+    <h2 id="dlgTitle">Новий кейс</h2>
+    <div class="fgrid">
+      <label class="field"><span>Нік або коротка назва (необов'язково)</span><input id="iNick" maxlength="40" placeholder="напр. Сім'я з 2, retail supervisor"></label>
+      <label class="field"><span>Потік MPNP</span><select id="iStream"></select></label>
+      <label class="field"><span>Тип подачі в IRCC</span><select id="iEe"></select></label>
+      <label class="field"><span>Comprehensive security check</span><select id="iSec"></select></label>
+    </div>
+    <div>
+      <div class="group-title" style="margin-top:0">Дати етапів (заповніть ті, що вже пройшли)</div>
+      <div class="fgrid dates" id="dateFields"></div>
+    </div>
+    <label class="field full"><span>Примітки (CELPIP/IELTS, бали EOI, NOC, зміна роботи тощо)</span><textarea id="iNotes" maxlength="500"></textarea></label>
+    <div class="hp" aria-hidden="true"><label>Website<input id="iWebsite" tabindex="-1" autocomplete="off"></label></div>
+    <div id="formMsg" hidden></div>
+    <div class="dlg-foot">
+      <div class="actions">
+        <button class="btn danger" type="button" id="btnDel" hidden>Видалити кейс</button>
+        <button class="btn danger" type="button" id="btnDelConfirm" hidden>Так, видалити назавжди</button>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="btnCancel">Скасувати</button>
+        <button class="btn primary" type="submit" id="btnSave">Зберегти</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgCode">
+  <div class="dlg">
+    <h2>Редагування кейсу</h2>
+    <p style="margin:0;color:var(--ink2)">Вставте код редагування, який ви отримали після збереження кейсу.</p>
+    <label class="field"><span>Код редагування</span><input id="iCode" placeholder="abcd1234-…" autocomplete="off"></label>
+    <div id="codeMsg" hidden></div>
+    <div class="dlg-foot"><span></span>
+      <div class="actions">
+        <button class="btn" type="button" id="btnCodeCancel">Скасувати</button>
+        <button class="btn primary" type="button" id="btnCodeGo">Відкрити</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgDone">
+  <div class="dlg">
+    <h2>Кейс збережено</h2>
+    <p style="margin:0;color:var(--ink2)">Це ваш код редагування. Збережіть його: з ним ви зможете додати нові дати (AOR, PAL, eCoPR), коли вони з'являться. На цьому пристрої кнопка «Редагувати» з'явиться біля вашого кейсу автоматично.</p>
+    <div class="code" id="doneCode"></div>
+    <div class="dlg-foot"><span id="copyMsg" class="muted" style="font-size:13px"></span>
+      <div class="actions">
+        <button class="btn" type="button" id="btnCopy">Скопіювати</button>
+        <button class="btn primary" type="button" id="btnDoneClose">Готово</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<div id="tip" hidden></div>
+
+<script>
+/* ===== Налаштування ===== */
+const API_URL = ''; // ← вставте сюди URL вашого Apps Script Web App (…/exec)
+
+/* ===== Довідники ===== */
+const STAGES = [
+  {k:'eoi',  l:'EOI подано'},
+  {k:'laa',  l:'LAA (запрошення)'},
+  {k:'mpnp', l:'Заявку MPNP подано'},
+  {k:'verif',l:'Дзвінок/перевірка роботи'},
+  {k:'nom',  l:'Номінація'},
+  {k:'pr',   l:'PR-заявку подано (IRCC)'},
+  {k:'aor',  l:'AOR'},
+  {k:'bio',  l:'Біометрія'},
+  {k:'pal',  l:'PAL'},
+  {k:'med',  l:'Медогляд'},
+  {k:'fd',   l:'Final decision'},
+  {k:'p1',   l:'Portal 1'},
+  {k:'p2',   l:'Portal 2'},
+  {k:'ecopr',l:'eCoPR'}
+];
+const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'PR',aor:'AOR',bio:'Біометрія',pal:'PAL',med:'Медогляд',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
+const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
+const SECS = [['yes','Так, була'],['no','Ні']];
+const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
+
+const SEG_STEP = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor'],['aor','bio'],['bio','pal'],['pal','med'],['med','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
+const SEG_PR = [['pr','aor'],['pr','bio'],['pr','pal'],['pr','med'],['pr','fd'],['pr','p1'],['pr','ecopr']];
+const SEG_TOTAL = [['mpnp','nom'],['mpnp','ecopr'],['eoi','ecopr']];
+const segLabel = ([a,b]) => SHORT[a]+' → '+SHORT[b];
+
+/* ===== Утиліти ===== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function D(s){ if(!s||!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null; const [y,m,d]=s.split('-').map(Number); return Date.UTC(y,m-1,d); }
+function diff(a,b){ const x=D(a), y=D(b); if(x==null||y==null) return null; const v=Math.round((y-x)/864e5); return v>=0?v:null; }
+function todayISO(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
+function stats(arr){ if(!arr.length) return null; const s=[...arr].sort((a,b)=>a-b), n=s.length; const mean=s.reduce((a,b)=>a+b,0)/n; const med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2; return {n,mean,med,min:s[0],max:s[n-1],vals:s}; }
+const mon = v => (v/30.44).toFixed(1).replace('.',',');
+const dd = v => String(Math.round(v));
+function fmtDate(s){ if(!s) return '—'; const [y,m,d]=s.split('-'); return d+'.'+m+'.'+y; }
+function niceStep(max,target){ const raw=max/target; const p=Math.pow(10,Math.floor(Math.log10(raw||1))); const n=raw/p; return (n<=1?1:n<=2?2:n<=5?5:10)*p; }
+const LS = { get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+
+/* ===== Демо-дані ===== */
+function demoCases(){
+  const ex = {id:'example', nick:"Приклад: сім'я з 2, retail supervisor", stream:'swm', ee:'base', security:'', notes:'CELPIP 5-5-5-7, EOI 825 (non-EE). Перша EOI 06.08.2024, повторна через рік. Після PAL новий job offer і нова номінація MPNP, IRCC не повідомляли.',
+    s:{eoi:'2025-08-17',laa:'2025-09-04',mpnp:'2025-09-19',verif:'2025-11-24',nom:'2025-12-02',pr:'2025-12-19',aor:'2026-06-29',bio:'2026-07-03',pal:'2026-08-25',med:'2026-09-17',fd:'2026-09-21',p1:'2026-10-05',p2:'2026-10-13',ecopr:'2026-10-16'}};
+  let seed=7; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
+  const add=(iso,days)=>{ const t=new Date(D(iso)+days*864e5); return t.toISOString().slice(0,10); };
+  const typical={laa:[10,60],mpnp:[7,30],nom:[40,120],pr:[10,40],aor:[90,220],bio:[3,25],pal:[30,90],med:[10,40],fd:[2,20],p1:[5,20],p2:[3,12],ecopr:[2,10]};
+  const out=[ex]; const streams=['swm','swm','swm','swo','ies','swm','swo','swm','ies','swm'];
+  for(let i=0;i<10;i++){
+    let d=add('2025-01-10', Math.floor(rnd()*330)); const s={eoi:d}; const stop=5+Math.floor(rnd()*9);
+    let idx=0;
+    for(const k of ['laa','mpnp','nom','pr','aor','bio','pal','med','fd','p1','p2','ecopr']){
+      idx++; if(idx>stop) break; const [a,b]=typical[k];
+      const nd=add(d, Math.round(a+rnd()*(b-a))); if(D(nd)>D(todayISO())) break; d=nd; s[k]=d;
+    }
+    out.push({id:'demo'+i, nick:'Демо-кейс '+(i+1), stream:streams[i], ee: rnd()<.75?'base':'ee', security: rnd()<.2?'yes':(rnd()<.5?'no':''), notes:'Згенерований приклад для демо.', s});
+  }
+  return out;
+}
+
+/* ===== Стан ===== */
+let CASES = [];
+const DEMO = !API_URL;
+const F = {stream:'', ee:'', sec:'', year:''};
+let openId = null;
+let editing = null; // {id,key}
+const mine = () => LS.get('prdash_mine', []);
+
+/* ===== API ===== */
+async function apiGet(){
+  const r = await fetch(API_URL + (API_URL.includes('?')?'&':'?') + 't=' + Date.now());
+  const j = await r.json(); if(!j.ok) throw new Error(j.error||'Помилка завантаження'); return j.cases||[];
+}
+async function apiPost(body){
+  const r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  const j = await r.json(); if(!j.ok) throw new Error(j.error||'Помилка збереження'); return j;
+}
+
+/* ===== Фільтри ===== */
+function fillSelect(el, opts, all){ el.innerHTML = `<option value="">${all}</option>` + opts.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join(''); }
+function initFilters(){
+  fillSelect($('#fStream'), STREAMS, 'Усі потоки');
+  fillSelect($('#fEe'), EES, 'Усі');
+  fillSelect($('#fSec'), [['yes','Була'],['no','Не було'],['unk','Не вказано']], 'Усі');
+  [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fYear','year']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
+}
+function refreshYears(){
+  const ys=[...new Set(CASES.map(c=>c.s.pr&&c.s.pr.slice(0,4)).filter(Boolean))].sort().reverse();
+  const cur=F.year; fillSelect($('#fYear'), ys.map(y=>[y,y]), 'Усі роки'); $('#fYear').value = ys.includes(cur)?cur:''; F.year=$('#fYear').value;
+}
+function filtered(){
+  return CASES.filter(c=>{
+    if(F.stream && c.stream!==F.stream) return false;
+    if(F.ee && c.ee!==F.ee) return false;
+    if(F.sec==='unk' ? !!c.security : (F.sec && c.security!==F.sec)) return false;
+    if(F.year && !(c.s.pr||'').startsWith(F.year)) return false;
+    return true;
+  });
+}
+function segStats(list, seg){ const v=[]; for(const c of list){ const d=diff(c.s[seg[0]], c.s[seg[1]]); if(d!=null) v.push(d); } return stats(v); }
+
+/* ===== Рендер ===== */
+function render(){
+  const list = filtered();
+  $('#count').innerHTML = `<span class="num">${list.length}</span> з <span class="num">${CASES.length}</span> кейсів`;
+  renderTiles(list); renderRanges(list); renderTrend(list); renderTable(list);
+}
+
+function renderTiles(list){
+  const done = list.filter(c=>c.s.ecopr).length;
+  const tile=(k,st,sub)=>`<div class="tile"><span class="k">${k}</span><span class="v num">${st?dd(st.med)+'<span style="font-size:15px"> дн</span>':'—'}</span><span class="s">${st?`медіана · ≈${mon(st.med)} міс · n=${st.n}`:sub}</span></div>`;
+  $('#tiles').innerHTML =
+    `<div class="tile"><span class="k">Кейсів</span><span class="v num">${list.length}</span><span class="s">з них з eCoPR: <span class="num">${done}</span></span></div>` +
+    tile('MPNP → номінація', segStats(list,['mpnp','nom']), 'ще немає даних') +
+    tile('PR → AOR', segStats(list,['pr','aor']), 'ще немає даних') +
+    tile('PR → eCoPR', segStats(list,['pr','ecopr']), 'ще немає даних');
+}
+
+function rangeGroup(title, segs, list){
+  const rows = segs.map(seg=>({seg, st:segStats(list,seg)}));
+  const max = Math.max(10, ...rows.filter(r=>r.st).map(r=>r.st.max));
+  const step = niceStep(max,5); const top = Math.ceil(max/step)*step;
+  const pct = v => (v/top*100).toFixed(2)+'%';
+  let h = `<div class="group-title">${title}</div>`;
+  for(const {seg,st} of rows){
+    const key = seg.join('-');
+    if(!st){ h += `<div class="rrow empty"><span class="lbl">${segLabel(seg)}</span><span class="n num">0</span><div class="track"><div class="base"></div></div><span class="nums muted">немає даних</span></div>`; continue; }
+    const ticks = st.vals.map(v=>`<div class="tick" style="left:${pct(v)}"></div>`).join('');
+    h += `<div class="rrow" data-seg="${key}"><span class="lbl">${segLabel(seg)}</span><span class="n num" title="кількість кейсів">${st.n}</span>
+      <div class="track"><div class="base"></div><div class="rng" style="left:${pct(st.min)};width:calc(${pct(st.max-st.min)} + 0px)"></div>${ticks}<div class="med" style="left:${pct(st.med)}"></div><div class="mean" style="left:${pct(st.mean)}"></div></div>
+      <span class="nums num">сер <b>${dd(st.mean)}</b> · мед <b>${dd(st.med)}</b> · ${st.min}–${st.max}</span></div>`;
+  }
+  let ax=''; for(let v=0; v<=top; v+=step){ ax += `<span style="left:${pct(v)}">${v}</span>`; }
+  h += `<div class="axis"><span></span><span></span><div class="scale num">${ax}</div><span></span></div>`;
+  return h;
+}
+let RANGE_DATA = {};
+function renderRanges(list){
+  RANGE_DATA = {};
+  for(const seg of [...SEG_STEP,...SEG_PR,...SEG_TOTAL]){ RANGE_DATA[seg.join('-')] = {seg, st:segStats(list,seg)}; }
+  $('#ranges').innerHTML = rangeGroup('Між сусідніми етапами', SEG_STEP, list) + rangeGroup('Від подачі PR-заявки', SEG_PR, list) + rangeGroup('Загальний шлях', SEG_TOTAL, list);
+}
+
+/* --- тренд --- */
+function initTrend(){
+  const segs=[...SEG_STEP,...SEG_PR.slice(1),...SEG_TOTAL.slice(1)];
+  $('#trendSeg').innerHTML = segs.map(s=>`<option value="${s.join('-')}">${segLabel(s)}</option>`).join('');
+  $('#trendSeg').value='pr-aor';
+  $('#trendSeg').addEventListener('change',()=>renderTrend(filtered()));
+}
+let TREND_PTS=[];
+function renderTrend(list){
+  const [a,b] = $('#trendSeg').value.split('-');
+  const pts = list.map(c=>({c, x:D(c.s[a]), y:diff(c.s[a],c.s[b])})).filter(p=>p.x!=null&&p.y!=null).sort((p,q)=>p.x-q.x);
+  TREND_PTS = pts;
+  if(!pts.length){ $('#trend').innerHTML = `<div class="empty-state">Для етапу «${segLabel([a,b])}» поки немає кейсів з обома датами.</div>`; return; }
+  const narrow = ($('#trend').clientWidth||720) < 560;
+  const W=narrow?380:720, H=narrow?260:280, L=40, R=12, T=14, B=32;
+  let x0=Math.min(...pts.map(p=>p.x)), x1=Math.max(...pts.map(p=>p.x));
+  if(x1-x0<60*864e5){ x0-=30*864e5; x1+=30*864e5; }
+  const ymaxRaw=Math.max(...pts.map(p=>p.y),5), ys=niceStep(ymaxRaw,4), ytop=Math.ceil(ymaxRaw/ys)*ys;
+  const X=v=>L+(v-x0)/(x1-x0)*(W-L-R), Y=v=>T+(1-v/ytop)*(H-T-B);
+  let g='';
+  for(let v=0; v<=ytop; v+=ys){ g+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="al" x="${L-8}" y="${Y(v)+4}" text-anchor="end">${v}</text>`; }
+  // місячні мітки
+  const d0=new Date(x0), months=[]; let m=new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth()+1, 1));
+  while(m.getTime()<=x1){ months.push(m.getTime()); m=new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth()+1, 1)); }
+  const every=Math.max(1,Math.ceil(months.length/(narrow?4:7)));
+  months.forEach((t,i)=>{ if(i%every) return; const dt=new Date(t); g+=`<text class="al" x="${X(t)}" y="${H-10}" text-anchor="middle">${String(dt.getUTCMonth()+1).padStart(2,'0')}.${String(dt.getUTCFullYear()).slice(2)}</text>`; });
+  const st=stats(pts.map(p=>p.y));
+  g+=`<line class="medline" x1="${L}" x2="${W-R}" y1="${Y(st.med)}" y2="${Y(st.med)}"/><text class="ml" x="${W-R}" y="${Y(st.med)-6}" text-anchor="end">медіана ${dd(st.med)} дн</text>`;
+  pts.forEach((p,i)=>{ g+=`<circle class="dot" cx="${X(p.x)}" cy="${Y(p.y)}" r="5"/><circle class="hit" data-i="${i}" cx="${X(p.x)}" cy="${Y(p.y)}" r="12"/>`; });
+  $('#trend').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Тривалість етапу ${esc(segLabel([a,b]))} за датою початку">${g}</svg>`;
+}
+
+/* --- таблиця --- */
+function lastStage(c){ for(let i=STAGES.length-1;i>=0;i--){ const k=STAGES[i].k; if(c.s[k]) return k; } return null; }
+function renderTable(list){
+  const my = new Set(mine().map(m=>m.id));
+  const rows = [...list].sort((p,q)=>(D(q.s.pr)||D(q.s.mpnp)||0)-(D(p.s.pr)||D(p.s.mpnp)||0));
+  if(!rows.length){ $('#tbody').innerHTML = `<tr><td colspan="7" class="empty-state">${CASES.length?'Немає кейсів за цими фільтрами.':'Поки що жодного кейсу. Натисніть «Додати свій кейс», щоб стати першим.'}</td></tr>`; return; }
+  let h='';
+  for(const c of rows){
+    const ls=lastStage(c); const done=!!c.s.ecopr;
+    const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
+    h += `<tr class="case" data-id="${esc(c.id)}">
+      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mine">мій</span>':''}${c.security==='yes'?' <span class="pill sec">security check</span>':''}</td>
+      <td>${esc(lookup(STREAMS,c.stream)||'—')}</td>
+      <td>${c.ee==='ee'?'EE':c.ee==='base'?'Non-EE':'—'}</td>
+      <td class="num">${fmtDate(c.s.pr)}</td>
+      <td>${ls?`<span class="pill ${done?'done':''}">${esc(SHORT[ls])}</span> <span class="num muted" style="font-size:12.5px">${fmtDate(c.s[ls])}</span>`:'—'}</td>
+      <td class="r num">${since!=null?since+(done?'':' <span class="muted">·&nbsp;триває</span>'):'—'}</td>
+      <td class="r">${my.has(c.id)?`<button class="btn link" type="button" data-edit="${esc(c.id)}">Редагувати</button>`:''}</td></tr>`;
+    if(openId===c.id){
+      let tl=''; let prev=null;
+      for(const s of STAGES){ const v=c.s[s.k]; if(!v) continue; const d=prev?diff(prev,v):null; tl+=`<div><span>${esc(s.l)}</span><span class="num">${fmtDate(v)} ${d!=null?`<span class="d">+${d}</span>`:''}</span></div>`; prev=v; }
+      h += `<tr class="detail"><td colspan="7"><div class="tl">${tl}</div>${c.notes?`<p class="notes">${esc(c.notes)}</p>`:''}</td></tr>`;
+    }
+  }
+  $('#tbody').innerHTML = h;
+}
+
+/* ===== Підказки ===== */
+const tip = $('#tip');
+function showTip(html, x, y){ tip.innerHTML=html; tip.hidden=false; const r=tip.getBoundingClientRect(); let lx=x+14, ly=y+14; if(lx+r.width>innerWidth-8) lx=x-r.width-14; if(ly+r.height>innerHeight-8) ly=y-r.height-14; tip.style.left=Math.max(8,lx)+'px'; tip.style.top=Math.max(8,ly)+'px'; }
+function hideTip(){ tip.hidden=true; }
+$('#ranges').addEventListener('mousemove', e=>{
+  const row=e.target.closest('.rrow[data-seg]'); if(!row){ hideTip(); return; }
+  const {seg,st}=RANGE_DATA[row.dataset.seg];
+  showTip(`<b>${segLabel(seg)}</b><br>Кейсів: ${st.n}<br>Середнє: ${dd(st.mean)} дн (≈${mon(st.mean)} міс)<br>Медіана: ${dd(st.med)} дн (≈${mon(st.med)} міс)<br>Мін: ${st.min} дн · Макс: ${st.max} дн`, e.clientX, e.clientY);
+});
+$('#ranges').addEventListener('mouseleave', hideTip);
+$('#trend').addEventListener('mousemove', e=>{
+  const h=e.target.closest('.hit'); if(!h){ hideTip(); return; }
+  const p=TREND_PTS[+h.dataset.i]; const [a,b]=$('#trendSeg').value.split('-');
+  showTip(`<b>${esc(p.c.nick||'Без назви')}</b><br>${SHORT[a]}: ${fmtDate(p.c.s[a])}<br>${SHORT[b]}: ${fmtDate(p.c.s[b])}<br><b>${p.y} дн</b> (≈${mon(p.y)} міс)`, e.clientX, e.clientY);
+});
+$('#trend').addEventListener('mouseleave', hideTip);
+$('#trend').addEventListener('click', e=>{ const h=e.target.closest('.hit'); if(!h) return; openId=TREND_PTS[+h.dataset.i].c.id; renderTable(filtered()); document.querySelector(`tr[data-id="${CSS.escape(openId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'}); });
+
+$('#tbody').addEventListener('click', e=>{
+  const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); const m=mine().find(x=>x.id===ed.dataset.edit); if(m) openForm(m.id,m.key); return; }
+  const tr=e.target.closest('tr.case'); if(!tr) return; openId = openId===tr.dataset.id?null:tr.dataset.id; renderTable(filtered());
+});
+
+/* ===== Форма ===== */
+function initForm(){
+  fillSelect($('#iStream'), STREAMS, '— оберіть —');
+  fillSelect($('#iEe'), EES, '— не знаю —');
+  fillSelect($('#iSec'), SECS, '— не знаю —');
+  $('#dateFields').innerHTML = STAGES.map(s=>`<label class="field"><span>${esc(s.l)}</span><input type="date" id="d_${s.k}" min="2015-01-01" max="2035-12-31"></label>`).join('');
+}
+function setMsg(el, text, kind){ el.hidden=!text; el.className='msg '+(kind||'err'); el.textContent=text||''; }
+function openForm(id,key){
+  editing = id?{id,key}:null;
+  const c = id ? CASES.find(x=>x.id===id) : null;
+  $('#dlgTitle').textContent = c?'Редагування кейсу':'Новий кейс';
+  $('#iNick').value=c?.nick||''; $('#iStream').value=c?.stream||''; $('#iEe').value=c?.ee||''; $('#iSec').value=c?.security||''; $('#iNotes').value=c?.notes||''; $('#iWebsite').value='';
+  STAGES.forEach(s=>$('#d_'+s.k).value=c?.s[s.k]||'');
+  $('#btnDel').hidden=!c; $('#btnDelConfirm').hidden=true;
+  setMsg($('#formMsg'),''); $('#btnSave').disabled=false;
+  $('#dlg').showModal();
+}
+function readForm(){
+  const s={}; STAGES.forEach(st=>{ const v=$('#d_'+st.k).value; if(v) s[st.k]=v; });
+  return {nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security:$('#iSec').value, notes:$('#iNotes').value.trim(), s};
+}
+function validate(c){
+  const ks=Object.keys(c.s); if(ks.length<2) return 'Вкажіть щонайменше дві дати етапів.';
+  const t=D(todayISO()); for(const k of ks){ if(D(c.s[k])>t) return `Дата «${SL[k]}» у майбутньому.`; }
+  let prev=null, prevK=null;
+  for(const s of STAGES){ if(s.k==='verif') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
+  return null;
+}
+$('#form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const c=readForm(); const err=validate(c); if(err){ setMsg($('#formMsg'),err); return; }
+  $('#btnSave').disabled=true; setMsg($('#formMsg'),'Зберігаю…','ok');
+  try{
+    if(DEMO){
+      if(editing){ Object.assign(CASES.find(x=>x.id===editing.id), c); }
+      else { const id='local'+Date.now().toString(36); const key='demo'; CASES.push({id,...c}); LS.set('prdash_mine',[...mine(),{id,key}]); editing=null; $('#dlg').close(); afterData(); showDone(id+'-'+key); return; }
+      $('#dlg').close(); afterData(); return;
+    }
+    if(editing){
+      await apiPost({action:'update', id:editing.id, key:editing.key, case:c, website:$('#iWebsite').value});
+      $('#dlg').close(); await load();
+    } else {
+      const r = await apiPost({action:'create', case:c, website:$('#iWebsite').value});
+      LS.set('prdash_mine',[...mine(),{id:r.id,key:r.key}]);
+      $('#dlg').close(); await load(); showDone(r.id+'-'+r.key);
+    }
+  }catch(ex){ setMsg($('#formMsg'), ex.message||'Не вдалося зберегти. Перевірте з’єднання і спробуйте ще раз.'); $('#btnSave').disabled=false; }
+});
+$('#btnCancel').addEventListener('click',()=>$('#dlg').close());
+$('#btnDel').addEventListener('click',()=>{ $('#btnDel').hidden=true; $('#btnDelConfirm').hidden=false; });
+$('#btnDelConfirm').addEventListener('click', async ()=>{
+  if(!editing) return;
+  try{
+    if(DEMO){ CASES=CASES.filter(x=>x.id!==editing.id); }
+    else { await apiPost({action:'delete', id:editing.id, key:editing.key}); }
+    LS.set('prdash_mine', mine().filter(m=>m.id!==editing.id));
+    $('#dlg').close(); DEMO?afterData():await load();
+  }catch(ex){ setMsg($('#formMsg'), ex.message); }
+});
+$('#btnAdd').addEventListener('click',()=>openForm());
+
+function showDone(code){ $('#doneCode').textContent=code; $('#copyMsg').textContent=''; $('#dlgDone').showModal(); }
+$('#btnCopy').addEventListener('click', ()=>{
+  const code=$('#doneCode').textContent;
+  navigator.clipboard?.writeText(code).then(()=>{$('#copyMsg').textContent='Скопійовано';}).catch(()=>{ const r=document.createRange(); r.selectNodeContents($('#doneCode')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $('#copyMsg').textContent='Виділено, натисніть Ctrl+C'; });
+});
+$('#btnDoneClose').addEventListener('click',()=>$('#dlgDone').close());
+
+$('#btnCode').addEventListener('click',()=>{ $('#iCode').value=''; setMsg($('#codeMsg'),''); $('#dlgCode').showModal(); });
+$('#btnCodeCancel').addEventListener('click',()=>$('#dlgCode').close());
+$('#btnCodeGo').addEventListener('click',()=>{
+  const v=$('#iCode').value.trim(); const i=v.indexOf('-');
+  const id=i>0?v.slice(0,i):'', key=i>0?v.slice(i+1):'';
+  if(!id||!key||!CASES.find(c=>c.id===id)){ setMsg($('#codeMsg'),'Кейс з таким кодом не знайдено. Код має вигляд «abcd1234-…».'); return; }
+  if(!mine().some(m=>m.id===id)) LS.set('prdash_mine',[...mine(),{id,key}]);
+  $('#dlgCode').close(); openForm(id,key);
+});
+
+/* ===== Завантаження ===== */
+function afterData(){ refreshYears(); render(); }
+async function load(){
+  $('#errBanner').hidden=true;
+  try{ CASES = await apiGet(); }
+  catch(ex){ $('#errBanner').hidden=false; $('#errBanner').textContent='Не вдалося завантажити кейси: '+ex.message+'. Оновіть сторінку трохи пізніше.'; }
+  afterData();
+}
+
+initFilters(); initTrend(); initForm();
+if(DEMO){ $('#demoBanner').hidden=false; CASES=demoCases(); afterData(); }
+else { afterData(); load(); }
+</script>
+<!--BODY-END-->
+</body>
+</html>
