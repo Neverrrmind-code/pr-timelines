@@ -267,27 +267,37 @@ function callAi_(userText) {
   if (!ai.key) throw new Error('Ключ ШІ не налаштовано для провайдера «' + ai.provider + '» (див. коментар на початку Code.gs).');
   if (!ai.model) throw new Error('Не вказано модель (AI_MODEL) для провайдера «' + ai.provider + '».');
 
+  // Деякі моделі не приймають temperature або response_format: пробуємо варіанти, прибираючи непідтримувані параметри
+  const tryVariants = (variants, send) => {
+    let last;
+    for (const v of variants) {
+      try { return send(v); }
+      catch (e) { last = e; if (e.code !== 400 && e.code !== 422) throw e; }
+    }
+    throw last;
+  };
+
   if (ai.provider === 'openai') {
-    const send = jsonMode => fetchJson_(ai.base + '/chat/completions', {
-      method: 'post', contentType: 'application/json',
-      headers: { Authorization: 'Bearer ' + ai.key, 'HTTP-Referer': 'https://neverrrmind-code.github.io/pr-timelines/', 'X-Title': 'PR timelines import' },
-      payload: JSON.stringify(Object.assign({ model: ai.model, temperature: 0,
-        messages: [{ role: 'system', content: PROMPT_ }, { role: 'user', content: userText }] },
-        jsonMode ? { response_format: { type: 'json_object' } } : {}))
-    }, 'ШІ (' + ai.model + ')');
-    let j;
-    try { j = send(true); } catch (e) { if (e.code === 400 || e.code === 422) j = send(false); else throw e; }
+    const j = tryVariants([{ t: true, rf: true }, { t: false, rf: true }, { t: true, rf: false }, { t: false, rf: false }], v =>
+      fetchJson_(ai.base + '/chat/completions', {
+        method: 'post', contentType: 'application/json',
+        headers: { Authorization: 'Bearer ' + ai.key, 'HTTP-Referer': 'https://neverrrmind-code.github.io/pr-timelines/', 'X-Title': 'PR timelines import' },
+        payload: JSON.stringify(Object.assign({ model: ai.model,
+          messages: [{ role: 'system', content: PROMPT_ }, { role: 'user', content: userText }] },
+          v.t ? { temperature: 0 } : {}, v.rf ? { response_format: { type: 'json_object' } } : {}))
+      }, 'ШІ (' + ai.model + ')'));
     const ch = (j.choices || [])[0] || {};
     return { model: ai.model, text: String((ch.message && ch.message.content) || ''), stop: ch.finish_reason };
   }
 
   if (ai.provider === 'anthropic') {
-    const j = fetchJson_('https://api.anthropic.com/v1/messages', {
-      method: 'post', contentType: 'application/json',
-      headers: { 'x-api-key': ai.key, 'anthropic-version': '2023-06-01' },
-      payload: JSON.stringify({ model: ai.model, max_tokens: 8192, temperature: 0, system: PROMPT_,
-        messages: [{ role: 'user', content: userText }] })
-    }, 'Claude (' + ai.model + ')');
+    const j = tryVariants([{ t: true }, { t: false }], v =>
+      fetchJson_('https://api.anthropic.com/v1/messages', {
+        method: 'post', contentType: 'application/json',
+        headers: { 'x-api-key': ai.key, 'anthropic-version': '2023-06-01' },
+        payload: JSON.stringify(Object.assign({ model: ai.model, max_tokens: 8192, system: PROMPT_,
+          messages: [{ role: 'user', content: userText }] }, v.t ? { temperature: 0 } : {}))
+      }, 'Claude (' + ai.model + ')'));
     return { model: ai.model, text: (j.content || []).map(p => p.text || '').join(''), stop: j.stop_reason };
   }
 
