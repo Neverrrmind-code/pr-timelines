@@ -333,15 +333,15 @@ const STAGES = [
   {k:'aor',  l:'AOR'},
   {k:'med',  l:'Medicals cleared'},
   {k:'bio',  l:'Biometrics complete'},
-  {k:'pal',  l:'PAL (Invitation to pre-arrival services)'},
-  {k:'sec',  l:'Comprehensive security check started'},
+  {k:'pal',  l:'Invitation to PAL'},
+  {k:'sec',  l:'Comprehensive started'},
   {k:'fd',   l:'Final decision'},
   {k:'p1',   l:'Portal 1'},
   {k:'p2',   l:'Portal 2'},
   {k:'ecopr',l:'eCoPR'}
 ];
 const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
-const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Biometrics',sec:'Security check',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Biometrics',sec:'Comprehensive',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
 const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
 const SECS = [['yes','Так, була'],['no','Ні']];
@@ -629,7 +629,7 @@ function validate(c){
   const t=D(todayISO()); for(const k of ks){ if(D(c.s[k])>t) return `Дата «${SL[k]}» у майбутньому.`; }
   let prev=null, prevK=null;
   for(const k of ['adr','ghost']){ for(const v of c[k]){ if(D(v)>t) return `Дата ${k==='adr'?'ADR':'ghost update'} у майбутньому.`; } }
-  for(const s of STAGES){ if(s.k==='verif'||s.k==='med'||s.k==='sec') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
+  for(const s of STAGES){ if(s.k==='verif'||s.k==='med'||s.k==='sec'||s.k==='bio') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
   return null;
 }
 $('#form').addEventListener('submit', async e=>{
