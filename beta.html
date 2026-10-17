@@ -152,7 +152,7 @@ td.r,th.r{text-align:right}
 .tl div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:2px 0}
 .tl .d{color:var(--muted);font-size:12px}
 .notes{margin:10px 0 0;color:var(--ink2);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
-.mine{font-size:11px;color:var(--accent);margin-left:6px}
+.mytag{font-size:10.5px;color:var(--accent);margin-left:6px;font-weight:500;vertical-align:1px}
 
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 32px)}
 dialog::backdrop{background:rgba(10,16,24,.55)}
@@ -332,7 +332,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <label for="fStream">Потік MPNP<select id="fStream"></select></label>
     <label for="fEe">Тип подачі<select id="fEe"></select></label>
     <label for="fSec">Тип security check<select id="fSec"></select></label>
-    <label for="fAdr">ADR<select id="fAdr"></select></label>
+    <label for="fAdr">Дозапити<select id="fAdr"></select></label>
     <label for="fYear">Рік подачі на PR<select id="fYear"></select></label>
     <label for="fSrc">Джерело<select id="fSrc"></select></label>
     <span class="count" id="count"></span>
@@ -463,9 +463,9 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
       <div class="fgrid dates" id="dateFields"></div>    </div>
     <div class="fgrid">
       <div class="multi">
-        <div class="group-title" style="margin-top:0">Запити додаткових документів (ADR)</div>
+        <div class="group-title" style="margin-top:0">Дозапити документів (ADR)</div>
         <div class="mlist" id="list_adr"></div>
-        <button class="btn link addm" type="button" data-addmulti="adr">+ Додати дату ADR</button>
+        <button class="btn link addm" type="button" data-addmulti="adr">+ Додати дату дозапиту</button>
       </div>
       <div class="multi">
         <div class="group-title" style="margin-top:0">Ghost updates</div>
@@ -647,7 +647,7 @@ function initFilters(){
   fillSelect($('#fStream'), STREAMS, 'Усі потоки');
   fillSelect($('#fEe'), EES, 'Усі');
   fillSelect($('#fSec'), [['no','Стандартна'],['yes','Comprehensive'],['unk','Не вказано']], 'Усі');
-  fillSelect($('#fAdr'), [['yes','Був ADR'],['no','Без ADR']], 'Усі');
+  fillSelect($('#fAdr'), [['yes','Був дозапит'],['no','Без дозапиту']], 'Усі');
   fillSelect($('#fSrc'), [['form','Форма на сайті'],['telegram','Імпорт з Telegram']], 'Усі');
   [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fAdr','adr'],['#fYear','year'],['#fSrc','src']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
 }
@@ -679,7 +679,7 @@ function renderTiles(list){
   const done = list.filter(c=>c.s.ecopr).length;
   const tile=(k,st,sub)=>`<div class="tile"><span class="k">${k}</span><span class="v num">${st?dd(st.med)+'<span style="font-size:15px"> дн</span>':'—'}</span><span class="s">${st?`медіана · ≈${mon(st.med)} міс · ${plural(st.n,'кейс','кейси','кейсів')}`:sub}</span>${st&&st.n>1?`<span class="s muted" style="font-size:12px">у половини ${dd(st.q1)}–${dd(st.q3)} дн</span>`:''}</div>`;
   $('#tiles').innerHTML =
-    `<div class="tile"><span class="k">Кейсів</span><span class="v num">${list.length}</span><span class="s">з eCoPR: <span class="num">${done}</span> · з ADR: <span class="num">${list.filter(c=>c.adr&&c.adr.length).length}</span></span></div>` +
+    `<div class="tile"><span class="k">Кейсів</span><span class="v num">${list.length}</span><span class="s">з eCoPR: <span class="num">${done}</span> · з дозапитом: <span class="num">${list.filter(c=>c.adr&&c.adr.length).length}</span></span></div>` +
     tile('MPNP → номінація', segStats(list,['mpnp','nom']), 'ще немає даних') +
     tile('Подача на PR → AOR', segStats(list,['pr','aor']), 'ще немає даних') +
     tile('Подача на PR → eCoPR', segStats(list,['pr','ecopr']), 'ще немає даних');
@@ -798,7 +798,7 @@ function renderTrend(list){
 function lastStage(c){ let best=null, bd=-Infinity; STAGES.forEach(({k})=>{ const d=D(c.s[k]); if(d!=null && d>=bd){ bd=d; best=k; } }); return best; }
 function events(c){
   const ev=[]; STAGES.forEach((s,i)=>{ if(c.s[s.k]) ev.push({d:c.s[s.k], l:s.l, o:i, cls:''}); });
-  (c.adr||[]).forEach((d,i)=>ev.push({d, l:'ADR'+(c.adr.length>1?' #'+(i+1):''), o:99, cls:'ev-adr'}));
+  (c.adr||[]).forEach((d,i)=>ev.push({d, l:'Дозапит'+(c.adr.length>1?' #'+(i+1):''), o:99, cls:'ev-adr'}));
   (c.ghost||[]).forEach(d=>ev.push({d, l:'Ghost update', o:99, cls:'ev-ghost'}));
   return ev.sort((a,b)=>(D(a.d)-D(b.d))||(a.o-b.o));
 }
@@ -825,7 +825,7 @@ function renderTable(list){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mine">мій</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">ADR${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':''}</td>
+      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mytag" title="Ваш кейс">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':''}</td>
       <td>${esc(lookup(STREAMS,c.stream)||'—')}<span class="sub2">${c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':''}</span></td>
       <td class="num">${fmtDate(c.s.pr)}</td>
       <td class="minicell">${miniTl(c, top, ref)}</td>
@@ -934,7 +934,7 @@ function openForm(id,key){
 }
 function readForm(){
   const s={}, bad=[]; STAGES.forEach(st=>{ const v=fromDMY($('#d_'+st.k).value); if(v===null) bad.push(st.l); else if(v) s[st.k]=v; });
-  const adr=readMulti('adr',bad,'ADR'), ghost=readMulti('ghost',bad,'Ghost update');
+  const adr=readMulti('adr',bad,'Дозапит'), ghost=readMulti('ghost',bad,'Ghost update');
   return {c:{nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security: $('#iSec').value, notes:$('#iNotes').value.trim(), s, adr, ghost}, bad};
 }
 /* --- поле дати ДД.ММ.РРРР з календарем --- */
@@ -966,7 +966,7 @@ document.addEventListener('click', e=>{
 let mseq=0;
 function addMulti(kind,val){
   const id=`m_${kind}_${++mseq}`; const row=document.createElement('div'); row.className='mrow';
-  row.innerHTML=dateCtl(id, kind==='adr'?'Дата ADR':'Дата ghost update')+`<button type="button" class="btn link" data-rm>Прибрати</button>`;
+  row.innerHTML=dateCtl(id, kind==='adr'?'Дата дозапиту':'Дата ghost update')+`<button type="button" class="btn link" data-rm>Прибрати</button>`;
   setD(row.querySelector('.dtext'), val); $('#list_'+kind).append(row); return row;
 }
 function readMulti(kind,bad,label){
@@ -991,7 +991,7 @@ function validate(c){
   const ks=Object.keys(c.s); if(ks.length<2) return 'Вкажіть щонайменше дві дати етапів.';
   const t=D(todayISO()); for(const k of ks){ if(D(c.s[k])>t) return `Дата «${SL[k]}» у майбутньому.`; }
   let prev=null, prevK=null;
-  for(const k of ['adr','ghost']){ for(const v of c[k]){ if(D(v)>t) return `Дата ${k==='adr'?'ADR':'ghost update'} у майбутньому.`; } }
+  for(const k of ['adr','ghost']){ for(const v of c[k]){ if(D(v)>t) return `Дата ${k==='adr'?'дозапиту':'ghost update'} у майбутньому.`; } }
   for(const s of STAGES){ if(['verif','med','bio','sec','secdone'].includes(s.k)) continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
   return null;
 }
@@ -1176,7 +1176,7 @@ function readCard(i){
   STAGES.forEach(st=>{ const v=fromDMY($(`#imp_${i}_${st.k}`).value); if(v===null) bad.push(st.l); else if(v) s[st.k]=v; });
   const q=sel=>card.querySelector(sel).value;
   const c={ nick:q('.inick').trim(), stream:q('.istream'), ee:q('.iee'), security:q('.isec'), notes:q('.inotes').trim(), s,
-    adr:parseList(q('.iadr'),bad,'ADR'), ghost:parseList(q('.ighost'),bad,'Ghost update'), srcref:it.data.srcref };
+    adr:parseList(q('.iadr'),bad,'Дозапит'), ghost:parseList(q('.ighost'),bad,'Ghost update'), srcref:it.data.srcref };
   return {c,bad};
 }
 function checkCard(i){
@@ -1206,7 +1206,7 @@ function cardHtml(i){
     </div>
     <div class="igrid">${dates}</div>
     <div class="ilists">
-      <label class="field"><span>ADR (дати через кому)</span><input type="text" class="iadr" value="${esc(d.adr.map(toDMY).join(', '))}"></label>
+      <label class="field"><span>Дозапити, ADR (дати через кому)</span><input type="text" class="iadr" value="${esc(d.adr.map(toDMY).join(', '))}"></label>
       <label class="field"><span>Ghost updates (дати через кому)</span><input type="text" class="ighost" value="${esc(d.ghost.map(toDMY).join(', '))}"></label>
     </div>
     <label class="field"><span>Примітки</span><textarea class="inotes" maxlength="500">${esc(d.notes)}</textarea></label>
