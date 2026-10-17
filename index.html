@@ -331,24 +331,24 @@ const STAGES = [
   {k:'nom',  l:'Номінація'},
   {k:'pr',   l:'Подача на PR'},
   {k:'aor',  l:'AOR'},
-  {k:'bio',  l:'Біометрія'},
-  {k:'sec',  l:'Comprehensive security check started'},
-  {k:'pal',  l:'PAL'},
   {k:'med',  l:'Medicals cleared'},
+  {k:'bio',  l:'Biometrics complete'},
+  {k:'sec',  l:'Comprehensive security check started'},
+  {k:'pal',  l:'PAL (Invitation to pre-arrival services)'},
   {k:'fd',   l:'Final decision'},
   {k:'p1',   l:'Portal 1'},
   {k:'p2',   l:'Portal 2'},
   {k:'ecopr',l:'eCoPR'}
 ];
 const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
-const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Біометрія',sec:'Security check',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Biometrics',sec:'Security check',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
 const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
 const SECS = [['yes','Так, була'],['no','Ні']];
 const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
 
-const SEG_STEP = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor'],['aor','bio'],['bio','pal'],['pal','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
-const SEG_PR = [['pr','aor'],['pr','bio'],['pr','sec'],['pr','pal'],['pr','med'],['pr','fd'],['pr','p1'],['pr','ecopr']];
+const SEG_STEP = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor'],['aor','med'],['med','bio'],['bio','pal'],['pal','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
+const SEG_PR = [['pr','aor'],['pr','med'],['pr','bio'],['pr','sec'],['pr','pal'],['pr','fd'],['pr','p1'],['pr','ecopr']];
 const SEG_TOTAL = [['mpnp','nom'],['sec','fd'],['mpnp','ecopr'],['eoi','ecopr']];
 const segLabel = ([a,b]) => SHORT[a]+' → '+SHORT[b];
 
@@ -371,12 +371,12 @@ function demoCases(){
     s:{eoi:'2025-08-17',laa:'2025-09-04',mpnp:'2025-09-19',verif:'2025-11-24',nom:'2025-12-02',pr:'2025-12-19',aor:'2026-06-29',bio:'2026-07-03',pal:'2026-08-25',med:'2026-09-17',fd:'2026-09-21',p1:'2026-10-05',p2:'2026-10-13',ecopr:'2026-10-16'}};
   let seed=7; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
   const add=(iso,days)=>{ const t=new Date(D(iso)+days*864e5); return t.toISOString().slice(0,10); };
-  const typical={laa:[10,60],mpnp:[7,30],nom:[40,120],pr:[10,40],aor:[90,220],bio:[3,25],pal:[30,90],med:[10,40],fd:[2,20],p1:[5,20],p2:[3,12],ecopr:[2,10]};
+  const typical={laa:[10,60],mpnp:[7,30],nom:[40,120],pr:[10,40],aor:[90,220],med:[10,40],bio:[3,25],pal:[30,90],fd:[2,20],p1:[5,20],p2:[3,12],ecopr:[2,10]};
   const out=[ex]; const streams=['swm','swm','swm','swo','ies','swm','swo','swm','ies','swm'];
   for(let i=0;i<10;i++){
     let d=add('2025-01-10', Math.floor(rnd()*330)); const s={eoi:d}; const stop=5+Math.floor(rnd()*9);
     let idx=0;
-    for(const k of ['laa','mpnp','nom','pr','aor','bio','pal','med','fd','p1','p2','ecopr']){
+    for(const k of ['laa','mpnp','nom','pr','aor','med','bio','pal','fd','p1','p2','ecopr']){
       idx++; if(idx>stop) break; const [a,b]=typical[k];
       const nd=add(d, Math.round(a+rnd()*(b-a))); if(D(nd)>D(todayISO())) break; d=nd; s[k]=d;
     }
