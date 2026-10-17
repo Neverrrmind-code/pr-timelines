@@ -412,6 +412,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div class="adm-bar">
       <button class="btn primary" type="button" id="admParse">Розпізнати</button>
       <span class="muted" id="admProg" style="font-size:13.5px"></span>
+      <span class="muted num" id="admAi" style="font-size:12px;margin-left:auto"></span>
     </div>
     <div id="admMsg" hidden></div>
     <div id="admResults" style="display:flex;flex-direction:column;gap:12px"></div>
@@ -422,7 +423,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
         <button class="btn primary" type="button" id="admImport">Додати вибрані</button>
       </div>
     </div>
-    <footer>Текст постів надсилається в Google Gemini для розпізнавання. Імена, @нікнейми та номери заявок у базу не потрапляють. Посилання на повідомлення зберігається лише в Google Таблиці, щоб той самий пост не імпортувався двічі.</footer>
+    <footer>Текст постів надсилається у вибраний ШІ-сервіс (налаштовується в Script Properties) для розпізнавання. Імена, @нікнейми та номери заявок у базу не потрапляють. Посилання на повідомлення зберігається лише в Google Таблиці, щоб той самий пост не імпортувався двічі.</footer>
   </section>
 </div>
 
@@ -1046,7 +1047,8 @@ async function admLogin(pw){
   ADM.pw = pw; SS.set('prdash_admpw', pw);
   ADM.refs = new Set(j.refs||[]);
   $('#admLogin').hidden = true; $('#admMain').hidden = false;
-  setMsg($('#admMsg'), j.hasKey ? '' : 'Ключ Gemini ще не налаштовано: додайте GEMINI_API_KEY у Script Properties.', 'warn');
+  setMsg($('#admMsg'), j.hasKey ? '' : `Ключ ШІ ще не налаштовано для провайдера «${j.provider||'gemini'}». Див. коментар на початку Code.gs.`, 'warn');
+  $('#admAi').textContent = j.provider ? `ШІ: ${j.provider}${j.model?' · '+j.model:''}` : '';
 }
 $('#admLoginForm').addEventListener('submit', async e=>{
   e.preventDefault(); setMsg($('#admLoginMsg'),'Перевіряю…','ok');

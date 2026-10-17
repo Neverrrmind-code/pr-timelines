@@ -6,8 +6,15 @@
  *
  * Для імпорту з Telegram потрібні Script Properties (⚙ Project Settings → Script properties):
  *   ADMIN_PASSWORD  — пароль сторінки імпорту
- *   GEMINI_API_KEY  — ключ з https://aistudio.google.com/apikey
- *   GEMINI_MODEL    — (необов'язково) назва моделі, за замовчуванням gemini-3.8-flash
+ *   AI_PROVIDER     — gemini (за замовчуванням) | openai | anthropic
+ *
+ *   gemini:    GEMINI_API_KEY (https://aistudio.google.com/apikey), GEMINI_MODEL (необов'язково, за замовчуванням gemini-3.8-flash)
+ *   openai:    будь-який OpenAI-сумісний сервіс.
+ *              AI_API_KEY, AI_MODEL, AI_BASE_URL (за замовчуванням https://api.openai.com/v1)
+ *              OpenRouter: AI_BASE_URL = https://openrouter.ai/api/v1
+ *              Groq:       AI_BASE_URL = https://api.groq.com/openai/v1
+ *              DeepSeek:   AI_BASE_URL = https://api.deepseek.com
+ *   anthropic: AI_API_KEY (https://console.anthropic.com), AI_MODEL (необов'язково, за замовчуванням claude-haiku-5-5)
  * Після першого збереження виберіть функцію authorize і натисніть Run, щоб дозволити звернення до Gemini.
  */
 
@@ -22,6 +29,7 @@ const MAX_CREATES_PER_10_MIN = 30;
 const MAX_LIST = 20;
 const MAX_IMPORT = 100;
 const DEFAULT_MODEL = 'gemini-3.8-flash';
+const DEFAULT_ANTHROPIC_MODEL = 'claude-haiku-5-5';
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -97,7 +105,8 @@ function doPost(e) {
     if (b.action === 'adminCheck') {
       checkAdmin_(b.password);
       const refs = rows_().map(r => fmt_(r.srcref)).filter(Boolean);
-      return json_({ ok: true, model: prop_('GEMINI_MODEL') || DEFAULT_MODEL, hasKey: !!prop_('GEMINI_API_KEY'), refs: refs });
+      const ai = aiConf_();
+      return json_({ ok: true, provider: ai.provider, model: ai.model, hasKey: !!ai.key, refs: refs });
     }
     if (b.action === 'parse') { checkAdmin_(b.password); return json_(parse_(b.text, b.today)); }
 
@@ -233,37 +242,80 @@ function import_(cases) {
   return { ok: true, added: added, skipped: skipped, errors: errors };
 }
 
+function aiConf_() {
+  const provider = (prop_('AI_PROVIDER') || 'gemini').toLowerCase();
+  if (provider === 'openai') return { provider: provider, key: prop_('AI_API_KEY'), model: prop_('AI_MODEL'), base: (prop_('AI_BASE_URL') || 'https://api.openai.com/v1').replace(/\/+$/, '') };
+  if (provider === 'anthropic') return { provider: provider, key: prop_('AI_API_KEY'), model: prop_('AI_MODEL') || DEFAULT_ANTHROPIC_MODEL };
+  return { provider: 'gemini', key: prop_('GEMINI_API_KEY'), model: prop_('GEMINI_MODEL') || DEFAULT_MODEL };
+}
+
+function fetchJson_(url, opts, who) {
+  opts.muteHttpExceptions = true;
+  const r = UrlFetchApp.fetch(url, opts);
+  const code = r.getResponseCode();
+  let j;
+  try { j = JSON.parse(r.getContentText()); } catch (e) { throw new Error(who + ' відповів не JSON (HTTP ' + code + ')'); }
+  if (code < 200 || code >= 300) {
+    const m = (j.error && (j.error.message || j.error.type)) || j.message || ('HTTP ' + code);
+    const err = new Error(who + ': ' + m); err.code = code; throw err;
+  }
+  return j;
+}
+
+function callAi_(userText) {
+  const ai = aiConf_();
+  if (!ai.key) throw new Error('Ключ ШІ не налаштовано для провайдера «' + ai.provider + '» (див. коментар на початку Code.gs).');
+  if (!ai.model) throw new Error('Не вказано модель (AI_MODEL) для провайдера «' + ai.provider + '».');
+
+  if (ai.provider === 'openai') {
+    const send = jsonMode => fetchJson_(ai.base + '/chat/completions', {
+      method: 'post', contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ai.key, 'HTTP-Referer': 'https://neverrrmind-code.github.io/pr-timelines/', 'X-Title': 'PR timelines import' },
+      payload: JSON.stringify(Object.assign({ model: ai.model, temperature: 0,
+        messages: [{ role: 'system', content: PROMPT_ }, { role: 'user', content: userText }] },
+        jsonMode ? { response_format: { type: 'json_object' } } : {}))
+    }, 'ШІ (' + ai.model + ')');
+    let j;
+    try { j = send(true); } catch (e) { if (e.code === 400 || e.code === 422) j = send(false); else throw e; }
+    const ch = (j.choices || [])[0] || {};
+    return { model: ai.model, text: String((ch.message && ch.message.content) || ''), stop: ch.finish_reason };
+  }
+
+  if (ai.provider === 'anthropic') {
+    const j = fetchJson_('https://api.anthropic.com/v1/messages', {
+      method: 'post', contentType: 'application/json',
+      headers: { 'x-api-key': ai.key, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify({ model: ai.model, max_tokens: 8192, temperature: 0, system: PROMPT_,
+        messages: [{ role: 'user', content: userText }] })
+    }, 'Claude (' + ai.model + ')');
+    return { model: ai.model, text: (j.content || []).map(p => p.text || '').join(''), stop: j.stop_reason };
+  }
+
+  const j = fetchJson_('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(ai.model) + ':generateContent', {
+    method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': ai.key },
+    payload: JSON.stringify({
+      systemInstruction: { parts: [{ text: PROMPT_ }] },
+      contents: [{ role: 'user', parts: [{ text: userText }] }],
+      generationConfig: { temperature: 0, responseMimeType: 'application/json' }
+    })
+  }, 'Gemini');
+  const cand = (j.candidates || [])[0] || {};
+  return { model: ai.model, text: ((cand.content && cand.content.parts) || []).map(p => p.text || '').join(''), stop: cand.finishReason };
+}
+
 function parse_(text, today) {
-  const key = prop_('GEMINI_API_KEY');
-  if (!key) throw new Error('Ключ Gemini не налаштовано (GEMINI_API_KEY у Script Properties).');
-  const model = prop_('GEMINI_MODEL') || DEFAULT_MODEL;
   text = String(text || '').slice(0, 60000);
   if (!text.trim()) throw new Error('Порожній текст');
   today = /^\d{4}-\d{2}-\d{2}$/.test(String(today || '')) ? today : Utilities.formatDate(new Date(), 'UTC', 'yyyy-MM-dd');
-
-  const body = {
-    systemInstruction: { parts: [{ text: PROMPT_ }] },
-    contents: [{ role: 'user', parts: [{ text: 'TODAY: ' + today + '\n\nMESSAGES:\n' + text }] }],
-    generationConfig: { temperature: 0, responseMimeType: 'application/json' }
-  };
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent';
-  const r = UrlFetchApp.fetch(url, {
-    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-    headers: { 'x-goog-api-key': key }, payload: JSON.stringify(body)
-  });
-  const code = r.getResponseCode();
-  let j;
-  try { j = JSON.parse(r.getContentText()); } catch (e) { throw new Error('Gemini відповів не JSON (HTTP ' + code + ')'); }
-  if (code !== 200) throw new Error('Gemini: ' + ((j.error && j.error.message) || ('HTTP ' + code)));
-  const cand = (j.candidates || [])[0] || {};
-  const parts = (cand.content && cand.content.parts) || [];
-  const out = parts.map(p => p.text || '').join('').trim();
-  if (!out) throw new Error('Gemini повернув порожню відповідь' + (cand.finishReason ? ' (' + cand.finishReason + ')' : ''));
+  const res = callAi_('TODAY: ' + today + '\n\nMESSAGES:\n' + text);
+  const out = String(res.text || '').trim();
+  if (!out) throw new Error('ШІ повернув порожню відповідь' + (res.stop ? ' (' + res.stop + ')' : ''));
   let data;
-  try { data = JSON.parse(out.replace(/^```(?:json)?\s*|\s*```$/g, '')); }
-  catch (e) { throw new Error('Не вдалося прочитати відповідь Gemini як JSON'); }
+  const m = out.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+  try { data = JSON.parse(m ? m[0] : out); }
+  catch (e) { throw new Error('Не вдалося прочитати відповідь ШІ як JSON' + (res.stop ? ' (' + res.stop + ')' : '')); }
   const items = Array.isArray(data) ? data : (data.items || []);
-  return { ok: true, model: model, items: items };
+  return { ok: true, model: res.model, items: items };
 }
 
 const PROMPT_ = [
