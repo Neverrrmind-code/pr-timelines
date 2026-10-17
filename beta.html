@@ -244,8 +244,14 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .adm-tabs button+button{border-left:1px solid var(--line)}
 .adm-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
 .adm-text{width:100%;min-height:200px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font:13.5px/1.5 var(--f-mono);resize:vertical}
-.drop{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--ink2);background:var(--bg)}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:150px;border:2px dashed var(--line);border-radius:12px;padding:22px 18px;text-align:center;color:var(--ink2);background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
 .drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{color:var(--ink);font-weight:500;font-size:15px}
+.drop .hint{font-size:13px;color:var(--muted);max-width:56ch}
+.drop .pick{margin-top:6px;pointer-events:none}
+.drop input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.drop svg{color:var(--muted)}
 .adm-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .adm-sticky{position:sticky;bottom:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;box-shadow:0 -4px 16px rgba(0,0,0,.06);margin-bottom:env(safe-area-inset-bottom,0px)}
 .icard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
@@ -432,22 +438,26 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div id="admPaste">
       <textarea id="admText" class="adm-text" placeholder="Вставте один або кілька постів з таймлайнами. Пости краще розділяти порожнім рядком."></textarea>
     </div>
-    <div id="admFileBox" hidden>
+    <div id="admFileBox" hidden style="position:relative">
       <label class="drop" id="admDrop" for="admFile">
-        <b>Перетягніть сюди result.json</b><br>
-        <span class="muted" style="font-size:13px">Telegram Desktop → чат → ⋮ → Export chat history → формат JSON, без фото та відео</span><br>
-        <input type="file" id="admFile" accept=".json,application/json" style="margin-top:10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <b>Перетягніть сюди result.json</b>
+        <span class="hint">Telegram Desktop → чат → ⋮ → Export chat history → формат JSON, без фото та відео</span>
+        <span class="btn pick">Вибрати файл</span>
+        <input type="file" id="admFile" accept=".json,application/json">
       </label>
       <p class="muted" id="admFileInfo" style="font-size:13.5px;margin:8px 0 0"></p>
     </div>
-    <div id="admImgBox" hidden>
+    <div id="admImgBox" hidden style="position:relative">
       <label class="drop" id="admImgDrop" for="admImgFile">
-        <b>Перетягніть сюди скріншоти</b> або вставте з буфера (Ctrl+V)<br>
-        <span class="muted" style="font-size:13px">JPG, PNG, WebP. Перед надсиланням зображення зменшуються.</span><br>
-        <input type="file" id="admImgFile" accept="image/png,image/jpeg,image/webp" multiple style="margin-top:10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <b>Перетягніть сюди скріншоти або вставте з буфера (Ctrl+V)</b>
+        <span class="hint">JPG, PNG, WebP. Перед надсиланням зображення зменшуються.</span>
+        <span class="btn pick">Вибрати зображення</span>
+        <input type="file" id="admImgFile" accept="image/png,image/jpeg,image/webp" multiple>
       </label>
       <div class="thumbs" id="admThumbs"></div>
-      <label class="chk" style="margin-top:10px"><input type="checkbox" id="admOneCase" checked> Усі скріншоти — один кейс (до 6 зображень). Вимкніть, якщо на скріншотах різні люди: тоді кожне зображення розпізнається окремо.</label>
+      <label class="chk" style="margin-top:12px;align-items:flex-start"><input type="checkbox" id="admOneCase" checked style="margin-top:2px"><span><b style="font-weight:500;color:var(--ink)">Усі скріншоти — один кейс</b> (до 6 зображень)<br><span class="muted" style="font-size:13px">Вимкніть, якщо на скріншотах різні люди: тоді кожне зображення розпізнається окремо.</span></span></label>
     </div>
     <div class="adm-bar">
       <button class="btn primary" type="button" id="admParse">Розпізнати</button>
