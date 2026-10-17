@@ -8,6 +8,7 @@
  *   ADMIN_PASSWORD  — пароль сторінки імпорту
  *   GEMINI_API_KEY  — ключ з https://aistudio.google.com/apikey
  *   GEMINI_MODEL    — (необов'язково) назва моделі, за замовчуванням gemini-2.5-flash
+ * Після першого збереження виберіть функцію authorize і натисніть Run, щоб дозволити звернення до Gemini.
  */
 
 const SHEET_NAME = 'cases';
@@ -307,3 +308,8 @@ const PROMPT_ = [
   '- Never invent milestones or dates that are not in the text. If a message lists two submissions of EOI, use the one that led to LAA and mention the other in notes.',
   '- If a message is an update to an earlier timeline by the same person, still output it as its own item.'
 ].join('\n');
+
+/** Запустіть один раз вручну (Run → authorize), щоб надати скрипту дозвіл на звернення до Gemini. */
+function authorize() {
+  UrlFetchApp.fetch('https://generativelanguage.googleapis.com/', { muteHttpExceptions: true });
+}
