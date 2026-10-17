@@ -6,7 +6,7 @@
  */
 
 const SHEET_NAME = 'cases';
-const STAGES = ['eoi','laa','mpnp','verif','nom','pr','aor','bio','pal','med','fd','p1','p2','ecopr'];
+const STAGES = ['eoi','laa','mpnp','verif','nom','pr','aor','bio','sec','pal','med','fd','p1','p2','ecopr'];
 const META = ['nick','stream','ee','security','notes'];
 const LISTS = ['adr','ghost'];           // багаторазові події, дати через пробіл
 const HEADERS = ['id','key','created','updated'].concat(META, STAGES, LISTS);

@@ -249,9 +249,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     </div>
     <div>
       <div class="group-title" style="margin-top:0">Дати етапів (заповніть ті, що вже пройшли)</div>
-      <div class="fgrid dates" id="dateFields"></div>
-      <p class="muted" style="font-size:12.5px;margin:6px 0 0">Medicals cleared — дата, коли офіцер зарахував медогляд. Вона може бути раніше за PAL.</p>
-    </div>
+      <div class="fgrid dates" id="dateFields"></div>    </div>
     <div class="fgrid">
       <div class="multi">
         <div class="group-title" style="margin-top:0">Запити додаткових документів (ADR)</div>
@@ -325,6 +323,7 @@ const STAGES = [
   {k:'pr',   l:'PR-заявку подано (IRCC)'},
   {k:'aor',  l:'AOR'},
   {k:'bio',  l:'Біометрія'},
+  {k:'sec',  l:'Comprehensive security check started'},
   {k:'pal',  l:'PAL'},
   {k:'med',  l:'Medicals cleared'},
   {k:'fd',   l:'Final decision'},
@@ -333,15 +332,15 @@ const STAGES = [
   {k:'ecopr',l:'eCoPR'}
 ];
 const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
-const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'PR',aor:'AOR',bio:'Біометрія',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'PR',aor:'AOR',bio:'Біометрія',sec:'Security check',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
 const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
 const SECS = [['yes','Так, була'],['no','Ні']];
 const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
 
 const SEG_STEP = [['eoi','laa'],['laa','mpnp'],['mpnp','nom'],['nom','pr'],['pr','aor'],['aor','bio'],['bio','pal'],['pal','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
-const SEG_PR = [['pr','aor'],['pr','bio'],['pr','pal'],['pr','med'],['pr','fd'],['pr','p1'],['pr','ecopr']];
-const SEG_TOTAL = [['mpnp','nom'],['mpnp','ecopr'],['eoi','ecopr']];
+const SEG_PR = [['pr','aor'],['pr','bio'],['pr','sec'],['pr','pal'],['pr','med'],['pr','fd'],['pr','p1'],['pr','ecopr']];
+const SEG_TOTAL = [['mpnp','nom'],['sec','fd'],['mpnp','ecopr'],['eoi','ecopr']];
 const segLabel = ([a,b]) => SHORT[a]+' → '+SHORT[b];
 
 /* ===== Утиліти ===== */
@@ -573,7 +572,7 @@ function openForm(id,key){
 }
 function readForm(){
   const s={}; STAGES.forEach(st=>{ const v=$('#d_'+st.k).value; if(v) s[st.k]=v; });
-  return {nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security:$('#iSec').value, notes:$('#iNotes').value.trim(), s, adr:readMulti('adr'), ghost:readMulti('ghost')};
+  return {nick:$('#iNick').value.trim(), stream:$('#iStream').value, ee:$('#iEe').value, security: s.sec ? 'yes' : $('#iSec').value, notes:$('#iNotes').value.trim(), s, adr:readMulti('adr'), ghost:readMulti('ghost')};
 }
 let mseq=0;
 function addMulti(kind,val){
@@ -591,7 +590,7 @@ function validate(c){
   const t=D(todayISO()); for(const k of ks){ if(D(c.s[k])>t) return `Дата «${SL[k]}» у майбутньому.`; }
   let prev=null, prevK=null;
   for(const k of ['adr','ghost']){ for(const v of c[k]){ if(D(v)>t) return `Дата ${k==='adr'?'ADR':'ghost update'} у майбутньому.`; } }
-  for(const s of STAGES){ if(s.k==='verif'||s.k==='med') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
+  for(const s of STAGES){ if(s.k==='verif'||s.k==='med'||s.k==='sec') continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
   return null;
 }
 $('#form').addEventListener('submit', async e=>{
