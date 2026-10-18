@@ -116,7 +116,7 @@ function doPost(e) {
       if (b.action === 'create') return json_(create_(b.case));
       if (b.action === 'update') return json_(update_(b.id, b.key, b.case));
       if (b.action === 'delete') return json_(delete_(b.id, b.key));
-      if (b.action === 'import') { checkAdmin_(b.password); return json_(import_(b.cases)); }
+      if (b.action === 'import') { checkAdmin_(b.password); return json_(import_(b.cases, b.source)); }
       return json_({ ok: false, error: 'Невідома дія' });
     } finally {
       lock.releaseLock();
@@ -217,7 +217,8 @@ function checkAdmin_(pw) {
   }
 }
 
-function import_(cases) {
+function import_(cases, source) {
+  source = ['telegram', 'csv'].indexOf(source) >= 0 ? source : 'telegram';
   if (!Array.isArray(cases) || !cases.length) throw new Error('Немає кейсів для імпорту');
   if (cases.length > MAX_IMPORT) throw new Error('За один раз можна імпортувати до ' + MAX_IMPORT + ' кейсів');
   const sh = sheet_();
@@ -229,7 +230,7 @@ function import_(cases) {
       const ref = String(c && c.srcref || '').trim().slice(0, 200);
       if (ref && seen[ref]) { skipped.push(i); return; }
       const o = clean_(c);
-      o.source = 'telegram';
+      o.source = source;
       o.srcref = ref;
       newIds_(o);
       writeRow_(sh.getLastRow() + 1, o);
