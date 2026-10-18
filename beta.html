@@ -319,6 +319,9 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .csvtbl table{min-width:0;font-size:12.5px}
 .csvtbl td,.csvtbl th{padding:5px 8px;white-space:nowrap}
 .csvbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.adm-banner{border-style:solid;border-color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+.adm-banner b{color:var(--accent)}
+.adm-banner a{color:var(--accent)}
 #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 #tip b{font-weight:600}
 .empty-state{padding:28px 8px;text-align:center;color:var(--muted)}
@@ -343,6 +346,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <div class="banner" id="demoBanner" hidden><b>Демо-режим.</b> Показано приклад даних, нові кейси не зберігаються. Щоб увімкнути спільну базу, вставте URL Apps Script у змінну <span class="num">API_URL</span> в index.html.</div>
   <div class="banner" id="errBanner" hidden></div>
+  <div class="banner adm-banner" id="admBanner" hidden><b>Режим адміністратора.</b> Можна редагувати й видаляти будь-який кейс. <a href="#import">Імпорт</a> · <button class="btn link" type="button" id="admLogout" style="padding:0">Вийти</button></div>
 
   <div class="goal" id="goal"></div>
 
@@ -885,7 +889,7 @@ function renderTable(list){
       <td class="minicell">${miniTl(c, top, ref)}</td>
       <td>${ls?`<span class="pill ${done?'done':''}">${esc(SHORT[ls])}</span> <span class="num muted" style="font-size:12.5px">${fmtDate(c.s[ls])}</span>`:'—'}</td>
       <td class="r num">${since!=null?since+(done?'':'<span class="sub2">триває</span>'):'—'}</td>
-      <td class="r">${my.has(c.id)?`<button class="btn link" type="button" data-edit="${esc(c.id)}">Редагувати</button>`:''}</td></tr>`;
+      <td class="r">${(my.has(c.id)||isAdmin())?`<button class="btn link" type="button" data-edit="${esc(c.id)}">Редагувати</button>`:''}</td></tr>`;
     if(openId===c.id){
       let tl=''; let prev=null;
       for(const e of events(c)){ const d=prev?diff(prev,e.d):null; tl+=`<div class="${e.cls}"><span class="nm">${esc(e.l)}</span><span class="dt num">${fmtDate(e.d)}</span><span class="d num">${d!=null?'+'+d:''}</span></div>`; prev=e.d; }
@@ -963,7 +967,7 @@ $('#trend').addEventListener('mouseleave', hideTip);
 $('#trend').addEventListener('click', e=>{ const h=e.target.closest('.hit'); if(!h) return; openId=TREND_PTS[+h.dataset.i].c.id; renderTable(filtered()); document.querySelector(`tr[data-id="${CSS.escape(openId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'}); });
 
 $('#tbody').addEventListener('click', e=>{
-  const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); const m=mine().find(x=>x.id===ed.dataset.edit); if(m) openForm(m.id,m.key); return; }
+  const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); const m=mine().find(x=>x.id===ed.dataset.edit); if(m) openForm(m.id,m.key); else if(isAdmin()) openForm(ed.dataset.edit,null,true); return; }
   const tr=e.target.closest('tr.case'); if(!tr) return; openId = openId===tr.dataset.id?null:tr.dataset.id; renderTable(filtered());
 });
 
@@ -975,10 +979,10 @@ function initForm(){
   $('#dateFields').innerHTML = STAGES.map(s=>`<div class="field"><label for="d_${s.k}">${esc(s.l)}</label>${dateCtl('d_'+s.k)}</div>`).join('');
 }
 function setMsg(el, text, kind){ el.hidden=!text; el.className='msg '+(kind||'err'); el.textContent=text||''; }
-function openForm(id,key){
-  editing = id?{id,key}:null;
+function openForm(id,key,admin){
+  editing = id?{id,key,admin:!!admin}:null;
   const c = id ? CASES.find(x=>x.id===id) : null;
-  $('#dlgTitle').textContent = c?'Редагування кейсу':'Новий кейс';
+  $('#dlgTitle').textContent = c?(admin?'Редагування кейсу (адміністратор)':'Редагування кейсу'):'Новий кейс';
   $('#iNick').value=c?.nick||''; $('#iStream').value=c?.stream||''; $('#iEe').value=c?.ee||''; $('#iSec').value=c?.security||''; $('#iNotes').value=c?.notes||''; $('#iWebsite').value='';
   STAGES.forEach(s=>setD($('#d_'+s.k), c?.s[s.k]));
   ['adr','ghost'].forEach(k=>{ $('#list_'+k).innerHTML=''; (c?.[k]||[]).forEach(v=>addMulti(k,v)); });
@@ -1061,7 +1065,10 @@ $('#form').addEventListener('submit', async e=>{
       else { const id='local'+Date.now().toString(36); const key='demo'; CASES.push({id,...c}); LS.set('prdash_mine',[...mine(),{id,key}]); editing=null; $('#dlg').close(); afterData(); showDone(id+'-'+key); return; }
       $('#dlg').close(); afterData(); return;
     }
-    if(editing){
+    if(editing && editing.admin){
+      await apiPost({action:'adminUpdate', id:editing.id, password:SS.get('prdash_admpw'), case:c});
+      $('#dlg').close(); await load();
+    } else if(editing){
       await apiPost({action:'update', id:editing.id, key:editing.key, case:c, website:$('#iWebsite').value});
       $('#dlg').close(); await load();
     } else {
@@ -1077,6 +1084,7 @@ $('#btnDelConfirm').addEventListener('click', async ()=>{
   if(!editing) return;
   try{
     if(DEMO){ CASES=CASES.filter(x=>x.id!==editing.id); }
+    else if(editing.admin){ await apiPost({action:'adminDelete', id:editing.id, password:SS.get('prdash_admpw')}); }
     else { await apiPost({action:'delete', id:editing.id, key:editing.key}); }
     LS.set('prdash_mine', mine().filter(m=>m.id!==editing.id));
     $('#dlg').close(); DEMO?afterData():await load();
@@ -1111,6 +1119,9 @@ async function admPost(body){
   let j; try{ j = await readJson(r); }catch(e){ throw new Error('Сервер Google тимчасово відповів помилкою. Спробуйте ще раз.'); }
   if(!j.ok) throw new Error(j.error||'Помилка сервера'); return j;
 }
+function isAdmin(){ return !DEMO && !!SS.get('prdash_admpw'); }
+function renderAdminBanner(){ $('#admBanner').hidden = !isAdmin(); }
+$('#admLogout').addEventListener('click',()=>{ SS.set('prdash_admpw',''); ADM.pw=''; $('#admLogin').hidden=false; $('#admMain').hidden=true; renderAdminBanner(); render(); });
 function route(){
   const adm = location.hash==='#import';
   $('#mainView').hidden = adm; $('#adminView').hidden = !adm;
@@ -1123,7 +1134,7 @@ async function admEnter(){
 }
 async function admLogin(pw){
   const j = await admPost({action:'adminCheck', password:pw});
-  ADM.pw = pw; SS.set('prdash_admpw', pw);
+  ADM.pw = pw; SS.set('prdash_admpw', pw); renderAdminBanner();
   ADM.refs = new Set(j.refs||[]);
   $('#admLogin').hidden = true; $('#admMain').hidden = false;
   setMsg($('#admMsg'), j.hasKey ? '' : `Ключ ШІ ще не налаштовано для провайдера «${j.provider||'gemini'}». Див. коментар на початку Code.gs.`, 'warn');
@@ -1567,7 +1578,7 @@ async function load(){
 }
 
 initFilters(); initTrend(); initForm(); initForecast(); initPath();
-addEventListener('hashchange', route); route();
+addEventListener('hashchange', ()=>{ route(); if(location.hash!=='#import') render(); }); route(); renderAdminBanner();
 if(DEMO){ $('#demoBanner').hidden=false; CASES=demoCases(); afterData(); }
 else { afterData(); load(); }
 </script>

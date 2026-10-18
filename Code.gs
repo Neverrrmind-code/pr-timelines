@@ -117,6 +117,8 @@ function doPost(e) {
       if (b.action === 'update') return json_(update_(b.id, b.key, b.case));
       if (b.action === 'delete') return json_(delete_(b.id, b.key));
       if (b.action === 'import') { checkAdmin_(b.password); return json_(import_(b.cases, b.source)); }
+      if (b.action === 'adminUpdate') { checkAdmin_(b.password); return json_(adminUpdate_(b.id, b.case)); }
+      if (b.action === 'adminDelete') { checkAdmin_(b.password); return json_(adminDelete_(b.id)); }
       return json_({ ok: false, error: 'Невідома дія' });
     } finally {
       lock.releaseLock();
@@ -215,6 +217,27 @@ function checkAdmin_(pw) {
     cache.put('adminfail', String(fails + 1), 600);
     throw new Error('Неправильний пароль');
   }
+}
+
+function findById_(id) {
+  const r = rows_().find(o => String(o.id) === String(id));
+  if (!r) throw new Error('Кейс не знайдено');
+  return r;
+}
+
+function adminUpdate_(id, c) {
+  const r = findById_(id);
+  const o = clean_(c);
+  o.id = String(r.id); o.key = String(r.key); o.created = fmt_(r.created); o.updated = new Date().toISOString();
+  o.source = fmt_(r.source) || 'form'; o.srcref = fmt_(r.srcref);
+  writeRow_(r._row, o);
+  return { ok: true, id: o.id };
+}
+
+function adminDelete_(id) {
+  const r = findById_(id);
+  sheet_().deleteRow(r._row);
+  return { ok: true };
 }
 
 function import_(cases, source) {
