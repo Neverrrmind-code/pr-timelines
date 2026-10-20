@@ -322,7 +322,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     </div>
     <div class="actions">
       <button class="btn" id="btnCode" type="button">Редагувати за кодом</button>
-      <button class="btn primary" id="btnAdd" type="button">Додати свій кейс</button>
+      <button class="btn primary" id="btnAdd" type="button">Додати свій таймлайн</button>
     </div>
   </header>
 
@@ -506,7 +506,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div id="formMsg" hidden></div>
     <div class="dlg-foot">
       <div class="actions">
-        <button class="btn danger" type="button" id="btnDel" hidden>Видалити кейс</button>
+        <button class="btn danger" type="button" id="btnDel" hidden>Видалити таймлайн</button>
         <button class="btn danger" type="button" id="btnDelConfirm" hidden>Так, видалити назавжди</button>
       </div>
       <div class="actions">
@@ -913,7 +913,7 @@ function renderForecast(){
     const rel = left>0 ? `через ${durTxt(left)}` : left===0 ? 'приблизно сьогодні' : `медіана минула ${durTxt(-left)} тому`;
     const range = (mc && r.st.n>1) ? `у половини ${fmtShort(r.lo)}–${fmtDate(r.hi)} · ` : '';
     return `<div class="fc-row${left<=0?' due':''}${r.st.n<FEW?' few':''}"><span class="dot"></span><span class="nm">${nm}</span><span class="when">≈ ${fmtDate(r.d)}</span><span class="sub">${rel} · ${range}${plural(r.st.n,'кейс','кейси','кейсів')}</span></div>`;
-  }).join('') + (mc ? '' : `<p class="fc-lock">Додайте свій кейс, щоб побачити діапазон дат «у половини людей» і порівняння з іншими. <button class="btn link" type="button" data-act="add" style="padding:0">Додати кейс</button></p>`);
+  }).join('') + (mc ? '' : `<p class="fc-lock">Додайте свій кейс, щоб побачити діапазон дат «у половини людей» і порівняння з іншими. <button class="btn link" type="button" data-act="add" style="padding:0">Додати таймлайн</button></p>`);
   note.textContent = `Рахуємо від ${ak==='aor'?'AOR':'подачі на PR'} (${fmtDate(ad)}) за ${plural(others.length,'кейсом','кейсами','кейсами')} спільноти.` + ((mc && mc.s.pr===pr) ? ' Дати вашого кейсу підставлено автоматично.' : '');
 }
 
@@ -1363,10 +1363,10 @@ function renderGoal(mc){
   if(mc){
     const last=mc.updated||mc.created; const ago=last?Math.floor((Date.now()-Date.parse(last))/864e5):0;
     right = (!mc.s.ecopr && ago>=30)
-      ? `<span>Минуло ${plural(ago,'день','дні','днів')} від останнього оновлення вашого кейсу. Є нові дати?</span><button class="btn" type="button" data-act="edit">Оновити кейс</button>`
+      ? `<span>Минуло ${plural(ago,'день','дні','днів')} від останнього оновлення вашого кейсу. Є нові дати?</span><button class="btn" type="button" data-act="edit">Оновити таймлайн</button>`
       : `<span>Дякуємо, ваш кейс уже в статистиці.</span>${mc.s.ecopr?'':'<button class="btn" type="button" data-act="edit">Додати нові дати</button>'}`;
   } else {
-    right = `<span>Вже отримали eCoPR? Завершені таймлайни найцінніші для тих, хто ще чекає.</span><button class="btn primary" type="button" data-act="add">Додати свій кейс</button>`;
+    right = `<span>Вже отримали eCoPR? Завершені таймлайни найцінніші для тих, хто ще чекає.</span><button class="btn primary" type="button" data-act="add">Додати свій таймлайн</button>`;
   }
   $('#goal').innerHTML = `<div class="gl"><span class="gt">Вже <b>${n}</b> ${plural(n,'кейс','кейси','кейсів').replace(/^\d+ /,'')}${wk?` · <b>+${wk}</b> за тиждень`:''} · наступна ціль <b>${goal}</b>. Що більше кейсів, то точніші прогнози.</span><div class="gbar" role="progressbar" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${n}"><i style="width:${Math.min(100,n/goal*100).toFixed(1)}%"></i></div></div><div class="gr">${right}</div>`;
 }
@@ -1374,7 +1374,7 @@ function renderMine(mc){
   const box=$('#mineBox');
   if(!mc){
     box.className='mine teaser';
-    box.innerHTML=`<div><h2 style="font-size:17px">Ваш кейс серед інших</h2><p class="muted" style="margin:4px 0 0;font-size:14px;max-width:64ch">Додайте свій кейс, і тут з'явиться, чи швидше ваш шлях за інших, чи не затримується наступний етап, а прогноз покаже повний діапазон дат.</p></div><button class="btn primary" type="button" data-act="add">Додати свій кейс</button>`;
+    box.innerHTML=`<div><h2 style="font-size:17px">Ваш кейс серед інших</h2><p class="muted" style="margin:4px 0 0;font-size:14px;max-width:64ch">Додайте свій кейс, і тут з'явиться, чи швидше ваш шлях за інших, чи не затримується наступний етап, а прогноз покаже повний діапазон дат.</p></div><button class="btn primary" type="button" data-act="add">Додати свій таймлайн</button>`;
     return;
   }
   box.className='mine';
