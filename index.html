@@ -239,7 +239,8 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .paxis span:first-child{transform:none}
 .pill.tg{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px}
 /* імпорт */
-.adm-tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start;background:var(--surface)}
+.adm-tabs{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start;background:var(--surface);max-width:100%}
+.adm-tabs button{flex:1 1 auto}
 .adm-tabs button{border:0;background:none;padding:8px 14px;cursor:pointer;color:var(--ink2)}
 .adm-tabs button+button{border-left:1px solid var(--line)}
 .adm-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
@@ -304,6 +305,42 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .thumb img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
 .thumb button{position:absolute;top:4px;right:4px;border:0;border-radius:50%;width:24px;height:24px;background:rgba(10,16,24,.7);color:#fff;cursor:pointer;line-height:24px;padding:0;font-size:14px}
 .thumb span{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;background:rgba(10,16,24,.6);color:#fff;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.csvmap{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.csvmap h3,.csvsum h3{margin:0 0 8px;font-size:14px;font-weight:600}
+.csvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 14px}
+.csvcol{display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0}
+.csvcol .h{font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.csvcol .x{font-size:11.5px;color:var(--muted);font-family:var(--f-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.csvcol select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:100%}
+.csvsum{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.csvstats{display:flex;flex-wrap:wrap;gap:8px}
+.csvstats .chip{font-size:13px}
+.csvsum details summary{cursor:pointer;font-size:13.5px;color:var(--ink2)}
+.csvtbl{overflow-x:auto;margin-top:6px}
+.csvtbl table{min-width:0;font-size:12.5px}
+.csvtbl td,.csvtbl th{padding:5px 8px;white-space:nowrap}
+.csvbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.adm-banner{border-style:solid;border-color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+.adm-banner b{color:var(--accent)}
+.adm-banner a{color:var(--accent)}
+.dupcmp{margin-top:6px}
+.dupcmp-h{font-size:12.5px;color:var(--ink2);margin-bottom:4px}
+.dupcmp table{border-collapse:collapse;font-size:12.5px;min-width:0;width:auto}
+.dupcmp th,.dupcmp td{padding:4px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;text-transform:none;letter-spacing:0}
+.dupcmp td.only{background:color-mix(in srgb,var(--accent-soft) 55%,transparent);color:var(--ink)}
+.dupcmp-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--muted);margin-top:4px}
+.dupcmp-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.dupcmp thead th{font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500;position:static}
+.dupcmp tbody th{font-weight:500;color:var(--ink2);font-size:12.5px}
+.dupcmp td.same{color:var(--muted)}
+.dupcmp td.diff{background:color-mix(in srgb,var(--mark) 18%,transparent);color:var(--ink);font-weight:500}
+.dupcmp td.miss{color:var(--muted)}
+.dupcmp td.nt{white-space:normal;min-width:180px;max-width:340px;color:var(--ink2)}
+.iwarn,.icard > *{min-width:0}
+.dupcmp,.dupcmp .csvtbl{max-width:100%}
+.dupcmp tr.pa td{border-bottom:0;padding-top:8px}
+.dupcmp tr.pb td{color:var(--ink2);font-size:12px}
+.dupcmp tr.pb td.diff{color:var(--ink)}
 #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 #tip b{font-weight:600}
 .empty-state{padding:28px 8px;text-align:center;color:var(--muted)}
@@ -328,6 +365,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <div class="banner" id="demoBanner" hidden><b>Демо-режим.</b> Показано приклад даних, нові кейси не зберігаються. Щоб увімкнути спільну базу, вставте URL Apps Script у змінну <span class="num">API_URL</span> в index.html.</div>
   <div class="banner" id="errBanner" hidden></div>
+  <div class="banner adm-banner" id="admBanner" hidden><b>Режим адміністратора.</b> Можна редагувати й видаляти будь-який кейс. <a href="#import">Імпорт</a> · <button class="btn link" type="button" id="admLogout" style="padding:0">Вийти</button></div>
 
   <div class="goal" id="goal"></div>
 
@@ -433,7 +471,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <section id="admMain" hidden style="gap:16px">
     <div class="adm-tabs" role="group" aria-label="Джерело тексту">
-      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button>
+      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button><button type="button" data-src="csv" aria-pressed="false">Таблиця (CSV)</button>
     </div>
     <div id="admPaste">
       <textarea id="admText" class="adm-text" placeholder="Вставте один або кілька постів з таймлайнами. Пости краще розділяти порожнім рядком."></textarea>
@@ -459,7 +497,18 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
       <div class="thumbs" id="admThumbs"></div>
       <label class="chk" style="margin-top:12px;align-items:flex-start"><input type="checkbox" id="admOneCase" checked style="margin-top:2px"><span><b style="font-weight:500;color:var(--ink)">Усі скріншоти — один кейс</b> (до 6 зображень)<br><span class="muted" style="font-size:13px">Вимкніть, якщо на скріншотах різні люди: тоді кожне зображення розпізнається окремо.</span></span></label>
     </div>
-    <div class="adm-bar">
+    <div id="admCsvBox" hidden style="position:relative">
+      <label class="drop" id="admCsvDrop" for="admCsvFile">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <b>Перетягніть сюди CSV-файл</b>
+        <span class="hint">Google Таблиці: Файл → Завантажити → CSV (поточний аркуш). Колонки з іменами не імпортуються.</span>
+        <span class="btn pick">Вибрати файл</span>
+        <input type="file" id="admCsvFile" accept=".csv,text/csv">
+      </label>
+      <div id="csvMap" hidden></div>
+      <div id="csvSum" hidden></div>
+    </div>
+    <div class="adm-bar" id="admParseBar">
       <button class="btn primary" type="button" id="admParse">Розпізнати</button>
       <span class="muted" id="admProg" style="font-size:13.5px"></span>
       <span class="muted num" id="admAi" style="font-size:12px;margin-left:auto"></span>
@@ -676,7 +725,7 @@ function initFilters(){
   fillSelect($('#fEe'), EES, 'Усі');
   fillSelect($('#fSec'), [['no','Стандартна'],['yes','Comprehensive'],['unk','Не вказано']], 'Усі');
   fillSelect($('#fAdr'), [['yes','Був дозапит'],['no','Без дозапиту']], 'Усі');
-  fillSelect($('#fSrc'), [['form','Форма на сайті'],['telegram','Імпорт з Telegram']], 'Усі');
+  fillSelect($('#fSrc'), [['form','Форма на сайті'],['telegram','Імпорт з Telegram'],['csv','CSV']], 'Усі');
   [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fAdr','adr'],['#fYear','year'],['#fSrc','src']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
 }
 function refreshYears(){
@@ -690,7 +739,7 @@ function filtered(){
     if(F.sec==='unk' ? !!c.security : (F.sec && c.security!==F.sec)) return false;
     if(F.adr && (F.adr==='yes') !== !!(c.adr&&c.adr.length)) return false;
     if(F.year && !(c.s.pr||'').startsWith(F.year)) return false;
-    if(F.src && (c.source==='telegram'?'telegram':'form')!==F.src) return false;
+    if(F.src && (['telegram','csv'].includes(c.source)?c.source:'form')!==F.src) return false;
     return true;
   });
 }
@@ -853,13 +902,13 @@ function renderTable(list){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mytag" title="Ваш кейс">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':''}</td>
+      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mytag" title="Ваш кейс">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':c.source==='csv'?' <span class="pill tg" title="Імпортовано з таблиці CSV">CSV</span>':''}</td>
       <td>${esc(lookup(STREAMS,c.stream)||'—')}<span class="sub2">${c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':''}</span></td>
       <td class="num">${fmtDate(c.s.pr)}</td>
       <td class="minicell">${miniTl(c, top, ref)}</td>
       <td>${ls?`<span class="pill ${done?'done':''}">${esc(SHORT[ls])}</span> <span class="num muted" style="font-size:12.5px">${fmtDate(c.s[ls])}</span>`:'—'}</td>
       <td class="r num">${since!=null?since+(done?'':'<span class="sub2">триває</span>'):'—'}</td>
-      <td class="r">${my.has(c.id)?`<button class="btn link" type="button" data-edit="${esc(c.id)}">Редагувати</button>`:''}</td></tr>`;
+      <td class="r">${(my.has(c.id)||isAdmin())?`<button class="btn link" type="button" data-edit="${esc(c.id)}">Редагувати</button>`:''}</td></tr>`;
     if(openId===c.id){
       let tl=''; let prev=null;
       for(const e of events(c)){ const d=prev?diff(prev,e.d):null; tl+=`<div class="${e.cls}"><span class="nm">${esc(e.l)}</span><span class="dt num">${fmtDate(e.d)}</span><span class="d num">${d!=null?'+'+d:''}</span></div>`; prev=e.d; }
@@ -937,7 +986,7 @@ $('#trend').addEventListener('mouseleave', hideTip);
 $('#trend').addEventListener('click', e=>{ const h=e.target.closest('.hit'); if(!h) return; openId=TREND_PTS[+h.dataset.i].c.id; renderTable(filtered()); document.querySelector(`tr[data-id="${CSS.escape(openId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'}); });
 
 $('#tbody').addEventListener('click', e=>{
-  const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); const m=mine().find(x=>x.id===ed.dataset.edit); if(m) openForm(m.id,m.key); return; }
+  const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); const m=mine().find(x=>x.id===ed.dataset.edit); if(m) openForm(m.id,m.key); else if(isAdmin()) openForm(ed.dataset.edit,null,true); return; }
   const tr=e.target.closest('tr.case'); if(!tr) return; openId = openId===tr.dataset.id?null:tr.dataset.id; renderTable(filtered());
 });
 
@@ -949,10 +998,10 @@ function initForm(){
   $('#dateFields').innerHTML = STAGES.map(s=>`<div class="field"><label for="d_${s.k}">${esc(s.l)}</label>${dateCtl('d_'+s.k)}</div>`).join('');
 }
 function setMsg(el, text, kind){ el.hidden=!text; el.className='msg '+(kind||'err'); el.textContent=text||''; }
-function openForm(id,key){
-  editing = id?{id,key}:null;
+function openForm(id,key,admin){
+  editing = id?{id,key,admin:!!admin}:null;
   const c = id ? CASES.find(x=>x.id===id) : null;
-  $('#dlgTitle').textContent = c?'Редагування кейсу':'Новий кейс';
+  $('#dlgTitle').textContent = c?(admin?'Редагування кейсу (адміністратор)':'Редагування кейсу'):'Новий кейс';
   $('#iNick').value=c?.nick||''; $('#iStream').value=c?.stream||''; $('#iEe').value=c?.ee||''; $('#iSec').value=c?.security||''; $('#iNotes').value=c?.notes||''; $('#iWebsite').value='';
   STAGES.forEach(s=>setD($('#d_'+s.k), c?.s[s.k]));
   ['adr','ghost'].forEach(k=>{ $('#list_'+k).innerHTML=''; (c?.[k]||[]).forEach(v=>addMulti(k,v)); });
@@ -1035,7 +1084,10 @@ $('#form').addEventListener('submit', async e=>{
       else { const id='local'+Date.now().toString(36); const key='demo'; CASES.push({id,...c}); LS.set('prdash_mine',[...mine(),{id,key}]); editing=null; $('#dlg').close(); afterData(); showDone(id+'-'+key); return; }
       $('#dlg').close(); afterData(); return;
     }
-    if(editing){
+    if(editing && editing.admin){
+      await apiPost({action:'adminUpdate', id:editing.id, password:SS.get('prdash_admpw'), case:c});
+      $('#dlg').close(); await load();
+    } else if(editing){
       await apiPost({action:'update', id:editing.id, key:editing.key, case:c, website:$('#iWebsite').value});
       $('#dlg').close(); await load();
     } else {
@@ -1051,6 +1103,7 @@ $('#btnDelConfirm').addEventListener('click', async ()=>{
   if(!editing) return;
   try{
     if(DEMO){ CASES=CASES.filter(x=>x.id!==editing.id); }
+    else if(editing.admin){ await apiPost({action:'adminDelete', id:editing.id, password:SS.get('prdash_admpw')}); }
     else { await apiPost({action:'delete', id:editing.id, key:editing.key}); }
     LS.set('prdash_mine', mine().filter(m=>m.id!==editing.id));
     $('#dlg').close(); DEMO?afterData():await load();
@@ -1085,6 +1138,9 @@ async function admPost(body){
   let j; try{ j = await readJson(r); }catch(e){ throw new Error('Сервер Google тимчасово відповів помилкою. Спробуйте ще раз.'); }
   if(!j.ok) throw new Error(j.error||'Помилка сервера'); return j;
 }
+function isAdmin(){ return !DEMO && !!SS.get('prdash_admpw'); }
+function renderAdminBanner(){ $('#admBanner').hidden = !isAdmin(); }
+$('#admLogout').addEventListener('click',()=>{ SS.set('prdash_admpw',''); ADM.pw=''; $('#admLogin').hidden=false; $('#admMain').hidden=true; renderAdminBanner(); render(); });
 function route(){
   const adm = location.hash==='#import';
   $('#mainView').hidden = adm; $('#adminView').hidden = !adm;
@@ -1097,7 +1153,7 @@ async function admEnter(){
 }
 async function admLogin(pw){
   const j = await admPost({action:'adminCheck', password:pw});
-  ADM.pw = pw; SS.set('prdash_admpw', pw);
+  ADM.pw = pw; SS.set('prdash_admpw', pw); renderAdminBanner();
   ADM.refs = new Set(j.refs||[]);
   $('#admLogin').hidden = true; $('#admMain').hidden = false;
   setMsg($('#admMsg'), j.hasKey ? '' : `Ключ ШІ ще не налаштовано для провайдера «${j.provider||'gemini'}». Див. коментар на початку Code.gs.`, 'warn');
@@ -1111,6 +1167,7 @@ $('#admLoginForm').addEventListener('submit', async e=>{
 document.querySelectorAll('[data-src]').forEach(b=>b.addEventListener('click',()=>{
   ADM.src=b.dataset.src; document.querySelectorAll('[data-src]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
   $('#admPaste').hidden = ADM.src!=='paste'; $('#admFileBox').hidden = ADM.src!=='file'; $('#admImgBox').hidden = ADM.src!=='img';
+  $('#admCsvBox').hidden = ADM.src!=='csv'; $('#admParseBar').hidden = ADM.src==='csv';
 }));
 
 /* --- експорт Telegram --- */
@@ -1185,6 +1242,139 @@ document.addEventListener('paste', e=>{
   addImages(files);
 });
 
+/* --- CSV (таблиця спільноти) --- */
+const CSV = { head:[], rows:[], map:[], built:null };
+const CSV_TARGETS = [['','— не імпортувати —'],...STAGES.map(s=>[s.k, s.l]),['adrnote','Дозапит (текст у примітки)'],['office','Офіс (у примітки)'],['note','Інше (у примітки)']];
+function parseCSVText(t){ const rows=[]; let row=[], f='', q=false;
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c=='"'){ if(t[i+1]=='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+    else if(c=='"') q=true; else if(c==','||c==';'&&!t.slice(0,200).includes(',')){ row.push(f); f=''; }
+    else if(c=='\n'){ row.push(f.replace(/\r$/,'')); rows.push(row); row=[]; f=''; } else f+=c; }
+  if(f || row.length){ row.push(f.replace(/\r$/,'')); rows.push(row); }
+  return rows; }
+const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,
+  січ:1,лют:2,бер:3,кві:4,тра:5,чер:6,лип:7,сер:8,вер:9,жов:10,лис:11,гру:12, янв:1,фев:2,мар:3,апр:4,мая:5,май:5,июн:6,июл:7,авг:8,сен:9,окт:10,ноя:11,дек:12};
+const iso3=(y,m,d)=>{ if(y<100) y+=2000; const s=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; return isIso(s)&&new Date(s+'T00:00:00Z').getUTCDate()===d ? s : null; };
+// повертає {iso} | {dm:[d,m]} (без року) | null
+function parseCell(v){
+  v=String(v||'').replace(/[^\p{L}\p{N}.\-\/ ]/gu,' ').replace(/\s+/g,' ').trim();
+  if(!v) return null; let m;
+  if(m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)) { const r=iso3(+m[1],+m[2],+m[3]); return r?{iso:r}:null; }
+  if(m=v.match(/^(\d{1,2})\s*[-\/ ]\s*([A-Za-zА-Яа-яІіЇїЄє]{3})[A-Za-zА-Яа-яІіЇїЄє.]*\s*[-\/ ]\s*(\d{2,4})$/)){ const mo=MONTHS[m[2].toLowerCase()]; if(!mo) return null; const r=iso3(+m[3],mo,+m[1]); return r?{iso:r}:null; }
+  if(m=v.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})\.?$/)) { const r=iso3(+m[3],+m[2],+m[1]); return r?{iso:r}:null; }
+  if(m=v.match(/^(\d{1,2})[.\/](\d{1,2})\.?$/)) { const d=+m[1], mo=+m[2]; return (d>=1&&d<=31&&mo>=1&&mo<=12)?{dm:[d,mo]}:null; }
+  return null; }
+function guessTarget(h, vals){
+  const t=h.toLowerCase().replace(/[аa]or/,'aor').replace(/\s+/g,' ').trim();
+  const dateShare = vals.length ? vals.filter(v=>parseCell(v)).length/vals.length : 0;
+  if(/офіс|office/.test(t)) return 'office';
+  if(/дозапит|adr|запит/.test(t)) return 'adrnote';
+  if(/^med|медогляд|medical/.test(t)) return 'med';
+  if(dateShare<0.4) return '';
+  if(/^applied|submit|подача|pr sub/.test(t)) return 'pr';
+  if(/aor/.test(t)) return 'aor';
+  if(/біометр|biometr|^bio/.test(t)) return 'bio';
+  if(/^pal|pre.?arr|pre.?appr/.test(t)) return 'pal';
+  if(/portal.?1|^p1$|портал.?1/.test(t)) return 'p1';
+  if(/portal.?2|^p2$|портал.?2/.test(t)) return 'p2';
+  if(/e?copr/.test(t)) return 'ecopr';
+  if(/^fd$|final|рішення/.test(t)) return 'fd';
+  if(/номін|nominat/.test(t)) return 'nom';
+  if(/^eoi/.test(t)) return 'eoi';
+  if(/laa/.test(t)) return 'laa';
+  return ''; }
+async function handleCsv(f){
+  if(!f) return;
+  const rows=parseCSVText(await f.text()).filter(r=>r.some(x=>String(x).trim()));
+  if(rows.length<2){ setMsg($('#admMsg'),'У файлі немає даних.'); return; }
+  CSV.head=rows[0].map(h=>String(h).trim()); CSV.rows=rows.slice(1);
+  CSV.map=CSV.head.map((h,j)=>guessTarget(h, CSV.rows.map(r=>r[j]).filter(v=>String(v||'').trim()).slice(0,200)));
+  // одна колонка на одне поле: якщо є дві з однаковою ціллю, лишаємо ту, де більше дат
+  const seen={}; CSV.map.forEach((t,j)=>{ if(!t||['adrnote','office','note'].includes(t)) return; const sc=CSV.rows.filter(r=>parseCell(r[j])).length; if(seen[t]==null || sc>seen[t].sc){ if(seen[t]!=null) CSV.map[seen[t].j]=''; seen[t]={j,sc}; } else CSV.map[j]=''; });
+  renderCsvMap(); buildCsv();
+}
+function renderCsvMap(){
+  const opt=v=>CSV_TARGETS.map(([k,l])=>`<option value="${k}"${k===v?' selected':''}>${esc(l)}</option>`).join('');
+  $('#csvMap').hidden=false;
+  $('#csvMap').innerHTML=`<div class="csvmap"><h3>Колонки таблиці</h3><div class="csvgrid">${CSV.head.map((h,j)=>{
+    const ex=CSV.rows.map(r=>String(r[j]||'').trim()).find(v=>v && parseCell(v)) || '';
+    return `<label class="csvcol"><span class="h" title="${esc(h)}">${esc(h||'(без назви)')}</span><span class="x">${ex?esc(ex.slice(0,24)):'&nbsp;'}</span><select data-csvcol="${j}">${opt(CSV.map[j])}</select></label>`; }).join('')}</div>
+    <p class="muted" style="font-size:12.5px;margin:8px 0 0">Колонки з іменами чи довільним текстом за замовчуванням не імпортуються. Приклад показує лише значення, схожі на дату.</p></div>`;
+}
+$('#csvMap').addEventListener('change', e=>{ const sel=e.target.closest('[data-csvcol]'); if(!sel) return; CSV.map[+sel.dataset.csvcol]=sel.value; buildCsv(); });
+function fixYear(dm, ref){ // день.місяць без року: беремо рік, найближчий до опорної дати
+  const r=D(ref); let best=null, bd=Infinity; const y0=new Date(r).getUTCFullYear();
+  for(const y of [y0-1,y0,y0+1]){ const s=iso3(y,dm[1],dm[0]); if(!s) continue; const dd=Math.abs(D(s)-r); if(D(s)>=r-30*864e5 && dd<bd){ bd=dd; best=s; } }
+  return best; }
+function buildCsv(){
+  const today=D(todayISO()); const out={ready:[], dup:[], bad:[], empty:0};
+  const batchKeys=new Set();
+  CSV.rows.forEach((r,ri)=>{
+    const s={}, notes=[], dmLater=[];
+    CSV.map.forEach((t,j)=>{ if(!t) return; const raw=String(r[j]||'').trim(); if(!raw||/^[-–—]$|^n\/?a$/i.test(raw)) return;
+      if(t==='adrnote'){ notes.push('Дозапит: '+raw.slice(0,60)); return; }
+      if(t==='office'){ notes.push('Офіс: '+raw.slice(0,40)); return; }
+      if(t==='note'){ notes.push(raw.slice(0,60)); return; }
+      const p=parseCell(raw);
+      if(!p){ if(t==='med' && /^[oо]ld$/i.test(raw)) notes.push('Медогляд зараховано з попередньої заяви'); else if(t==='med') notes.push('Медогляд: '+raw.slice(0,30)); return; }
+      if(p.iso) s[t]=p.iso; else dmLater.push([t,p.dm]); });
+    const ref=s.aor||s.pr||s.bio||Object.values(s).sort()[0];
+    dmLater.forEach(([t,dm])=>{ if(ref){ const v=fixYear(dm,ref); if(v) s[t]=v; } });
+    Object.keys(s).forEach(k=>{ if(D(s[k])>today) delete s[k]; });
+    if(Object.keys(s).length<2){ out.empty++; return; }
+    const c={nick:'', stream:'', ee:'', security:'', notes:notes.join('; ').slice(0,500), s, adr:[], ghost:[]};
+    const key=['pr','aor','bio','pal','p1','p2','ecopr'].map(k=>s[k]||'').join('|');
+    c.srcref='csv:'+key;
+    const err=validate(c);
+    if(err){ out.bad.push({row:ri+2, err, c}); return; }
+    if(batchKeys.has(key)){ const prev=out.ready.find(x=>x.key===key); out.dup.push({row:ri+2, c, other:prev&&prev.c, title:prev?`Рядок ${prev.row} цього файлу`:'Інший рядок цього файлу'}); return; }
+    const dm=dupMatch(c,-1);
+    if(dm){ out.dup.push({row:ri+2, c, other:dm.other, title:dm.title}); return; }
+    if(ADM.refs.has(c.srcref)){ out.dup.push({row:ri+2, c, other:null, title:'Уже імпортовано з цього файлу раніше'}); return; }
+    batchKeys.add(key); out.ready.push({row:ri+2, c, key});
+  });
+  CSV.built=out; renderCsvSum();
+}
+function csvRowCells(c){ return ['pr','aor','bio','med','pal','fd','p1','p2','ecopr'].map(k=>`<td class="num">${c.s[k]?fmtDate(c.s[k]):'<span class="muted">—</span>'}</td>`).join(''); }
+function dupPairs(list){
+  const cols=['pr','aor','bio','med','pal','fd','p1','p2','ecopr'];
+  const cells=(c,o)=>cols.map(k=>{ const x=c&&c.s[k], y=o&&o.s[k]; if(!x) return '<td class="miss">—</td>'; return `<td class="num ${o?(!y?'only':x===y?'same':'diff'):''}">${fmtDate(x)}</td>`; }).join('');
+  const body=list.slice(0,300).map(x=>`<tr class="pa"><td><b>Рядок ${x.row}</b></td>${cells(x.c,x.other)}<td class="nt">${esc((x.c.notes||'').slice(0,60))}</td></tr><tr class="pb"><td>${esc(x.title)}</td>${x.other?cells(x.other,x.c):`<td colspan="${cols.length}" class="muted">—</td>`}<td class="nt">${esc(((x.other&&x.other.notes)||'').slice(0,60))}</td></tr>`).join('');
+  return `<div class="csvtbl dupcmp"><table><thead><tr><th></th>${['Подача на PR','AOR','Біометрія','Medicals','PAL','FD','Portal 1','Portal 2','eCoPR'].map(h=>`<th>${h}</th>`).join('')}<th>Примітки</th></tr></thead><tbody>${body}</tbody></table></div><div class="dupcmp-legend"><span><i style="background:color-mix(in srgb,var(--mark) 18%,transparent)"></i>дати відрізняються</span><span><i style="background:color-mix(in srgb,var(--accent-soft) 55%,transparent)"></i>є лише з одного боку</span><span>сірим — збігаються</span></div>`;
+}
+function renderCsvSum(){
+  const b=CSV.built; $('#csvSum').hidden=false;
+  const head=`<tr><th>Рядок</th>${['Подача на PR','AOR','Біометрія','Medicals','PAL','FD','Portal 1','Portal 2','eCoPR'].map(h=>`<th>${h}</th>`).join('')}<th>Примітки</th></tr>`;
+  const tbl=(list,extra)=>`<div class="csvtbl"><table><thead>${head.replace('</tr>', extra?'<th>Причина</th></tr>':'</tr>')}</thead><tbody>${list.slice(0,300).map(x=>`<tr><td class="num">${x.row}</td>${csvRowCells(x.c)}<td>${esc(x.c.notes.slice(0,80))}</td>${extra?`<td>${esc(x.err||'')}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
+  $('#csvSum').innerHTML=`<div class="csvsum"><h3>Зведення</h3>
+    <div class="csvstats"><span class="chip good">Готові до імпорту: ${b.ready.length}</span><span class="chip">Дублікати / вже в базі: ${b.dup.length}</span><span class="chip warn">З помилками дат: ${b.bad.length}</span><span class="chip">Менше двох дат: ${b.empty}</span></div>
+    ${b.ready.length?`<details><summary>Переглянути готові (${b.ready.length})</summary>${tbl(b.ready)}</details>`:''}
+    ${b.bad.length?`<details><summary>Рядки з помилками (${b.bad.length}): їх можна виправити в таблиці й завантажити файл ще раз</summary>${tbl(b.bad,true)}</details>`:''}
+    ${b.dup.length?`<details><summary>Дублікати (${b.dup.length}): не імпортуються. Для кожного показано, з чим він збігся</summary>${dupPairs(b.dup)}</details>`:''}
+    <div class="csvbar"><button class="btn primary" type="button" id="csvGo"${b.ready.length?'':' disabled'}>Імпортувати ${plural(b.ready.length,'таймлайн','таймлайни','таймлайнів')}</button><span class="muted" id="csvProg" style="font-size:13.5px"></span></div></div>`;
+}
+$('#csvSum').addEventListener('click', async e=>{
+  if(!e.target.closest('#csvGo')) return;
+  const list=CSV.built.ready.map(x=>x.c); const btn=$('#csvGo'); btn.disabled=true;
+  let added=0, skipped=0, errs=0;
+  try{
+    for(let k=0;k<list.length;k+=100){
+      $('#csvProg').textContent=`Імпортую ${Math.min(k+100,list.length)} з ${list.length}…`;
+      const j=await admPost({action:'import', password:ADM.pw, source:'csv', cases:list.slice(k,k+100)});
+      added+=(j.added||[]).length; skipped+=(j.skipped||[]).length; errs+=(j.errors||[]).length;
+      list.slice(k,k+100).forEach(c=>ADM.refs.add(c.srcref));
+    }
+    $('#csvProg').textContent='';
+    setMsg($('#admMsg'), `Готово: додано ${added}${skipped?`, пропущено як уже імпортовані ${skipped}`:''}${errs?`, помилок сервера ${errs}`:''}.`, errs?'warn':'ok');
+    await load(); buildCsv();
+  }catch(ex){ setMsg($('#admMsg'), ex.message); btn.disabled=false; $('#csvProg').textContent=''; }
+});
+$('#admCsvFile').addEventListener('change', e=>{ handleCsv(e.target.files[0]); e.target.value=''; });
+const cdrop=$('#admCsvDrop');
+['dragenter','dragover'].forEach(t=>cdrop.addEventListener(t,e=>{e.preventDefault(); cdrop.classList.add('over');}));
+['dragleave','drop'].forEach(t=>cdrop.addEventListener(t,e=>{e.preventDefault(); cdrop.classList.remove('over');}));
+cdrop.addEventListener('drop', e=>handleCsv(e.dataTransfer.files[0]));
+
 function makeChunks(){
   const LIM=12000, out=[];
   if(ADM.src==='img'){
@@ -1244,12 +1434,28 @@ $('#admParse').addEventListener('click', async ()=>{
 });
 
 /* --- картки перевірки --- */
-function dupOf(c, selfIdx){
+const SRC_L = c => c.source==='telegram' ? 'Telegram' : c.source==='csv' ? 'CSV' : 'форма';
+function dupMatch(c, selfIdx){
   const keys=['eoi','laa','mpnp','nom','pr','aor','pal','fd','ecopr'];
   const same=x=>keys.filter(k=>c.s[k] && x.s && x.s[k]===c.s[k]).length>=2;
-  const ex=CASES.find(same); if(ex) return `схоже на кейс «${ex.nick||'Без назви'}», що вже є в базі`;
-  const j=ADM.items.findIndex((it,i)=>i!==selfIdx && i<selfIdx && same(it.data)); if(j>=0) return `схоже на картку #${j+1} у цьому списку`;
-  return '';
+  const ex=CASES.find(same);
+  if(ex) return { other:ex, label:`схоже на таймлайн «${ex.nick||'Без назви'}», що вже є в базі`, title:`У базі · ${ex.nick||'Без назви'} · ${SRC_L(ex)}${ex.created?' · додано '+fmtDate(String(ex.created).slice(0,10)):''}` };
+  const j=ADM.items.findIndex((it,i)=>i!==selfIdx && i<selfIdx && same(it.data));
+  if(j>=0) return { other:ADM.items[j].data, label:`схоже на картку #${j+1} у цьому списку`, title:`Картка #${j+1}` };
+  return null;
+}
+function dupOf(c, selfIdx){ const m=dupMatch(c, selfIdx); return m ? m.label : ''; }
+// таблиця порівняння двох таймлайнів: однакові дати приглушені, відмінні підсвічені
+function dupCompare(a, b, titleA, titleB){
+  const keys=STAGES.map(s=>s.k).filter(k=>(a.s&&a.s[k])||(b.s&&b.s[k]));
+  const lists=[['adr','Дозапит'],['ghost','Ghost update']].filter(([k])=>(a[k]&&a[k].length)||(b[k]&&b[k].length));
+  if(!keys.length && !lists.length) return '';
+  const cell=(x,y)=>{ if(!x) return `<td class="miss">—</td>`; return `<td class="num ${!y?'only':x===y?'same':'diff'}">${fmtDate(x)}</td>`; };
+  let rows=keys.map(k=>{ const x=a.s[k]||'', y=b.s[k]||''; return `<tr><th scope="row">${esc(SHORT[k]||k)}</th>${cell(x,y)}${cell(y,x)}</tr>`; }).join('');
+  rows+=lists.map(([k,l])=>{ const x=(a[k]||[]).map(fmtDate).join(', '), y=(b[k]||[]).map(fmtDate).join(', '); const cl=(!x||!y)?'only':x===y?'same':'diff'; return `<tr><th scope="row">${l}</th><td class="num ${x?cl:'miss'}">${x||'—'}</td><td class="num ${y?cl:'miss'}">${y||'—'}</td></tr>`; }).join('');
+  const nt=(a.notes||b.notes) ? `<tr><th scope="row">Примітки</th><td class="nt">${esc((a.notes||'').slice(0,120))||'—'}</td><td class="nt">${esc((b.notes||'').slice(0,120))||'—'}</td></tr>` : '';
+  const same=keys.filter(k=>a.s[k]&&a.s[k]===b.s[k]).length, diffN=keys.filter(k=>a.s[k]&&b.s[k]&&a.s[k]!==b.s[k]).length;
+  return `<div class="dupcmp"><div class="dupcmp-h">Порівняння: збігається ${plural(same,'дата','дати','дат')}${diffN?`, відрізняється ${diffN}`:''}</div><div class="csvtbl"><table><thead><tr><th>Етап</th><th>${esc(titleA)}</th><th>${esc(titleB)}</th></tr></thead><tbody>${rows}${nt}</tbody></table></div><div class="dupcmp-legend"><span><i style="background:color-mix(in srgb,var(--mark) 18%,transparent)"></i>дати відрізняються</span><span><i style="background:color-mix(in srgb,var(--accent-soft) 55%,transparent)"></i>є лише з одного боку</span><span>сірим — збігаються</span></div></div>`;
 }
 function parseList(v,bad,label){ const out=[]; String(v||'').split(/[\s,;]+/).filter(Boolean).forEach(t=>{ const d=fromDMY(t); if(d===null) bad.push(label); else if(d) out.push(d); }); return out.sort(); }
 function readCard(i){
@@ -1268,10 +1474,10 @@ function checkCard(i){
   else { const v=validate(c); if(v) errs.push(v.replace(/\.$/,'')); }
   const amb=it.data.ambiguous.filter(k=>c.s[k]||k==='adr'||k==='ghost');
   if(amb.length) warns.push(`ШІ не впевнений у порядку день/місяць: ${amb.map(k=>SHORT[k]||k).join(', ')} (підсвічено)`);
-  const dup=dupOf(c,i); if(dup) warns.push('можливий дублікат: '+dup);
+  const dm=dupMatch(c,i); const dup=dm?dm.label:''; if(dup) warns.push('можливий дублікат: '+dup);
   if(!bad.length){ const ow=outlierWarnings(c); if(ow.length) warns.push('незвично довгі проміжки: '+ow.join('; ')); }
   if(it.data.msgdate && Object.values(c.s).some(d=>D(d)>D(it.data.msgdate))) warns.push(`є дата, пізніша за дату повідомлення (${fmtDate(it.data.msgdate)})`);
-  return {c,errs,warns,dup:!!dup};
+  return {c,errs,warns,dup:!!dup,dm};
 }
 function cardHtml(i){
   const it=ADM.items[i], d=it.data;
@@ -1300,14 +1506,14 @@ function refreshCard(i){
   const card=document.querySelector(`.icard[data-i="${i}"]`); if(!card) return;
   const it=ADM.items[i];
   if(it.done){ card.querySelector('.iwarn').innerHTML=`<span style="color:var(--good)">✓ ${esc(it.err||'Додано в базу')}</span>`; card.querySelector('.isel').checked=false; return; }
-  const {errs,warns,dup}=checkCard(i);
+  const {c,errs,warns,dup,dm}=checkCard(i);
   if(it.sel===null) it.sel = !errs.length && !dup;
   if(errs.length){ if(it.sel) it.autoOff=true; it.sel=false; }
   else if(it.autoOff){ it.autoOff=false; it.sel=!dup; }
   if(it.sel===false && errs.length && !it.autoOff) it.autoOff=true;
   const cb=card.querySelector('.isel'); cb.checked=it.sel; cb.disabled=!!errs.length;
   card.classList.toggle('off', !it.sel);
-  card.querySelector('.iwarn').innerHTML = errs.map(e=>`<span class="e">${esc(e)}</span>`).join('') + warns.map(w=>`<span class="w">${esc(w)}</span>`).join('') + (it.err?`<span class="e">${esc(it.err)}</span>`:'');
+  card.querySelector('.iwarn').innerHTML = errs.map(e=>`<span class="e">${esc(e)}</span>`).join('') + warns.map(w=>`<span class="w">${esc(w)}</span>`).join('') + (it.err?`<span class="e">${esc(it.err)}</span>`:'') + (dm ? dupCompare(c, dm.other, 'Нове (з імпорту)', dm.title) : '');
   updateSelCount();
 }
 function renderImport(){
@@ -1416,7 +1622,7 @@ async function load(){
 }
 
 initFilters(); initTrend(); initForm(); initForecast(); initPath();
-addEventListener('hashchange', route); route();
+addEventListener('hashchange', ()=>{ route(); if(location.hash!=='#import') render(); }); route(); renderAdminBanner();
 if(DEMO){ $('#demoBanner').hidden=false; CASES=demoCases(); afterData(); }
 else { afterData(); load(); }
 </script>
