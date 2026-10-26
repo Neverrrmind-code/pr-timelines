@@ -239,7 +239,8 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .paxis span:first-child{transform:none}
 .pill.tg{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px}
 /* імпорт */
-.adm-tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start;background:var(--surface)}
+.adm-tabs{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start;background:var(--surface);max-width:100%}
+.adm-tabs button{flex:1 1 auto}
 .adm-tabs button{border:0;background:none;padding:8px 14px;cursor:pointer;color:var(--ink2)}
 .adm-tabs button+button{border-left:1px solid var(--line)}
 .adm-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
@@ -322,6 +323,24 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .adm-banner{border-style:solid;border-color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
 .adm-banner b{color:var(--accent)}
 .adm-banner a{color:var(--accent)}
+.dupcmp{margin-top:6px}
+.dupcmp-h{font-size:12.5px;color:var(--ink2);margin-bottom:4px}
+.dupcmp table{border-collapse:collapse;font-size:12.5px;min-width:0;width:auto}
+.dupcmp th,.dupcmp td{padding:4px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;text-transform:none;letter-spacing:0}
+.dupcmp td.only{background:color-mix(in srgb,var(--accent-soft) 55%,transparent);color:var(--ink)}
+.dupcmp-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--muted);margin-top:4px}
+.dupcmp-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.dupcmp thead th{font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500;position:static}
+.dupcmp tbody th{font-weight:500;color:var(--ink2);font-size:12.5px}
+.dupcmp td.same{color:var(--muted)}
+.dupcmp td.diff{background:color-mix(in srgb,var(--mark) 18%,transparent);color:var(--ink);font-weight:500}
+.dupcmp td.miss{color:var(--muted)}
+.dupcmp td.nt{white-space:normal;min-width:180px;max-width:340px;color:var(--ink2)}
+.iwarn,.icard > *{min-width:0}
+.dupcmp,.dupcmp .csvtbl{max-width:100%}
+.dupcmp tr.pa td{border-bottom:0;padding-top:8px}
+.dupcmp tr.pb td{color:var(--ink2);font-size:12px}
+.dupcmp tr.pb td.diff{color:var(--ink)}
 #tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 #tip b{font-weight:600}
 .empty-state{padding:28px 8px;text-align:center;color:var(--muted)}
@@ -1308,12 +1327,21 @@ function buildCsv(){
     c.srcref='csv:'+key;
     const err=validate(c);
     if(err){ out.bad.push({row:ri+2, err, c}); return; }
-    if(batchKeys.has(key) || ADM.refs.has(c.srcref) || dupOf(c, -1)){ out.dup.push({row:ri+2, c}); return; }
-    batchKeys.add(key); out.ready.push({row:ri+2, c});
+    if(batchKeys.has(key)){ const prev=out.ready.find(x=>x.key===key); out.dup.push({row:ri+2, c, other:prev&&prev.c, title:prev?`Рядок ${prev.row} цього файлу`:'Інший рядок цього файлу'}); return; }
+    const dm=dupMatch(c,-1);
+    if(dm){ out.dup.push({row:ri+2, c, other:dm.other, title:dm.title}); return; }
+    if(ADM.refs.has(c.srcref)){ out.dup.push({row:ri+2, c, other:null, title:'Уже імпортовано з цього файлу раніше'}); return; }
+    batchKeys.add(key); out.ready.push({row:ri+2, c, key});
   });
   CSV.built=out; renderCsvSum();
 }
 function csvRowCells(c){ return ['pr','aor','bio','med','pal','fd','p1','p2','ecopr'].map(k=>`<td class="num">${c.s[k]?fmtDate(c.s[k]):'<span class="muted">—</span>'}</td>`).join(''); }
+function dupPairs(list){
+  const cols=['pr','aor','bio','med','pal','fd','p1','p2','ecopr'];
+  const cells=(c,o)=>cols.map(k=>{ const x=c&&c.s[k], y=o&&o.s[k]; if(!x) return '<td class="miss">—</td>'; return `<td class="num ${o?(!y?'only':x===y?'same':'diff'):''}">${fmtDate(x)}</td>`; }).join('');
+  const body=list.slice(0,300).map(x=>`<tr class="pa"><td><b>Рядок ${x.row}</b></td>${cells(x.c,x.other)}<td class="nt">${esc((x.c.notes||'').slice(0,60))}</td></tr><tr class="pb"><td>${esc(x.title)}</td>${x.other?cells(x.other,x.c):`<td colspan="${cols.length}" class="muted">—</td>`}<td class="nt">${esc(((x.other&&x.other.notes)||'').slice(0,60))}</td></tr>`).join('');
+  return `<div class="csvtbl dupcmp"><table><thead><tr><th></th>${['Подача на PR','AOR','Біометрія','Medicals','PAL','FD','Portal 1','Portal 2','eCoPR'].map(h=>`<th>${h}</th>`).join('')}<th>Примітки</th></tr></thead><tbody>${body}</tbody></table></div><div class="dupcmp-legend"><span><i style="background:color-mix(in srgb,var(--mark) 18%,transparent)"></i>дати відрізняються</span><span><i style="background:color-mix(in srgb,var(--accent-soft) 55%,transparent)"></i>є лише з одного боку</span><span>сірим — збігаються</span></div>`;
+}
 function renderCsvSum(){
   const b=CSV.built; $('#csvSum').hidden=false;
   const head=`<tr><th>Рядок</th>${['Подача на PR','AOR','Біометрія','Medicals','PAL','FD','Portal 1','Portal 2','eCoPR'].map(h=>`<th>${h}</th>`).join('')}<th>Примітки</th></tr>`;
@@ -1322,7 +1350,7 @@ function renderCsvSum(){
     <div class="csvstats"><span class="chip good">Готові до імпорту: ${b.ready.length}</span><span class="chip">Дублікати / вже в базі: ${b.dup.length}</span><span class="chip warn">З помилками дат: ${b.bad.length}</span><span class="chip">Менше двох дат: ${b.empty}</span></div>
     ${b.ready.length?`<details><summary>Переглянути готові (${b.ready.length})</summary>${tbl(b.ready)}</details>`:''}
     ${b.bad.length?`<details><summary>Рядки з помилками (${b.bad.length}): їх можна виправити в таблиці й завантажити файл ще раз</summary>${tbl(b.bad,true)}</details>`:''}
-    ${b.dup.length?`<details><summary>Дублікати (${b.dup.length}): не імпортуються</summary>${tbl(b.dup)}</details>`:''}
+    ${b.dup.length?`<details><summary>Дублікати (${b.dup.length}): не імпортуються. Для кожного показано, з чим він збігся</summary>${dupPairs(b.dup)}</details>`:''}
     <div class="csvbar"><button class="btn primary" type="button" id="csvGo"${b.ready.length?'':' disabled'}>Імпортувати ${plural(b.ready.length,'таймлайн','таймлайни','таймлайнів')}</button><span class="muted" id="csvProg" style="font-size:13.5px"></span></div></div>`;
 }
 $('#csvSum').addEventListener('click', async e=>{
@@ -1406,12 +1434,28 @@ $('#admParse').addEventListener('click', async ()=>{
 });
 
 /* --- картки перевірки --- */
-function dupOf(c, selfIdx){
+const SRC_L = c => c.source==='telegram' ? 'Telegram' : c.source==='csv' ? 'CSV' : 'форма';
+function dupMatch(c, selfIdx){
   const keys=['eoi','laa','mpnp','nom','pr','aor','pal','fd','ecopr'];
   const same=x=>keys.filter(k=>c.s[k] && x.s && x.s[k]===c.s[k]).length>=2;
-  const ex=CASES.find(same); if(ex) return `схоже на кейс «${ex.nick||'Без назви'}», що вже є в базі`;
-  const j=ADM.items.findIndex((it,i)=>i!==selfIdx && i<selfIdx && same(it.data)); if(j>=0) return `схоже на картку #${j+1} у цьому списку`;
-  return '';
+  const ex=CASES.find(same);
+  if(ex) return { other:ex, label:`схоже на таймлайн «${ex.nick||'Без назви'}», що вже є в базі`, title:`У базі · ${ex.nick||'Без назви'} · ${SRC_L(ex)}${ex.created?' · додано '+fmtDate(String(ex.created).slice(0,10)):''}` };
+  const j=ADM.items.findIndex((it,i)=>i!==selfIdx && i<selfIdx && same(it.data));
+  if(j>=0) return { other:ADM.items[j].data, label:`схоже на картку #${j+1} у цьому списку`, title:`Картка #${j+1}` };
+  return null;
+}
+function dupOf(c, selfIdx){ const m=dupMatch(c, selfIdx); return m ? m.label : ''; }
+// таблиця порівняння двох таймлайнів: однакові дати приглушені, відмінні підсвічені
+function dupCompare(a, b, titleA, titleB){
+  const keys=STAGES.map(s=>s.k).filter(k=>(a.s&&a.s[k])||(b.s&&b.s[k]));
+  const lists=[['adr','Дозапит'],['ghost','Ghost update']].filter(([k])=>(a[k]&&a[k].length)||(b[k]&&b[k].length));
+  if(!keys.length && !lists.length) return '';
+  const cell=(x,y)=>{ if(!x) return `<td class="miss">—</td>`; return `<td class="num ${!y?'only':x===y?'same':'diff'}">${fmtDate(x)}</td>`; };
+  let rows=keys.map(k=>{ const x=a.s[k]||'', y=b.s[k]||''; return `<tr><th scope="row">${esc(SHORT[k]||k)}</th>${cell(x,y)}${cell(y,x)}</tr>`; }).join('');
+  rows+=lists.map(([k,l])=>{ const x=(a[k]||[]).map(fmtDate).join(', '), y=(b[k]||[]).map(fmtDate).join(', '); const cl=(!x||!y)?'only':x===y?'same':'diff'; return `<tr><th scope="row">${l}</th><td class="num ${x?cl:'miss'}">${x||'—'}</td><td class="num ${y?cl:'miss'}">${y||'—'}</td></tr>`; }).join('');
+  const nt=(a.notes||b.notes) ? `<tr><th scope="row">Примітки</th><td class="nt">${esc((a.notes||'').slice(0,120))||'—'}</td><td class="nt">${esc((b.notes||'').slice(0,120))||'—'}</td></tr>` : '';
+  const same=keys.filter(k=>a.s[k]&&a.s[k]===b.s[k]).length, diffN=keys.filter(k=>a.s[k]&&b.s[k]&&a.s[k]!==b.s[k]).length;
+  return `<div class="dupcmp"><div class="dupcmp-h">Порівняння: збігається ${plural(same,'дата','дати','дат')}${diffN?`, відрізняється ${diffN}`:''}</div><div class="csvtbl"><table><thead><tr><th>Етап</th><th>${esc(titleA)}</th><th>${esc(titleB)}</th></tr></thead><tbody>${rows}${nt}</tbody></table></div><div class="dupcmp-legend"><span><i style="background:color-mix(in srgb,var(--mark) 18%,transparent)"></i>дати відрізняються</span><span><i style="background:color-mix(in srgb,var(--accent-soft) 55%,transparent)"></i>є лише з одного боку</span><span>сірим — збігаються</span></div></div>`;
 }
 function parseList(v,bad,label){ const out=[]; String(v||'').split(/[\s,;]+/).filter(Boolean).forEach(t=>{ const d=fromDMY(t); if(d===null) bad.push(label); else if(d) out.push(d); }); return out.sort(); }
 function readCard(i){
@@ -1430,10 +1474,10 @@ function checkCard(i){
   else { const v=validate(c); if(v) errs.push(v.replace(/\.$/,'')); }
   const amb=it.data.ambiguous.filter(k=>c.s[k]||k==='adr'||k==='ghost');
   if(amb.length) warns.push(`ШІ не впевнений у порядку день/місяць: ${amb.map(k=>SHORT[k]||k).join(', ')} (підсвічено)`);
-  const dup=dupOf(c,i); if(dup) warns.push('можливий дублікат: '+dup);
+  const dm=dupMatch(c,i); const dup=dm?dm.label:''; if(dup) warns.push('можливий дублікат: '+dup);
   if(!bad.length){ const ow=outlierWarnings(c); if(ow.length) warns.push('незвично довгі проміжки: '+ow.join('; ')); }
   if(it.data.msgdate && Object.values(c.s).some(d=>D(d)>D(it.data.msgdate))) warns.push(`є дата, пізніша за дату повідомлення (${fmtDate(it.data.msgdate)})`);
-  return {c,errs,warns,dup:!!dup};
+  return {c,errs,warns,dup:!!dup,dm};
 }
 function cardHtml(i){
   const it=ADM.items[i], d=it.data;
@@ -1462,14 +1506,14 @@ function refreshCard(i){
   const card=document.querySelector(`.icard[data-i="${i}"]`); if(!card) return;
   const it=ADM.items[i];
   if(it.done){ card.querySelector('.iwarn').innerHTML=`<span style="color:var(--good)">✓ ${esc(it.err||'Додано в базу')}</span>`; card.querySelector('.isel').checked=false; return; }
-  const {errs,warns,dup}=checkCard(i);
+  const {c,errs,warns,dup,dm}=checkCard(i);
   if(it.sel===null) it.sel = !errs.length && !dup;
   if(errs.length){ if(it.sel) it.autoOff=true; it.sel=false; }
   else if(it.autoOff){ it.autoOff=false; it.sel=!dup; }
   if(it.sel===false && errs.length && !it.autoOff) it.autoOff=true;
   const cb=card.querySelector('.isel'); cb.checked=it.sel; cb.disabled=!!errs.length;
   card.classList.toggle('off', !it.sel);
-  card.querySelector('.iwarn').innerHTML = errs.map(e=>`<span class="e">${esc(e)}</span>`).join('') + warns.map(w=>`<span class="w">${esc(w)}</span>`).join('') + (it.err?`<span class="e">${esc(it.err)}</span>`:'');
+  card.querySelector('.iwarn').innerHTML = errs.map(e=>`<span class="e">${esc(e)}</span>`).join('') + warns.map(w=>`<span class="w">${esc(w)}</span>`).join('') + (it.err?`<span class="e">${esc(it.err)}</span>`:'') + (dm ? dupCompare(c, dm.other, 'Нове (з імпорту)', dm.title) : '');
   updateSelCount();
 }
 function renderImport(){
