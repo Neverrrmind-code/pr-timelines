@@ -128,7 +128,11 @@ details.grp .gbody{padding-bottom:12px}
 .trend .sechead label{max-width:100%;min-width:0}
 
 .tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
-table{border-collapse:collapse;width:100%;min-width:880px;font-size:14px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th.idcell{width:1%}
+td.idcell{font-size:13px;color:var(--ink2);letter-spacing:.03em;white-space:nowrap;width:1%}
+tbody tr.case.myrow td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+tbody tr.case.myrow td.idcell{box-shadow:inset 3px 0 0 var(--accent);color:var(--accent);font-weight:500}
 td.minicell{vertical-align:middle;padding-block:6px}
 .mini{position:relative;width:220px;height:18px}
 .mini .ml{position:absolute;top:8px;height:2px;background:color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:2px}
@@ -514,7 +518,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div class="tablewrap">
       <table>
         <thead><tr>
-          <th>Таймлайн</th><th>Потік</th><th><button class="sortb" type="button" data-sort="pr">Подача на PR<i></i></button></th><th>Шлях від подачі на PR</th><th><button class="sortb" type="button" data-sort="last">Останній етап<i></i></button></th><th class="r"><button class="sortb" type="button" data-sort="days">Днів від подачі<i></i></button></th><th></th>
+          <th class="idcell">ID</th><th>Таймлайн</th><th><button class="sortb" type="button" data-sort="pr">Подача на PR<i></i></button></th><th>Шлях від подачі на PR</th><th><button class="sortb" type="button" data-sort="last">Останній етап<i></i></button></th><th class="r"><button class="sortb" type="button" data-sort="days">Днів від подачі<i></i></button></th><th></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -1065,9 +1069,9 @@ function renderTable(list){
   for(const c of shown){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
-    h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${caseNameHtml(c)}${my.has(c.id)?'<span class="mytag" title="Ваш таймлайн">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}</td>
-      <td>${esc(lookup(STREAMS,c.stream)||'—')}<span class="sub2">${c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':''}</span></td>
+    h += `<tr class="case${my.has(c.id)?' myrow':''}" data-id="${esc(c.id)}"${my.has(c.id)?' title="Ваш таймлайн"':''}>
+      <td class="idcell num">${esc(hid(c))}</td>
+      <td>${c.nick?esc(c.nick):'<span class="anon">Таймлайн</span>'}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}</td>
       <td class="num">${fmtDate(c.s.pr)}</td>
       <td class="minicell">${miniTl(c, top, ref)}</td>
       <td>${ls?`<span class="pill ${done?'done':''}">${esc(SHORT[ls])}</span> <span class="num muted" style="font-size:12.5px">${fmtDate(c.s[ls])}</span>`:'—'}</td>
