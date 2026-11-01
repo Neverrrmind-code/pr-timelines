@@ -2025,13 +2025,30 @@ function renderMine(mc){
 
 /* ===== Картка таймлайну за посиланням #ID ===== */
 const caseUrl = c => location.origin + location.pathname + '#' + hid(c);
+// стандартний текстовий таймлайн для Telegram: шапка, усі дати хронологічно, підсумок, посилання
+const TL_NAME = Object.assign({}, RT_NAME, {sec:'Security check started', secdone:'Security check completed'});
+const NEXT_ORDER = ['eoi','laa','mpnp','nom','pr','aor','bio','pal','p1','p2','ecopr'];
 function shareText(c){
-  const parts=[];
-  if(c.s.pr) parts.push(`подача на PR ${fmtDate(c.s.pr)}`);
-  for(const k of ['aor','pal','ecopr']){ const v=sdiff(c.s.pr,c.s[k]); if(c.s.pr && v!=null && v>=0) parts.push(`${SHORT[k]} через ${longTxt(v)}`); }
-  if(!c.s.ecopr && c.s.pr){ const ls=lastStage(c); const w=sdiff(c.s[ls], todayISO()); if(w!=null && ls!=='pr') parts.push(`після ${SHORT[ls]} чекає ${longTxt(w)}`); }
-  return `Таймлайн PR (MPNP) ${hid(c)}${c.nick?` «${c.nick}»`:''}: ${parts.join(', ') || 'дати етапів'}.`;
+  const head = [c.nick, lookup(STREAMS,c.stream), c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':'', c.security==='yes'?'Comprehensive':''].filter(Boolean).join(' · ');
+  const ev=[]; STAGES.forEach((st,i)=>{ if(c.s[st.k]) ev.push({d:c.s[st.k], l:TL_NAME[st.k]||SHORT[st.k], o:i}); });
+  (c.adr||[]).forEach(d=>ev.push({d, l:'Дозапит', o:99})); (c.ghost||[]).forEach(d=>ev.push({d, l:'Ghost update', o:99}));
+  ev.sort((x,y)=>(D(x.d)-D(y.d))||(x.o-y.o));
+  let sum='';
+  const from = c.s.pr ? 'pr' : c.s.eoi ? 'eoi' : null;
+  if(c.s.ecopr && c.s.pr){ const t=sdiff(c.s.pr,c.s.ecopr); if(t!=null&&t>=0) sum=`Від подачі на PR до eCoPR: ${longTxt(t)}`; }
+  else if(from){
+    const t=sdiff(c.s[from], todayISO());
+    const lastI=Math.max(...NEXT_ORDER.map((k,i)=>c.s[k]?i:-1)); const nx=NEXT_ORDER.slice(lastI+1).find(k=>!c.s[k]);
+    if(t!=null&&t>=0) sum=`Триває ${longTxt(t)} від ${from==='pr'?'подачі на PR':'EOI'}${nx?`, чекає ${TL_NAME[nx]}`:''}`;
+  }
+  const lines=[`Таймлайн PR · MPNP · ${hid(c)}`];
+  if(head) lines.push(head);
+  lines.push('', ...ev.map(e=>`${e.l} — ${fmtDate(e.d)}`), '');
+  if(sum) lines.push(sum);
+  lines.push(caseUrl(c));
+  return lines.join('\n');
 }
+const tgLink = c => 'https://t.me/share/url?url=' + encodeURIComponent(shareText(c));
 let caseOpenId=null;
 function openCase(code){
   code=String(code||'').replace(/^#/,'').toUpperCase();
@@ -2060,8 +2077,8 @@ function openCase(code){
       ${rows.length?`<h3>Порівняння з іншими</h3><div>${cmpHtml(rows)}</div>`:''}
       <div class="cc-share"><span class="cc-link" title="${esc(caseUrl(c))}">${esc(caseUrl(c).replace(/^https?:\/\//,''))}</span>
         <button class="btn primary" type="button" data-ccshare>Поділитись</button>
-        <button class="btn" type="button" data-cccopy>Скопіювати посилання</button>
-        <a class="btn" target="_blank" rel="noopener" href="https://t.me/share/url?url=${encodeURIComponent(caseUrl(c))}&text=${encodeURIComponent(shareText(c))}">Надіслати в Telegram</a>
+        <button class="btn" type="button" data-cccopy>Скопіювати лише посилання</button>
+        <a class="btn" target="_blank" rel="noopener" href="${esc(tgLink(c))}">Надіслати в Telegram</a>
         ${(!isAdmin())?`<button class="btn link" type="button" data-ccupd>${my?'Оновити свій таймлайн':isOpen(c)?'Це мій таймлайн — оновити':'Оновити з кодом'}</button>`:''}
         <div id="ccMsg" hidden></div></div>`;
   }
@@ -2073,10 +2090,10 @@ function closeCase(){
 $('#dlgCase').addEventListener('close',()=>{ caseOpenId=null; if(/^#[0-9A-Z]{4}$/i.test(location.hash)) history.replaceState(null,'',location.pathname+location.search); });
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(_){ return false; } }
 async function shareCase(c, msgEl){
-  const url=caseUrl(c), text=shareText(c);
-  if(navigator.share && matchMedia('(pointer:coarse)').matches){ try{ await navigator.share({title:'Таймлайн '+hid(c), text, url}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
-  const ok=await copyText(text+'\n'+url);
-  if(msgEl) setMsg(msgEl, ok?'Текст із посиланням скопійовано. Вставте його в чат Telegram.':'Не вдалося скопіювати автоматично. Виділіть посилання вище й скопіюйте вручну.', ok?'ok':'warn');
+  const text=shareText(c);   // посилання вже в кінці тексту
+  if(navigator.share && matchMedia('(pointer:coarse)').matches){ try{ await navigator.share({title:'Таймлайн '+hid(c), text}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+  const ok=await copyText(text);
+  if(msgEl) setMsg(msgEl, ok?'Таймлайн із посиланням скопійовано. Вставте його в чат Telegram.':'Не вдалося скопіювати автоматично. Виділіть посилання вище й скопіюйте вручну.', ok?'ok':'warn');
 }
 $('#caseBody').addEventListener('click', async e=>{
   if(e.target.closest('[data-ccclose]')){ closeCase(); return; }
