@@ -2243,13 +2243,15 @@ function queueHtml(a, k, pool){
   }
   return '';
 }
+// етап пройдено, якщо є його дата або дата будь-якого пізнішого ключового етапу (у багатьох імпортованих немає проміжних дат)
+const reached = (c,k) => { const i=ORDER_ALL.indexOf(k); return ORDER_ALL.some((x,j)=>j>=i && c.s[x]); };
 // «Подались разом з вами»: ті, хто мав стартовий етап у межах ±2 тижнів (або ±1 міс), і скільки з них уже має наступні етапи
 function togetherHtml(start, sd, keys, pool){
   for(const [w,lbl] of [[14,'±2 тижні'],[31,'±1 міс']]){
     const lo=addDays(sd,-w), hi=addDays(sd,w);
     const grp=pool.filter(c=>c.s[start] && c.s[start]>=lo && c.s[start]<=hi);
     if(grp.length<5) continue;
-    return `<div class="hh4">${TOGETHER[start]||'Разом з вами'} · ${lbl} · ${plural(grp.length,'людина','людини','людей')}</div><div class="hcoh">${keys.map(k=>`<div><b>${grp.filter(c=>c.s[k]).length}</b><span>мають ${esc(RT_NAME[k])}</span></div>`).join('')}</div>`;
+    return `<div class="hh4">${TOGETHER[start]||'Разом з вами'} · ${lbl} · ${plural(grp.length,'людина','людини','людей')}</div><div class="hcoh">${keys.map(k=>`<div><b>${grp.filter(c=>reached(c,k)).length}</b><span>мають ${esc(RT_NAME[k])}</span></div>`).join('')}</div>`;
   }
   return '';
 }
