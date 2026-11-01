@@ -932,8 +932,15 @@ function initPath(){
     b.addEventListener('click',()=>{ pathMode=b.dataset.path; LS.set('prdash_path',pathMode); document.querySelectorAll('[data-path]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); renderPath(filtered()); });
   });
 }
-const longTxt = v => v>=45 ? `${mon(v)} міс` : `${dd(v)} дн`;
-const gapTxt = g => g>=60 ? `${mon(g)} міс` : g>=14 ? `${Math.round(g/7)} тиж` : plural(Math.round(g),'день','дні','днів');
+// понад 12 місяців — «1 рік і 3 міс»
+function ymTxt(v){
+  const months=v/30.44; if(+months.toFixed(1)<12) return `${mon(v)} міс`;
+  let y=Math.floor(months/12), m=Math.round(months-y*12); if(m===12){ y++; m=0; }
+  return plural(y,'рік','роки','років') + (m ? ` і ${m} міс` : '');
+}
+const longTxt = v => v>=45 ? ymTxt(v) : `${dd(v)} дн`;
+const gapTxt = g => g>=60 ? ymTxt(g) : g>=14 ? `${Math.round(g/7)} тиж` : plural(Math.round(g),'день','дні','днів');
+const rngTxt = (q1,q3,inMonths) => !inMonths ? `${dd(q1)}–${dd(q3)} дн` : +(q3/30.44).toFixed(1)<12 ? `${mon(q1)}–${mon(q3)} міс` : `${ymTxt(q1)} – ${ymTxt(q3)}`;
 const ROUTE_FEW = 20;          // у маршруті етап з меншою кількістю таймлайнів показуємо блідим
 const sdiff = (a,b) => { const x=D(a), y=D(b); return (x==null||y==null) ? null : Math.round((y-x)/864e5); };
 const medOf = v => { if(!v.length) return null; const s=[...v].sort((p,q)=>p-q); return quant(s,.5); };
@@ -969,14 +976,14 @@ function renderPath(list){
     const t = r.start ? 'старт' : `≈ ${longTxt(r.med)}`;
     let sub = '';
     if(r.st){
-      const rng = r.st.n>1 ? `у половини людей ${r.med>=45?mon(r.st.q1)+'–'+mon(r.st.q3)+' міс':dd(r.st.q1)+'–'+dd(r.st.q3)+' дн'}` : '';
+      const rng = r.st.n>1 ? `у половини людей ${rngTxt(r.st.q1, r.st.q3, r.med>=45)}` : '';
       sub = [rng, plural(r.st.n,'таймлайн','таймлайни','таймлайнів')].filter(Boolean).join(' · ') + (few?' · мало даних':'');
     }
     // ваш рядок
     let mine='';
     if(me && me.s[r.k]){ const el=sdiff(me.s[P.a], me.s[r.k]); mine = `<span class="rme done">Ваша дата: <b class="num">${fmtDate(me.s[r.k])}</b>${!r.start&&el!=null?` · ${longTxt(el)}`:''}</span>`; }
     else if(waiting && i>lastIdx && upcoming<3 && !(me.s[r.k])){ upcoming++; const e=expect(r.k); const left=sdiff(today,e);
-      mine = `<span class="rme next">Вам орієнтовно: <b class="num">≈ ${fmtDate(e)}</b>${left>0?` · через ${durTxt(left).replace('≈','≈ ')}`:' · за медіаною вже мав би настати'}</span>`; }
+      mine = `<span class="rme next">Вам орієнтовно: <b class="num">≈ ${fmtDate(e)}</b>${left>0?` · через ${left>=45?'≈ ':''}${longTxt(left)}`:' · за медіаною вже мав би настати'}</span>`; }
     const row = `<div class="rt ${cls}${few?' few':''}${me&&me.s[r.k]?' me':''}"><span class="dot"></span><span class="nm">${esc(RT_NAME[r.k]||SHORT[r.k])}</span><span class="t">${t}</span>${sub?`<span class="r">${sub}</span>`:''}${mine}</div>`;
     if(!nx) return row;
     // «Ви тут» замість звичайного проміжку після вашого останнього етапу
