@@ -63,8 +63,11 @@ header p{margin:6px 0 0;color:var(--ink2);max-width:60ch}
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .tile .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.tile .v{font-family:var(--f-display);font-size:26px;font-weight:500;line-height:1.2}
-.tile .s{font-size:13px;color:var(--ink2)}
+.tile .v{font-family:var(--f-display);font-size:28px;font-weight:600;line-height:1.15;margin:4px 0 6px;letter-spacing:-.01em}
+.tile .v .u{font-size:15px;font-weight:500;color:var(--ink2);margin-left:5px;letter-spacing:0}
+.tile .s{font-size:13px;color:var(--ink2);line-height:1.45}
+.tile .s.muted{color:var(--muted)}
+.tile .s .num{font-family:var(--f-mono)}
 @media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 section{display:flex;flex-direction:column;gap:12px}
@@ -865,14 +868,22 @@ function render(){
   renderTiles(list); renderPath(list); if(adv){ renderRanges(list); renderTrend(list); } renderTable(list);
 }
 
+// строк у місяцях; у днях — лише якщо коротше за місяць
+const MONTH = 30.44;
+const durParts = (v, inMonths) => inMonths ? [mon(v), 'міс'] : [dd(v), plural(Math.round(v),'день','дні','днів').replace(/^\d+ /,'')];
 function renderTiles(list){
-  const done = list.filter(c=>c.s.ecopr).length;
-  const tile=(k,st,sub)=>`<div class="tile"><span class="k">${k}</span><span class="v num">${st?dd(st.med)+'<span style="font-size:15px"> дн</span>':'—'}</span><span class="s">${st?`медіана · ≈${mon(st.med)} міс · ${plural(st.n,'таймлайн','таймлайни','таймлайнів')}`:sub}</span>${st&&st.n>1?`<span class="s muted" style="font-size:12px">у половини ${dd(st.q1)}–${dd(st.q3)} дн</span>`:''}</div>`;
+  const done = list.filter(c=>c.s.ecopr).length, adr = list.filter(c=>c.adr&&c.adr.length).length;
+  const tile=(k,st)=>{
+    if(!st) return `<div class="tile"><span class="k">${k}</span><span class="v">—</span><span class="s">Ще немає даних</span></div>`;
+    const m = st.med>=MONTH; const [v,u]=durParts(st.med,m);
+    const rng = st.n>1 ? (m ? `${mon(st.q1)}–${mon(st.q3)} міс` : `${dd(st.q1)}–${dd(st.q3)} дн`) : '';
+    return `<div class="tile"><span class="k">${k}</span><span class="v num">${v}<span class="u">${u}</span></span><span class="s">Медіана за ${plural(st.n,'таймлайном','таймлайнами','таймлайнами')}</span>${rng?`<span class="s muted">У половини людей ${rng}</span>`:''}</div>`;
+  };
   $('#tiles').innerHTML =
-    `<div class="tile"><span class="k">Таймлайнів</span><span class="v num">${list.length}</span><span class="s">з eCoPR: <span class="num">${done}</span> · з дозапитом: <span class="num">${list.filter(c=>c.adr&&c.adr.length).length}</span></span></div>` +
-    tile('MPNP → номінація', segStats(list,['mpnp','nom']), 'ще немає даних') +
-    tile('Подача на PR → AOR', segStats(list,['pr','aor']), 'ще немає даних') +
-    tile('Подача на PR → eCoPR', segStats(list,['pr','ecopr']), 'ще немає даних');
+    `<div class="tile"><span class="k">Таймлайнів</span><span class="v num">${list.length}</span><span class="s">З eCoPR: <span class="num">${done}</span></span><span class="s muted">З дозапитом: <span class="num">${adr}</span></span></div>` +
+    tile('MPNP → номінація', segStats(list,['mpnp','nom'])) +
+    tile('Подача на PR → AOR', segStats(list,['pr','aor'])) +
+    tile('Подача на PR → eCoPR', segStats(list,['pr','ecopr']));
 }
 
 const GROUP_DEF = {pr:true, aor:true, a:false, b:false, tot:false};
@@ -921,8 +932,15 @@ function initPath(){
     b.addEventListener('click',()=>{ pathMode=b.dataset.path; LS.set('prdash_path',pathMode); document.querySelectorAll('[data-path]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); renderPath(filtered()); });
   });
 }
-const longTxt = v => v>=45 ? `${mon(v)} міс` : `${dd(v)} дн`;
-const gapTxt = g => g>=60 ? `${mon(g)} міс` : g>=14 ? `${Math.round(g/7)} тиж` : plural(Math.round(g),'день','дні','днів');
+// понад 12 місяців — «1 рік і 3 міс»
+function ymTxt(v){
+  const months=v/30.44; if(+months.toFixed(1)<12) return `${mon(v)} міс`;
+  let y=Math.floor(months/12), m=Math.round(months-y*12); if(m===12){ y++; m=0; }
+  return plural(y,'рік','роки','років') + (m ? ` і ${m} міс` : '');
+}
+const longTxt = v => v>=45 ? ymTxt(v) : `${dd(v)} дн`;
+const gapTxt = g => g>=60 ? ymTxt(g) : g>=14 ? `${Math.round(g/7)} тиж` : plural(Math.round(g),'день','дні','днів');
+const rngTxt = (q1,q3,inMonths) => !inMonths ? `${dd(q1)}–${dd(q3)} дн` : +(q3/30.44).toFixed(1)<12 ? `${mon(q1)}–${mon(q3)} міс` : `${ymTxt(q1)} – ${ymTxt(q3)}`;
 const ROUTE_FEW = 20;          // у маршруті етап з меншою кількістю таймлайнів показуємо блідим
 const sdiff = (a,b) => { const x=D(a), y=D(b); return (x==null||y==null) ? null : Math.round((y-x)/864e5); };
 const medOf = v => { if(!v.length) return null; const s=[...v].sort((p,q)=>p-q); return quant(s,.5); };
@@ -958,14 +976,14 @@ function renderPath(list){
     const t = r.start ? 'старт' : `≈ ${longTxt(r.med)}`;
     let sub = '';
     if(r.st){
-      const rng = r.st.n>1 ? `у половини людей ${r.med>=45?mon(r.st.q1)+'–'+mon(r.st.q3)+' міс':dd(r.st.q1)+'–'+dd(r.st.q3)+' дн'}` : '';
+      const rng = r.st.n>1 ? `у половини людей ${rngTxt(r.st.q1, r.st.q3, r.med>=45)}` : '';
       sub = [rng, plural(r.st.n,'таймлайн','таймлайни','таймлайнів')].filter(Boolean).join(' · ') + (few?' · мало даних':'');
     }
     // ваш рядок
     let mine='';
     if(me && me.s[r.k]){ const el=sdiff(me.s[P.a], me.s[r.k]); mine = `<span class="rme done">Ваша дата: <b class="num">${fmtDate(me.s[r.k])}</b>${!r.start&&el!=null?` · ${longTxt(el)}`:''}</span>`; }
     else if(waiting && i>lastIdx && upcoming<3 && !(me.s[r.k])){ upcoming++; const e=expect(r.k); const left=sdiff(today,e);
-      mine = `<span class="rme next">Вам орієнтовно: <b class="num">≈ ${fmtDate(e)}</b>${left>0?` · через ${durTxt(left).replace('≈','≈ ')}`:' · за медіаною вже мав би настати'}</span>`; }
+      mine = `<span class="rme next">Вам орієнтовно: <b class="num">≈ ${fmtDate(e)}</b>${left>0?` · через ${left>=45?'≈ ':''}${longTxt(left)}`:' · за медіаною вже мав би настати'}</span>`; }
     const row = `<div class="rt ${cls}${few?' few':''}${me&&me.s[r.k]?' me':''}"><span class="dot"></span><span class="nm">${esc(RT_NAME[r.k]||SHORT[r.k])}</span><span class="t">${t}</span>${sub?`<span class="r">${sub}</span>`:''}${mine}</div>`;
     if(!nx) return row;
     // «Ви тут» замість звичайного проміжку після вашого останнього етапу
