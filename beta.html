@@ -329,8 +329,7 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .more{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center;font-size:13.5px;color:var(--muted)}
 .more:empty{display:none}
 .anon{color:var(--ink2)}
-.hid{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:5px;white-space:nowrap}
-.anon .hid{font-size:12.5px;margin-left:0}
+.hid{display:inline-block;font-family:var(--f-mono);font-size:11.5px;line-height:1.5;color:var(--ink2);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:6px;white-space:nowrap;vertical-align:1px;letter-spacing:.03em}
 .tsearch{flex:1 1 220px;max-width:340px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:14px}
 .dmeta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:8px}
 .dmeta .btn{padding:5px 12px;font-size:13.5px}
@@ -500,7 +499,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
       <div class="seg" role="group" aria-label="Які таймлайни показати" id="tTabs">
         <button type="button" data-tab="all" aria-pressed="true">Усі <span class="num" data-n="all"></span></button><button type="button" data-tab="wait" aria-pressed="false">Чекають <span class="num" data-n="wait"></span></button><button type="button" data-tab="done" aria-pressed="false">Отримали eCoPR <span class="num" data-n="done"></span></button>
       </div>
-      <input type="search" class="tsearch" id="tSearch" placeholder="Пошук: #ID, дата (19.12.2025) або назва" aria-label="Пошук таймлайну">
+      <input type="search" class="tsearch" id="tSearch" placeholder="Пошук: ID, дата (19.12.2025) або назва" aria-label="Пошук таймлайну">
     </div>
     <div class="tablewrap">
       <table>
@@ -622,7 +621,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <label class="field full"><span>Примітки (CELPIP/IELTS, бали EOI, NOC, зміна роботи тощо)</span><textarea id="iNotes" maxlength="500"></textarea></label>
     <fieldset class="prot" id="protBox">
       <legend>Хто може оновлювати цей таймлайн</legend>
-      <label class="radio"><input type="radio" name="prot" value="no" checked><span><b>Будь-хто, хто знає його #ID</b><small>Без коду: щоб додати нові дати, достатньо натиснути «Оновити свій таймлайн» і ввести #ID. Усі зміни зберігаються в журналі.</small></span></label>
+      <label class="radio"><input type="radio" name="prot" value="no" checked><span><b>Будь-хто, хто знає його ID</b><small>Без коду: щоб додати нові дати, достатньо натиснути «Оновити свій таймлайн» і ввести ID. Усі зміни зберігаються в журналі.</small></span></label>
       <label class="radio"><input type="radio" name="prot" value="yes"><span><b>Тільки я, з кодом редагування</b><small id="protYesHint">Після збереження ви отримаєте код. Без нього змінити таймлайн не зможе ніхто, крім адміністратора.</small></span></label>
     </fieldset>
     <div class="hp" aria-hidden="true"><label>Website<input id="iWebsite" tabindex="-1" autocomplete="off"></label></div>
@@ -644,7 +643,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   <form class="dlg" id="codeForm" novalidate>
     <h2>Оновити свій таймлайн</h2>
     <div id="codeMine" hidden></div>
-    <label class="field"><span>ID таймлайну</span><input id="iCode" placeholder="#D674" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <label class="field"><span>ID таймлайну</span><input id="iCode" placeholder="D674" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
     <p class="muted" style="margin:-8px 0 0;font-size:13px">ID видно в таблиці поруч із назвою, а знайти свій таймлайн можна пошуком за датою подачі. Якщо ви зберігали код редагування (на зразок abcd1234-…), можна вставити його сюди.</p>
     <label class="field" id="keyField" hidden><span>Код редагування</span><input id="iKey" placeholder="abcd1234-…" autocomplete="off" spellcheck="false"></label>
     <div id="codeMsg" hidden></div>
@@ -660,7 +659,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 <dialog id="dlgDone">
   <div class="dlg">
     <h2 id="doneTitle">Таймлайн збережено</h2>
-    <p style="margin:0" class="doneid">Ваш таймлайн <b class="bigid num" id="doneId"></b></p>
+    <p style="margin:0" class="doneid">ID вашого таймлайну: <b class="bigid num" id="doneId"></b></p>
     <p style="margin:0;color:var(--ink2)" id="doneText"></p>
     <div class="code" id="doneCode"></div>
     <div class="dlg-foot"><span id="copyMsg" class="muted" style="font-size:13px"></span>
@@ -961,10 +960,10 @@ function renderTrend(list){
 /* --- таблиця --- */
 const STREAM_S={swm:'SWM',swo:'SWO',ies:'IES',bis:'BIS',other:'Інше'};
 const caseCode = c => String(c.code || String(c.id||'').slice(0,4)).toUpperCase();
-const hid = c => '#'+caseCode(c);
+const hid = c => caseCode(c);
 const isOpen = c => c.protect==='no';
-function caseName(c){ return c.nick ? c.nick+' '+hid(c) : ('Таймлайн '+hid(c)+(STREAM_S[c.stream]?' · '+STREAM_S[c.stream]:'')); }
-function caseNameHtml(c){ return c.nick ? `${esc(c.nick)}<span class="hid">${esc(hid(c))}</span>` : `<span class="anon">Таймлайн <span class="hid">${esc(hid(c))}</span>${STREAM_S[c.stream]?' · '+STREAM_S[c.stream]:''}</span>`; }
+function caseName(c){ return (c.nick || ('Таймлайн'+(STREAM_S[c.stream]?' · '+STREAM_S[c.stream]:''))) + ' · ID '+hid(c); }
+function caseNameHtml(c){ return c.nick ? `${esc(c.nick)}<span class="hid" title="ID таймлайну">${esc(hid(c))}</span>` : `<span class="anon">Таймлайн${STREAM_S[c.stream]?' · '+STREAM_S[c.stream]:''}<span class="hid" title="ID таймлайну">${esc(hid(c))}</span></span>`; }
 function caseHay(c){ return [hid(c), c.nick||'', ...Object.values(c.s||{}).map(fmtDate)].join(' ').toLowerCase(); }
 const PAGE=25;
 const T={tab:'all', sort:'days', asc:true, limit:PAGE, q:''};
@@ -995,7 +994,7 @@ function renderTable(list){
   document.querySelectorAll('.sortb').forEach(b=>{ const on=b.dataset.sort===T.sort; b.classList.toggle('on',on); b.classList.toggle('asc',on&&T.asc); b.closest('th').setAttribute('aria-sort', on?(T.asc?'ascending':'descending'):'none'); });
   const key = T.sort==='pr' ? (c=>D(c.s.pr)) : T.sort==='last' ? lastD : daysOf;
   const dir = T.asc?1:-1;
-  const q = T.q.trim().toLowerCase();
+  const q = T.q.trim().toLowerCase().replace(/^#/,'');
   const pool0 = q ? list.filter(c=>caseHay(c).includes(q)) : list;
   const pool = T.tab==='wait' ? pool0.filter(c=>!c.s.ecopr) : T.tab==='done' ? pool0.filter(c=>c.s.ecopr) : pool0;
   // порожні значення завжди в кінці, незалежно від напрямку
@@ -1011,7 +1010,7 @@ function renderTable(list){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${caseNameHtml(c)}${my.has(c.id)?'<span class="mytag" title="Ваш таймлайн">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':c.source==='csv'?' <span class="pill tg" title="Імпортовано з таблиці CSV">CSV</span>':''}</td>
+      <td>${caseNameHtml(c)}${my.has(c.id)?'<span class="mytag" title="Ваш таймлайн">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}</td>
       <td>${esc(lookup(STREAMS,c.stream)||'—')}<span class="sub2">${c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':''}</span></td>
       <td class="num">${fmtDate(c.s.pr)}</td>
       <td class="minicell">${miniTl(c, top, ref)}</td>
@@ -1021,7 +1020,7 @@ function renderTable(list){
     if(openId===c.id){
       let tl=''; let prev=null;
       for(const e of events(c)){ const d=prev?diff(prev,e.d):null; tl+=`<div class="${e.cls}"><span class="nm">${esc(e.l)}</span><span class="dt num">${fmtDate(e.d)}</span><span class="d num">${d!=null?'+'+d:''}</span></div>`; prev=e.d; }
-      const meta = `<div class="dmeta"><span class="num">${esc(hid(c))}</span><span>${isOpen(c)?'оновити може будь-хто за #ID':'захищено кодом редагування'}</span>${(!my.has(c.id)&&!isAdmin())?`<button class="btn" type="button" data-upd="${esc(c.id)}">${isOpen(c)?'Це мій таймлайн — оновити':'Оновити з кодом'}</button>`:''}</div>`;
+      const meta = `<div class="dmeta"><span>ID <b class="num" style="color:var(--ink)">${esc(hid(c))}</b></span><span>${isOpen(c)?'оновити може будь-хто, хто знає ID':'захищено кодом редагування'}</span>${isAdmin()?`<span>джерело: ${c.source==='telegram'?'Telegram':c.source==='csv'?'CSV':'форма'}</span>`:''}${(!my.has(c.id)&&!isAdmin())?`<button class="btn" type="button" data-upd="${esc(c.id)}">${isOpen(c)?'Це мій таймлайн — оновити':'Оновити з кодом'}</button>`:''}</div>`;
       h += `<tr class="detail"><td colspan="7"><div class="dbox">${meta}<div class="tl">${tl}</div>${c.notes?`<p class="notes">${esc(c.notes)}</p>`:''}</div></td></tr>`;
     }
   }
@@ -1212,7 +1211,7 @@ $('#form').addEventListener('submit', async e=>{
   if((warns.length || twin) && sig!==warnSig){
     warnSig=sig;
     const parts=[];
-    if(twin) parts.push(`Схоже, такий таймлайн уже є${twin.nick?` («${twin.nick}»)`:''}: збігаються дати ${twin._same.map(k=>SHORT[k]).join(', ')}. Якщо це ваш таймлайн (${hid(twin)}), краще оновіть його через «Оновити свій таймлайн», щоб не було дублікату.`);
+    if(twin) parts.push(`Схоже, такий таймлайн уже є${twin.nick?` («${twin.nick}»)`:''}: збігаються дати ${twin._same.map(k=>SHORT[k]).join(', ')}. Якщо це ваш таймлайн (ID ${hid(twin)}), краще оновіть його через «Оновити свій таймлайн», щоб не було дублікату.`);
     if(warns.length) parts.push('Деякі проміжки незвично довгі: '+warns.join('; ')+'. Перевірте дати.');
     setMsg($('#formMsg'), parts.join(' ')+' Якщо все правильно, натисніть «Зберегти» ще раз.', 'warn'); return;
   }
@@ -1256,13 +1255,13 @@ $('#btnDelConfirm').addEventListener('click', async ()=>{
 $('#btnAdd').addEventListener('click',()=>openForm());
 
 function showDone(d){
-  const x = CASES.find(c=>c.id===d.id); const code = '#'+String(d.code || (x?caseCode(x):String(d.id).slice(0,4))).toUpperCase();
+  const x = CASES.find(c=>c.id===d.id); const code = String(d.code || (x?caseCode(x):String(d.id).slice(0,4))).toUpperCase();
   const prot = d.protect==='yes';
   $('#doneTitle').textContent = d.claimed ? 'Таймлайн захищено' : 'Таймлайн збережено';
   $('#doneId').textContent = code;
   $('#doneText').textContent = prot
     ? 'Нижче ваш код редагування. Збережіть його: без нього змінити таймлайн не зможе ніхто, крім адміністратора. На цьому пристрої кнопка «Оновити» з\'явиться біля вашого таймлайну автоматично.'
-    : `Щоб пізніше додати нові дати (AOR, PAL, eCoPR), натисніть «Оновити свій таймлайн» і введіть ${code}. Запишіть ID або зробіть скріншот. На цьому пристрої ваш таймлайн позначено «ваш».`;
+    : `Щоб пізніше додати нові дати (AOR, PAL, eCoPR), натисніть «Оновити свій таймлайн» і введіть ID ${code}. Запишіть його або зробіть скріншот. На цьому пристрої ваш таймлайн позначено «ваш».`;
   $('#doneCode').hidden = !prot; $('#doneCode').textContent = prot ? d.id+'-'+d.key : '';
   $('#btnCopy').textContent = prot ? 'Скопіювати код' : 'Скопіювати ID'; $('#btnCopy').dataset.copy = prot ? d.id+'-'+d.key : code;
   $('#copyMsg').textContent=''; $('#dlgDone').showModal();
@@ -1302,12 +1301,12 @@ $('#codeForm').addEventListener('submit',e=>{
     if(!key){ setMsg($('#codeMsg'),`Цей код належить іншому таймлайну, а не ${hid(codeTarget)}.`); return; }
     $('#dlgCode').close(); openForm(codeTarget.id,key); return;
   }
-  const v=$('#iCode').value.trim(); if(!v){ setMsg($('#codeMsg'),'Введіть ID таймлайну, наприклад #D674.'); return; }
+  const v=$('#iCode').value.trim(); if(!v){ setMsg($('#codeMsg'),'Введіть ID таймлайну, наприклад D674.'); return; }
   const f=full(v);
   if(f){ if(!CASES.find(c=>c.id===f.id)){ setMsg($('#codeMsg'),'Таймлайн з таким кодом не знайдено.'); return; } $('#dlgCode').close(); openForm(f.id,f.key); return; }
   const code=v.replace(/^#/,'').trim().toUpperCase();
   const c=CASES.find(x=>caseCode(x)===code);
-  if(!c){ setMsg($('#codeMsg'),`Таймлайн #${code} не знайдено. ID має 4 символи, наприклад #D674. Його видно в таблиці поруч із назвою.`); return; }
+  if(!c){ setMsg($('#codeMsg'),`Таймлайн ${code} не знайдено. ID має 4 символи, наприклад D674. Його видно в таблиці поруч із назвою.`); return; }
   const m=mine().find(x=>x.id===c.id && x.key);
   if(m || isOpen(c)){ $('#dlgCode').close(); openForm(c.id, m?m.key:''); return; }
   codeTarget=c; $('#keyField').hidden=false; setMsg($('#codeMsg'),`Таймлайн ${hid(c)} захищено кодом. Введіть код редагування, який ви отримали після збереження.`,'warn'); $('#iKey').focus();
