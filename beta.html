@@ -329,6 +329,61 @@ td.idcell a:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .iwarn .e::before{content:"✕ "}
 .isrc summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
 .isrc pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--f-mono);background:var(--bg);border-radius:8px;padding:8px 10px;margin:6px 0 0;color:var(--ink2)}
+/* головна */
+.statsview{display:flex;flex-direction:column;gap:28px}
+.back{display:inline-block;font-size:14px;color:var(--accent);text-decoration:none;margin-bottom:6px}
+.back:hover{text-decoration:underline}
+.home{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.hhead h1{font-size:clamp(25px,6.4vw,34px);line-height:1.12;letter-spacing:-.02em;font-weight:700}
+.hsub{margin:5px 0 0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hseg{align-self:flex-start;margin-top:2px}
+.hseg button{padding:7px 12px;font-size:13.5px}
+.hcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.hq{display:block;font-size:15.5px;font-weight:600;margin-bottom:8px}
+.drow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.drow select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:14.5px;max-width:100%}
+.dgrow{flex:1 1 140px;min-width:0}
+.dchip{border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:14px;background:var(--surface);cursor:pointer;color:var(--ink)}
+.dchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.hmore{align-self:flex-start;font-size:13px;padding:4px 0 0}
+#hMore{margin-top:6px}
+.hh4{font:600 12px var(--f-body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:8px 0 2px}
+.hrow{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:0 10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line)}
+.hrow:first-child,.hh4+.hrow{border-top:0}
+.hrow i{width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);display:block;transform:translateY(1px)}
+.hrow.ok i{background:var(--accent)}
+.hrow.end i{background:var(--good);border-color:var(--good)}
+.hrow b{font-weight:600}
+.hrow .w{font:500 14.5px var(--f-mono);text-align:right;white-space:nowrap}
+.hrow .s{grid-column:2 / -1;font-size:12.5px;color:var(--muted);line-height:1.4}
+.hhere{font-size:13.5px;color:var(--accent);padding:6px 0 4px}
+.hhere .herepin{margin-right:6px}
+.hqueue{background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;margin-top:4px}
+.hqueue b{font-weight:600}
+.hcoh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.hcoh div{background:var(--bg);border-radius:10px;padding:7px 6px;text-align:center}
+.hcoh b{display:block;font:600 19px var(--f-display)}
+.hcoh span{font-size:11.5px;color:var(--muted)}
+.hmsg{font-size:13.5px;color:var(--muted);padding:6px 0 2px}
+.hmsg.err{color:var(--bad)}
+.hbtns{display:flex;flex-direction:column;gap:8px}
+.hbtns .btn{padding:11px 14px;font-size:15px;font-weight:600;text-align:center;justify-content:center}
+.hbtns .btn.link{font-weight:500;padding:6px;text-decoration:none}
+.hbtns .row2{display:flex;justify-content:center;gap:4px 16px;flex-wrap:wrap}
+.hbtns .row2 .btn.link{font-size:13.5px;text-decoration:underline}
+.hmine-h{font-size:15px;color:var(--ink2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.hmine-h .hid{margin-left:0}
+.hstatus{background:var(--good-soft);border-radius:10px;padding:10px 12px;font-size:14.5px}
+.hfoot{font-size:11.5px;color:var(--muted);text-align:center;margin:2px 0 0}
+@media (max-width:760px){
+  .wrap:has(#homeView:not([hidden])){padding-block:16px 14px}
+  .home{gap:10px}
+  .hcard{padding:12px 12px 10px;gap:6px}
+  .hrow{padding:5px 0}
+  .hq{margin-bottom:6px}
+  .hbtns{gap:6px}
+  .hbtns .btn{padding:10px 14px}
+}
 /* мотивація */
 .goal{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13.5px;color:var(--ink2);padding:0 2px;margin-top:-8px}
 .goal .gt b{color:var(--ink);font-family:var(--f-mono);font-weight:500}
@@ -448,9 +503,40 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 <body>
 <!--BODY-START-->
 <div class="wrap" id="mainView">
+
+  <div class="banner" id="demoBanner" hidden><b>Демо-режим.</b> Показано приклад даних, нові кейси не зберігаються. Щоб увімкнути спільну базу, вставте URL Apps Script у змінну <span class="num">API_URL</span> в index.html.</div>
+  <div class="banner" id="errBanner" hidden></div>
+  <div class="banner adm-banner" id="admBanner" hidden><b>Режим адміністратора.</b> Можна редагувати й видаляти будь-який кейс. <a href="#import">Імпорт</a> · <button class="btn link" type="button" id="admLogout" style="padding:0">Вийти</button></div>
+
+
+  <div id="homeView" class="home">
+    <header class="hhead"><h1 id="brand">Таймлайни PR · MPNP</h1><p class="hsub" id="hsub">Таймлайни PR · MPNP</p></header>
+    <div id="homeMine" hidden></div>
+    <div id="homeVisitor" hidden>
+      <div class="seg hseg" role="group" aria-label="Ваш етап"><button type="button" data-hm="pr" aria-pressed="true">Я подався на PR</button><button type="button" data-hm="mpnp" aria-pressed="false">Я ще на етапі MPNP</button></div>
+      <div class="hcard">
+        <div id="hPr">
+          <label class="hq" for="h_pr">Коли ви подались на PR?</label>
+          <div class="drow"><button type="button" class="dchip" data-day="0">Сьогодні</button><button type="button" class="dchip" data-day="1">Вчора</button><span class="dgrow" id="hPrCtl"></span></div>
+          <button type="button" class="btn link hmore" id="hMoreBtn">Вже є AOR чи інший етап? Уточнити</button>
+          <div class="drow" id="hMore" hidden><select id="h_last" aria-label="Останній етап"></select><span class="dgrow" id="hLastCtl"></span></div>
+        </div>
+        <div id="hMp" hidden>
+          <label class="hq" for="h_md">Ваш останній етап MPNP</label>
+          <div class="drow"><select id="h_mst" aria-label="Етап MPNP"></select><span class="dgrow" id="hMdCtl"></span></div>
+        </div>
+        <div id="hOut"></div>
+      </div>
+      <div class="hbtns" id="hBtns"></div>
+    </div>
+    <p class="hfoot">Дані вносять самі учасники · це не офіційні строки IRCC</p>
+  </div>
+
+  <div id="statsView" class="statsview" hidden>
   <header>
     <div>
-      <h1>Таймлайни PR&nbsp;· MPNP</h1>
+      <a class="back" href="#" data-home>← Назад</a>
+      <h1>Статистика</h1>
       <p>Спільнота ділиться датами етапів від EOI до eCoPR. Тут видно, скільки зазвичай триває кожен етап і коли чекати наступний.</p>
     </div>
     <div class="actions">
@@ -458,11 +544,6 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
       <button class="btn primary" id="btnAdd" type="button">Додати свій таймлайн</button>
     </div>
   </header>
-
-  <div class="banner" id="demoBanner" hidden><b>Демо-режим.</b> Показано приклад даних, нові кейси не зберігаються. Щоб увімкнути спільну базу, вставте URL Apps Script у змінну <span class="num">API_URL</span> в index.html.</div>
-  <div class="banner" id="errBanner" hidden></div>
-  <div class="banner adm-banner" id="admBanner" hidden><b>Режим адміністратора.</b> Можна редагувати й видаляти будь-який кейс. <a href="#import">Імпорт</a> · <button class="btn link" type="button" id="admLogout" style="padding:0">Вийти</button></div>
-
 
   <div class="goal" id="goal"></div>
 
@@ -548,6 +629,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   </section>
 
   <footer>Дані вносять самі учасники, вони не перевіряються. Не вказуйте ПІБ, номери заявок (UCI, application number) та інші особисті дані. Тут статистика спільноти, а не офіційні строки IRCC чи MPNP.</footer>
+  </div>
 </div>
 
 <div class="wrap" id="adminView" hidden>
@@ -1174,7 +1256,7 @@ function initForm(){
   $('#dateFields').innerHTML = STAGES.map(s=>`<div class="field"><label for="d_${s.k}">${esc(s.l)}</label>${dateCtl('d_'+s.k)}</div>`).join('');
 }
 function setMsg(el, text, kind){ el.hidden=!text; el.className='msg '+(kind||'err'); el.textContent=text||''; }
-function openForm(id,key,admin){
+function openForm(id,key,admin,pre){
   editing = id?{id,key:key||'',admin:!!admin}:null;
   const c = id ? CASES.find(x=>x.id===id) : null;
   $('#dlgTitle').textContent = c?(admin?`Таймлайн ${hid(c)} (адміністратор)`:`Оновлення таймлайну ${hid(c)}`):'Новий таймлайн';
@@ -1182,7 +1264,7 @@ function openForm(id,key,admin){
   document.querySelectorAll('input[name=prot]').forEach(r=>{ r.checked = r.value===prot; r.disabled = !!(c && !admin && !key && r.value==='no' && prot!=='no'); });
   $('#protYesHint').textContent = (c && !admin && !key && prot==='no') ? 'Ви отримаєте новий код редагування. Після цього змінити таймлайн зможете лише ви (і адміністратор).' : 'Після збереження ви отримаєте код. Без нього змінити таймлайн не зможе ніхто, крім адміністратора.';
   $('#iNick').value=c?.nick||''; $('#iStream').value=c?.stream||''; $('#iEe').value=c?.ee||''; $('#iSec').value=c?.security||''; $('#iNotes').value=c?.notes||''; $('#iWebsite').value='';
-  STAGES.forEach(s=>setD($('#d_'+s.k), c?.s[s.k]));
+  STAGES.forEach(s=>setD($('#d_'+s.k), c ? c.s[s.k] : (pre||{})[s.k]));
   ['adr','ghost'].forEach(k=>{ $('#list_'+k).innerHTML=''; (c?.[k]||[]).forEach(v=>addMulti(k,v)); });
   $('#btnDel').hidden=!(c && (key || admin)); $('#btnDelConfirm').hidden=true;
   setMsg($('#formMsg'),''); $('#btnSave').disabled=false; warnSig='';
@@ -1382,10 +1464,15 @@ async function admPost(body){
 function isAdmin(){ return !DEMO && !!SS.get('prdash_admpw'); }
 function renderAdminBanner(){ $('#admBanner').hidden = !isAdmin(); }
 $('#admLogout').addEventListener('click',()=>{ SS.set('prdash_admpw',''); ADM.pw=''; $('#admLogin').hidden=false; $('#admMain').hidden=true; renderAdminBanner(); render(); });
+let VIEW='home';
 function route(){
-  const adm = location.hash==='#import';
+  const h=location.hash, adm = h==='#import';
   $('#mainView').hidden = adm; $('#adminView').hidden = !adm;
-  if(adm) admEnter();
+  if(adm){ admEnter(); return; }
+  const prev=VIEW;
+  if(h==='#stats') VIEW='stats'; else if(!/^#[0-9A-Z]{4}$/i.test(h)) VIEW='home';
+  $('#homeView').hidden = VIEW!=='home'; $('#statsView').hidden = VIEW!=='stats';
+  if(prev!==VIEW) scrollTo(0,0);
 }
 async function admEnter(){
   if(DEMO){ setMsg($('#admLoginMsg'),'Імпорт працює лише з підключеною базою (API_URL).'); return; }
@@ -2087,7 +2174,7 @@ function openCase(code){
 function closeCase(){
   if($('#dlgCase').open) $('#dlgCase').close();
 }
-$('#dlgCase').addEventListener('close',()=>{ caseOpenId=null; if(/^#[0-9A-Z]{4}$/i.test(location.hash)) history.replaceState(null,'',location.pathname+location.search); });
+$('#dlgCase').addEventListener('close',()=>{ caseOpenId=null; if(/^#[0-9A-Z]{4}$/i.test(location.hash)) history.replaceState(null,'',location.pathname+location.search+(VIEW==='stats'?'#stats':'')); });
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(_){ return false; } }
 async function shareCase(c, msgEl){
   const text=shareText(c);   // посилання вже в кінці тексту
@@ -2110,8 +2197,161 @@ document.addEventListener('click', e=>{
   else if(a.dataset.act==='edit'){ const mc=myCase(); if(mc) openUpdate(mc.id); }
 });
 
+/* ===== Головна: прогноз, «Подались разом з вами», рух черги ===== */
+const NAMES=['Навігатор ждунів','PR-Радар','Кришталева куля іммігранта','Калькулятор терпіння'];
+(function(){ let i=Number(LS.get('prdash_name',-1)); i=Number.isFinite(i)?(i+1)%NAMES.length:0; LS.set('prdash_name',i); $('#brand').textContent=NAMES[i]; document.title=NAMES[i]+' · Таймлайни PR MPNP'; })();
+const MON_N=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
+const MON_L=['січні','лютому','березні','квітні','травні','червні','липні','серпні','вересні','жовтні','листопаді','грудні'];
+const ymOf = iso => { const d=new Date(D(iso)); return [d.getUTCFullYear(), d.getUTCMonth()]; };
+const monthYear = iso => { const [y,m]=ymOf(iso); return `${MON_N[m]} ${y}`; };
+function monthRange(a,b){ const [y1,m1]=ymOf(a), [y2,m2]=ymOf(b); if(y1===y2&&m1===m2) return `${MON_N[m1]} ${y1}`; return y1===y2 ? `${MON_N[m1]} – ${MON_N[m2]} ${y2}` : `${MON_N[m1]} ${y1} – ${MON_N[m2]} ${y2}`; }
+function monthRangeLoc(a,b){ const [y1,m1]=ymOf(a), [y2,m2]=ymOf(b); if(y1===y2&&m1===m2) return `у ${MON_L[m1]} ${y1}`; return y1===y2 ? `у ${MON_L[m1]} – ${MON_L[m2]} ${y2}` : `у ${MON_L[m1]} ${y1} – ${MON_L[m2]} ${y2}`; }
+const ACT = {eoi:'подали EOI', mpnp:'подали заявку MPNP', nom:'отримали номінацію', pr:'подались на PR', aor:'отримали AOR', bio:'здали біометрію', med:'пройшли медогляд', pal:'отримали PAL', p1:'отримали Portal 1', p2:'отримали Portal 2', ecopr:'отримали eCoPR'};
+const TOGETHER = {eoi:'Подали EOI разом з вами', mpnp:'Подали заявку MPNP разом з вами', nom:'Отримали номінацію разом з вами', pr:'Подались на PR разом з вами'};
+function pairSt(a,b,pool){ const v=[]; for(const c of pool){ const d=sdiff(c.s[a],c.s[b]); if(d!=null && d>=0) v.push(d); } if(!v.length) return {n:0}; v.sort((x,y)=>x-y); return {n:v.length, med:quant(v,.5), q1:quant(v,.25), q3:quant(v,.75)}; }
+// орієнтовна дата етапу k від відомої дати етапу a: пряма пара, інакше ланцюжок через проміжний етап
+function fcOne(a, ad, k, pool){
+  const p=pairSt(a,k,pool);
+  if(p.n>=8) return {k, d:addDays(ad,p.med), lo:addDays(ad,p.q1), hi:addDays(ad,p.q3), n:p.n};
+  for(const m of ['nom','pr','aor','pal','p1']){ if(m===a||m===k) continue; const x=pairSt(a,m,pool), y=pairSt(m,k,pool); if(x.n>=8 && y.n>=8) return {k, d:addDays(ad,x.med+y.med), n:Math.min(x.n,y.n)}; }
+  return null;
+}
+const ORDER_ALL=['eoi','laa','mpnp','nom','pr','aor','bio','med','pal','p1','p2','ecopr'];
+function targetsAfter(a, list){ const ia=ORDER_ALL.indexOf(a); const after=list.filter(k=>ORDER_ALL.indexOf(k)>ia); const t=after.filter(k=>k!=='ecopr').slice(0,2); if(after.includes('ecopr')) t.push('ecopr'); return t; }
+function fcRowsHtml(a, ad, keys, pool){
+  const today=todayISO(); let h='';
+  for(const k of keys){
+    const f=fcOne(a,ad,k,pool); const cls=k==='ecopr'?'end':'';
+    if(!f){ h+=`<div class="hrow ${cls}"><i></i><b>${esc(RT_NAME[k])}</b><span class="w">—</span><span class="s">ще замало даних спільноти</span></div>`; continue; }
+    const left=sdiff(today,f.d);
+    const when = left<0 ? fmtDate(f.d) : left>60 ? monthYear(f.d) : fmtDate(f.d);
+    const rel = left<0 ? 'за медіаною вже мав би настати' : left===0 ? 'приблизно сьогодні' : `через ${longTxt(left)}`;
+    const rng = (f.lo && f.hi && left>60) ? ` · у половини людей ${monthRange(f.lo,f.hi)}` : '';
+    h+=`<div class="hrow ${cls}"><i></i><b>${esc(RT_NAME[k])}</b><span class="w">≈ ${when}</span><span class="s">${rel}${rng}</span></div>`;
+  }
+  return h;
+}
+// рух черги: хто нещодавно отримав наступний етап і коли ці люди мали етап a
+function queueHtml(a, k, pool){
+  for(const days of [30,90]){
+    const from=addDays(todayISO(),-days);
+    const got=pool.filter(c=>c.s[k] && c.s[a] && c.s[k]>=from && c.s[k]<=todayISO());
+    if(got.length<2) continue;
+    const ds=got.map(c=>c.s[a]).sort(); const lo=ds[Math.floor((ds.length-1)*.1)], hi=ds[Math.ceil((ds.length-1)*.9)];
+    const who = k==='pr' ? `на PR подались ${plural(got.length,'людина','людини','людей')}` : `${RT_NAME[k]} ${got.length===1?'отримала':'отримали'} ${plural(got.length,'людина','людини','людей')}`;
+    return `<div class="hqueue"><b>Як там у конкурентів:</b> за останні ${days===30?'30 днів':'3 місяці'} ${who}. Вони ${ACT[a]||'мали '+RT_NAME[a]} ${monthRangeLoc(lo,hi)}.</div>`;
+  }
+  return '';
+}
+// «Подались разом з вами»: ті, хто мав стартовий етап у межах ±2 тижнів (або ±1 міс), і скільки з них уже має наступні етапи
+function togetherHtml(start, sd, keys, pool){
+  for(const [w,lbl] of [[14,'±2 тижні'],[31,'±1 міс']]){
+    const lo=addDays(sd,-w), hi=addDays(sd,w);
+    const grp=pool.filter(c=>c.s[start] && c.s[start]>=lo && c.s[start]<=hi);
+    if(grp.length<5) continue;
+    return `<div class="hh4">${TOGETHER[start]||'Разом з вами'} · ${lbl} · ${plural(grp.length,'людина','людини','людей')}</div><div class="hcoh">${keys.map(k=>`<div><b>${grp.filter(c=>c.s[k]).length}</b><span>мають ${esc(RT_NAME[k])}</span></div>`).join('')}</div>`;
+  }
+  return '';
+}
+const PR_LAST = [['aor','AOR'],['bio','Biometrics'],['med','Medicals'],['pal','PAL'],['p1','Portal 1'],['p2','Portal 2']];
+const MP_ST = [['eoi','EOI подано'],['mpnp','Заявку MPNP подано'],['nom','Номінацію отримано']];
+let HOME = Object.assign({mode:'pr', pr:'', last:'aor', lastd:'', more:false, mst:'eoi', md:''}, LS.get('prdash_home',{}));
+let homeOther=false;
+function initHome(){
+  $('#hPrCtl').innerHTML=dateCtl('h_pr'); $('#hLastCtl').innerHTML=dateCtl('h_lastd','Дата етапу'); $('#hMdCtl').innerHTML=dateCtl('h_md');
+  $('#h_last').innerHTML=PR_LAST.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+  $('#h_mst').innerHTML=MP_ST.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+  setD($('#h_pr'),HOME.pr); setD($('#h_lastd'),HOME.lastd); setD($('#h_md'),HOME.md); $('#h_last').value=HOME.last; $('#h_mst').value=HOME.mst;
+  $('#hMore').hidden=!HOME.more;
+  const upd=()=>{ HOME.pr=fromDMY($('#h_pr').value)||''; HOME.lastd=fromDMY($('#h_lastd').value)||''; HOME.md=fromDMY($('#h_md').value)||''; HOME.last=$('#h_last').value; HOME.mst=$('#h_mst').value; LS.set('prdash_home',HOME); renderHome(); };
+  $('#homeVisitor').addEventListener('input',upd); $('#homeVisitor').addEventListener('change',upd);
+  $('#homeVisitor').addEventListener('click',e=>{
+    const m=e.target.closest('[data-hm]'); if(m){ HOME.mode=m.dataset.hm; LS.set('prdash_home',HOME); renderHome(); return; }
+    const d=e.target.closest('[data-day]'); if(d){ setD($('#h_pr'), addDays(todayISO(), -Number(d.dataset.day))); upd(); return; }
+    if(e.target.closest('#hMoreBtn')){ HOME.more=!HOME.more; $('#hMore').hidden=!HOME.more; upd(); }
+  });
+}
+function homeSave(){
+  const pre={};
+  if(HOME.mode==='pr'){ if(HOME.pr) pre.pr=HOME.pr; if(HOME.more && HOME.lastd) pre[HOME.last]=HOME.lastd; }
+  else if(HOME.md) pre[HOME.mst]=HOME.md;
+  openForm(null,null,false,pre);
+}
+function renderHome(){
+  $('#hsub').textContent = `Таймлайни PR · MPNP · ${plural(CASES.length,'таймлайн','таймлайни','таймлайнів')}`;
+  const me=myCase(); const showMine = me && !homeOther && (me.s.pr || me.s.eoi || me.s.mpnp || me.s.nom);
+  $('#homeMine').hidden=!showMine; $('#homeVisitor').hidden=!!showMine;
+  if(showMine) return renderHomeMine(me);
+  document.querySelectorAll('[data-hm]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hm===HOME.mode)));
+  $('#hPr').hidden = HOME.mode!=='pr'; $('#hMp').hidden = HOME.mode!=='mpnp';
+  const today=todayISO(); const yest=addDays(today,-1);
+  document.querySelectorAll('[data-day]').forEach(b=>b.setAttribute('aria-pressed', String(HOME.pr===(b.dataset.day==='0'?today:yest))));
+  let a, ad, start, sd, keys, cohKeys, err='';
+  if(HOME.mode==='pr'){
+    start='pr'; sd=HOME.pr;
+    if(HOME.more && HOME.lastd){ a=HOME.last; ad=HOME.lastd; } else { a='pr'; ad=HOME.pr; }
+    keys=targetsAfter(a,['aor','pal','p1','p2','ecopr']); cohKeys=['aor','pal','ecopr'];
+    if(HOME.pr && HOME.more && HOME.lastd && HOME.lastd<HOME.pr) err='Дата етапу раніша за дату подачі на PR.';
+  } else {
+    a=HOME.mst; ad=HOME.md; start=HOME.mst; sd=HOME.md;
+    keys=targetsAfter(a,['nom','pr','aor','pal','ecopr']); cohKeys=['nom','pr','aor'].filter(k=>ORDER_ALL.indexOf(k)>ORDER_ALL.indexOf(a)).slice(0,3);
+    if(cohKeys.length<3) cohKeys=['pr','aor','ecopr'];
+  }
+  if(ad && ad>today) err='Ця дата в майбутньому. Перевірте, будь ласка.';
+  let out='';
+  if(!ad) out=`<p class="hmsg">${HOME.mode==='pr'?'Вкажіть дату подачі на PR — і тут з\'явиться, коли зазвичай приходять AOR, PAL і eCoPR.':'Вкажіть дату — і тут з\'явиться, коли зазвичай приходять номінація, запрошення на PR і eCoPR.'}</p>`;
+  else if(err) out=`<p class="hmsg err">${err}</p>`;
+  else if(!CASES.length) out='<p class="hmsg">Завантажую дані спільноти…</p>';
+  else {
+    out=`<div class="hh4">Чого чекати далі</div>${fcRowsHtml(a,ad,keys,CASES)}`;
+    const age=sd?sdiff(sd,today):0;
+    const tog = (sd && age>45) ? togetherHtml(start, sd, cohKeys, CASES) : '';
+    out += tog || (keys[0] ? queueHtml(a, keys[0], CASES) : '');
+  }
+  $('#hOut').innerHTML=out;
+  $('#hBtns').innerHTML = `<button class="btn primary" type="button" data-hsave>Зберегти свій таймлайн і отримати посилання</button>
+    <a class="btn link" href="#stats">Подивитись статистику →</a>
+    <div class="row2">${homeOther?`<button class="btn link" type="button" data-hback>← Мій таймлайн</button>`:`<button class="btn link" type="button" data-hcode>Вже додавали? Оновити за ID</button>`}</div>`;
+}
+function renderHomeMine(me){
+  const start = me.s.pr ? 'pr' : ['nom','mpnp','eoi'].find(k=>me.s[k]);
+  const others = CASES.filter(c=>c.id!==me.id), today=todayISO();
+  const last = ['eoi','mpnp','nom','pr','aor','pal','p1','p2','ecopr'].filter(k=>me.s[k]).pop();   // останній ключовий етап
+  const keys = me.s.ecopr ? [] : targetsAfter(last, ORDER_ALL.indexOf(last)>=ORDER_ALL.indexOf('pr') ? ['aor','pal','p1','p2','ecopr'] : ['nom','pr','aor','ecopr']);
+  let h=`<div class="hmine-h">Ваш таймлайн <span class="hid">${esc(hid(me))}</span> · ${start==='pr'?'подача':esc(RT_NAME[start])} ${fmtDate(me.s[start])}</div><div class="hcard">`;
+  if(me.s.ecopr){
+    const t=sdiff(me.s[start],me.s.ecopr); const v=[]; others.forEach(c=>{ const d=sdiff(c.s[start],c.s.ecopr); if(d!=null&&d>=0) v.push(d); });
+    const faster = v.length>=5 ? v.filter(x=>x>t).length/v.length : null;
+    h+=`<div class="hstatus">eCoPR отримано через <b>${longTxt(t)}</b>${faster!=null?` — швидше, ніж у ${pctTxt(faster)} людей`:''}. Вітаємо!</div>`;
+  } else {
+    if(last && last!==start){
+      const t=sdiff(me.s[start],me.s[last]); const v=[]; others.forEach(c=>{ const d=sdiff(c.s[start],c.s[last]); if(d!=null&&d>=0) v.push(d); });
+      let cmp=''; if(v.length>=5 && t!=null){ const longer=v.filter(x=>x>t).length/v.length, shorter=v.filter(x=>x<t).length/v.length; cmp = longer>=shorter ? ` — швидше, ніж у ${pctTxt(longer)} людей` : ` — довше, ніж у ${pctTxt(shorter)} людей`; }
+      h+=`<div class="hrow ok"><i></i><b>${esc(RT_NAME[last])}</b><span class="w">${fmtDate(me.s[last])}</span><span class="s">через ${longTxt(t)}${cmp}</span></div>`;
+    }
+    if(keys[0]) h+=`<div class="hhere"><span class="herepin">Ви тут</span> чекаєте ${esc(RT_NAME[keys[0]])} <b>${plural(Math.max(0,sdiff(me.s[last],today)),'день','дні','днів')}</b></div>`;
+    h+=fcRowsHtml(last, me.s[last], keys, others);
+  }
+  const cohKeys = start==='pr' ? ['aor','pal','ecopr'] : ['nom','pr','aor'];
+  const tog = togetherHtml(start, me.s[start], cohKeys, others);
+  h += tog || (keys[0] ? queueHtml(last, keys[0], others) : '');
+  h+=`</div><div class="hbtns"><a class="btn primary" target="_blank" rel="noopener" href="${esc(tgLink(me))}">Поділитись у Telegram</a>
+    <button class="btn" type="button" data-hupd>Оновити свій таймлайн</button>
+    <a class="btn link" href="#stats">Подивитись статистику →</a>
+    <div class="row2"><a class="btn link" href="#${esc(hid(me))}">Картка таймлайну</a><button class="btn link" type="button" data-hother>Порахувати для іншої дати</button></div></div>`;
+  $('#homeMine').innerHTML=h;
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-hsave]')){ homeSave(); return; }
+  if(e.target.closest('[data-hcode]')){ openCodeDlg(); return; }
+  if(e.target.closest('[data-hother]')){ homeOther=true; renderHome(); scrollTo(0,0); return; }
+  if(e.target.closest('[data-hback]')){ homeOther=false; renderHome(); return; }
+  if(e.target.closest('[data-hupd]')){ const me=myCase(); if(me) openUpdate(me.id); return; }
+  if(e.target.closest('[data-home]')){ e.preventDefault(); history.pushState(null,'',location.pathname+location.search); route(); scrollTo(0,0); }
+});
+
 /* ===== Завантаження ===== */
-function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); renderEngage(); if(!DEMO && !LOADED) return; caseFromHash(); }
+function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); renderEngage(); renderHome(); if(!DEMO && !LOADED) return; caseFromHash(); }
 let LOADED=false;
 async function load(){
   $('#errBanner').hidden=true;
@@ -2120,7 +2360,7 @@ async function load(){
   afterData();
 }
 
-initFilters(); initTrend(); initForm(); initPath();
+initFilters(); initTrend(); initForm(); initPath(); initHome();
 addEventListener('hashchange', ()=>{ const wasAdm=!$('#adminView').hidden; route(); if(location.hash==='#import') return; if(wasAdm) render(); caseFromHash(); }); route(); renderAdminBanner();
 if(DEMO){ $('#demoBanner').hidden=false; CASES=demoCases(); afterData(); }
 else { afterData(); load(); }
