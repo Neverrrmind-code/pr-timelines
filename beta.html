@@ -1343,16 +1343,7 @@ function validate(c){
 $('#form').addEventListener('submit', async e=>{
   e.preventDefault();
   const {c,bad}=readForm(); const err= bad.length ? `Дата «${bad[0]}» має бути у форматі ДД.ММ.РРРР, наприклад 19.12.2025.` : validate(c); if(err){ setMsg($('#formMsg'),err); return; }
-  const warns=outlierWarnings(c);
-  const twin = editing ? null : formTwin(c);
-  const sig=JSON.stringify([warns, twin&&twin.id]);
-  if((warns.length || twin) && sig!==warnSig){
-    warnSig=sig;
-    const parts=[];
-    if(twin) parts.push(`Схоже, такий таймлайн уже є${twin.nick?` («${twin.nick}»)`:''}: збігаються дати ${twin._same.map(k=>SHORT[k]).join(', ')}. Якщо це ваш таймлайн (ID ${hid(twin)}), краще оновіть його через «Оновити свій таймлайн», щоб не було дублікату.`);
-    if(warns.length) parts.push('Деякі проміжки незвично довгі: '+warns.join('; ')+'. Перевірте дати.');
-    setMsg($('#formMsg'), parts.join(' ')+' Якщо все правильно, натисніть «Зберегти» ще раз.', 'warn'); return;
-  }
+  // зберігаємо з першого разу: без попереджень про довгі проміжки чи схожі таймлайни (дублікати ловить адмін-вкладка)
   $('#btnSave').disabled=true; setMsg($('#formMsg'),'Зберігаю…','ok');
   const protect = (document.querySelector('input[name=prot]:checked')||{}).value || 'no';
   const remember = (id,key)=>{ const rest=mine().filter(m=>m.id!==id); LS.set('prdash_mine',[...rest,{id,key:key||''}]); };
