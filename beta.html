@@ -890,7 +890,7 @@ const PATHS = {
   all: {a:'eoi', ms:['laa','mpnp','nom','pr','aor','bio','med','elig','pal','secdone','p1','p2','ecopr'], major:['nom','pr','aor','pal','ecopr'], end:'ecopr'}
 };
 // назви етапів у маршруті — англійською, як у трекері IRCC і в постах спільноти
-const RT_NAME = {eoi:'EOI',laa:'LAA',mpnp:'MPNP application',verif:'Job verification',nom:'Nomination',pr:'PR application',aor:'AOR',bio:'Biometrics',med:'Medicals',elig:'Eligibility',pal:'PAL',secdone:'Security check',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const RT_NAME = {eoi:'EOI',laa:'LAA',mpnp:'MPNP application',verif:'Job verification',nom:'Nomination',pr:'PR application',aor:'AOR',bio:'Biometrics',med:'Medicals',elig:'Eligibility',pal:'PAL',secdone:'Security check completed',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 let pathMode = LS.get('prdash_path','ircc'); if(!PATHS[pathMode]) pathMode='ircc';
 function initPath(){
   document.querySelectorAll('[data-path]').forEach(b=>{
