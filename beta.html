@@ -2226,8 +2226,7 @@ function fcRowsHtml(a, ad, keys, pool){
     const left=sdiff(today,f.d);
     const when = left<0 ? fmtDate(f.d) : left>60 ? monthYear(f.d) : fmtDate(f.d);
     const rel = left<0 ? 'за медіаною вже мав би настати' : left===0 ? 'приблизно сьогодні' : `через ${longTxt(left)}`;
-    const rng = (f.lo && f.hi && left>60) ? ` · у половини людей ${monthRange(f.lo,f.hi)}` : '';
-    h+=`<div class="hrow ${cls}"><i></i><b>${esc(RT_NAME[k])}</b><span class="w">≈ ${when}</span><span class="s">${rel}${rng}</span></div>`;
+    h+=`<div class="hrow ${cls}"><i></i><b>${esc(RT_NAME[k])}</b><span class="w">≈ ${when}</span><span class="s">${rel}</span></div>`;
   }
   return h;
 }
