@@ -224,21 +224,23 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .seg button{border:0;background:none;padding:7px 12px;font-size:13.5px;cursor:pointer;color:var(--ink2)}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
-.pathlabels{position:relative;height:40px}
-.plabel{position:absolute;left:0;bottom:calc(var(--lv,0) * 34px + 8px);white-space:nowrap;font-size:12.5px;line-height:1.25}
-.plabel b{display:block;font-weight:500;color:var(--ink)}
-.plabel span{color:var(--ink2);font-family:var(--f-mono);font-size:11.5px}
-.plabel::after{content:"";position:absolute;left:var(--sx,0);top:100%;height:calc(var(--lv,0) * 34px + 8px);border-left:1px solid var(--line)}
-.plabel.few{opacity:.55}
-.ptrack{position:relative;height:10px;border-radius:5px;background:var(--line)}
-.ptrack .pseg{position:absolute;top:0;height:10px;background:var(--accent)}
-.ptrack .pseg.alt{background:color-mix(in srgb,var(--accent) 55%,var(--surface))}
-.ptrack .pseg:first-child{border-radius:5px 0 0 5px}
-.ptrack .pdot{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
-.ptrack .pdot.end{background:var(--good);border-color:var(--good)}
-.paxis{position:relative;height:24px;font-size:11px;color:var(--muted);font-family:var(--f-mono)}
-.paxis span{position:absolute;top:7px;transform:translateX(-50%);white-space:nowrap}
-.paxis span:first-child{transform:none}
+.route-panel{padding:18px 20px 8px}
+.route{max-width:760px}
+.rt{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:0 12px;position:relative}
+.rt .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);margin:4px 0 0 4px;z-index:1}
+.rt.start .dot{background:var(--accent)}
+.rt.end .dot{background:var(--good);border-color:var(--good);width:16px;height:16px;margin:3px 0 0 3px}
+.rt.minor .dot{width:10px;height:10px;margin:6px 0 0 6px;border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.rt::before{content:"";position:absolute;left:10px;top:18px;bottom:-4px;border-left:2px solid var(--line)}
+.rt:last-child::before{display:none}
+.rt .nm{font-weight:600;min-width:0}
+.rt.minor .nm{font-weight:400;color:var(--ink2)}
+.rt .t{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;white-space:nowrap}
+.rt.start .t{color:var(--muted);font-size:13px}
+.rt .r{grid-column:2 / -1;font-size:12.5px;color:var(--muted);padding:1px 0 16px}
+.rt .gap{position:absolute;left:24px;bottom:0;font-size:11.5px;color:var(--mark);font-family:var(--f-mono);line-height:1}
+.rt.few{opacity:.55}
+@media (max-width:520px){.route-panel{padding:14px 14px 4px}}
 .pill.tg{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px}
 /* імпорт */
 .adm-tabs{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start;background:var(--surface);max-width:100%}
@@ -438,12 +440,12 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <section>
     <div class="sechead">
-      <h2>Шлях у середньому</h2>
+      <h2>Скільки чекати кожен етап</h2>
       <div class="seg" role="group" aria-label="Відрізок шляху">
         <button type="button" data-path="mpnp" aria-pressed="false">MPNP</button><button type="button" data-path="ircc" aria-pressed="true">IRCC</button><button type="button" data-path="all" aria-pressed="false">Весь шлях</button>
       </div>
     </div>
-    <div class="panel" style="padding:16px 18px 10px">
+    <div class="panel route-panel">
       <div id="path"></div>
       <p class="muted" id="pathNote" style="font-size:12.5px;margin:6px 0 0"></p>
     </div>
@@ -864,51 +866,43 @@ function renderRanges(list){
 }
 $('#ranges').addEventListener('toggle', e=>{ const d=e.target; if(!d.matches || !d.matches('details.grp')) return; const st=LS.get(GROUP_KEY,{}); st[d.dataset.g]=d.open; LS.set(GROUP_KEY,st); }, true);
 
-/* --- шкала процесу --- */
+/* --- маршрут: скільки чекати кожен етап --- */
 const PATHS = {
-  mpnp:{a:'eoi', ms:['laa','mpnp','nom','pr'], note:'Медіана від EOI до кожного етапу.'},
-  ircc:{a:'pr',  ms:['aor','med','bio','pal','secdone','fd','p1','p2','ecopr'], note:'Медіана від подачі на PR до кожного етапу. Medicals, Biometrics, PAL і Security check у різних людей ідуть у різному порядку.'},
-  all: {a:'eoi', ms:['laa','mpnp','nom','pr','aor','pal','fd','ecopr'], note:'Медіана від EOI до кожного етапу.'}
+  mpnp:{a:'eoi', ms:['laa','mpnp','verif','nom','pr'], major:['nom','pr'], end:'pr', note:'Медіана від EOI до кожного етапу.'},
+  ircc:{a:'pr',  ms:['aor','bio','med','pal','secdone','p1','p2','ecopr'], major:['aor','pal','ecopr'], end:'ecopr', note:'Медіана від подачі на PR до кожного етапу. Біометрія, Medicals, PAL і Security check у різних людей ідуть у різному порядку.'},
+  all: {a:'eoi', ms:['laa','mpnp','nom','pr','aor','bio','pal','p1','ecopr'], major:['nom','pr','aor','pal','ecopr'], end:'ecopr', note:'Медіана від EOI до кожного етапу.'}
 };
+const RT_NAME = {eoi:'EOI',laa:'LAA (запрошення)',mpnp:'Заявку MPNP подано',verif:'Перевірка роботи',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Біометрія',med:'Medicals cleared',pal:'PAL',secdone:'Security check завершено',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 let pathMode = LS.get('prdash_path','ircc'); if(!PATHS[pathMode]) pathMode='ircc';
 function initPath(){
   document.querySelectorAll('[data-path]').forEach(b=>{
     b.setAttribute('aria-pressed', String(b.dataset.path===pathMode));
     b.addEventListener('click',()=>{ pathMode=b.dataset.path; LS.set('prdash_path',pathMode); document.querySelectorAll('[data-path]').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); renderPath(filtered()); });
   });
-  let t; addEventListener('resize',()=>{ clearTimeout(t); t=setTimeout(layoutPathLabels,120); });
 }
+const longTxt = v => v>=45 ? `${mon(v)} міс` : `${dd(v)} дн`;
+const gapTxt = g => g>=60 ? `+${mon(g)} міс` : g>=14 ? `+${Math.round(g/7)} тиж` : `+${Math.round(g)} дн`;
 function renderPath(list){
   const P=PATHS[pathMode];
-  const pts=P.ms.map(k=>({k, st:segStats(list,[P.a,k])})).filter(p=>p.st).sort((x,y)=>x.st.med-y.st.med);
-  if(!pts.length){ $('#path').innerHTML='<div class="gempty" style="padding:12px 0">Поки немає кейсів з потрібними датами.</div>'; $('#pathNote').textContent=''; return; }
-  const maxv=Math.max(...pts.map(p=>p.st.med), 30);
-  const months=Math.max(1,Math.ceil(maxv/30.44)); const mstep = months<=6?1:months<=12?2:months<=24?3:6;
-  const topM=Math.ceil(months/mstep)*mstep; const top=topM*30.44;
-  const pct=v=>(v/top*100).toFixed(2);
-  let segs='', dots='', labels=`<div class="plabel" data-x="0"><b>${SHORT[P.a]}</b><span>старт</span></div>`, prev=0;
-  pts.forEach((p,i)=>{
-    const x=p.st.med; if(x>prev) segs+=`<div class="pseg${i%2?' alt':''}" style="left:${pct(prev)}%;width:${pct(x-prev)}%"></div>`; prev=Math.max(prev,x);
-    const last = p.k==='ecopr' || p.k===P.ms[P.ms.length-1];
-    dots+=`<div class="pdot${last?' end':''}" style="left:${pct(x)}%" title="${esc(SHORT[p.k])}: медіана ${dd(x)} дн, ${plural(p.st.n,'кейс','кейси','кейсів')}"></div>`;
-    labels+=`<div class="plabel${p.st.n<FEW?' few':''}" data-x="${pct(x)}"><b>${esc(SHORT[p.k])}</b><span>${durTxt(x)}</span></div>`;
-  });
-  let ax=''; for(let m=0;m<=topM;m+=mstep){ ax+=`<span style="left:${pct(m*30.44)}%">${m===0?'0':m+' міс'}</span>`; }
-  $('#path').innerHTML=`<div class="pathlabels" id="pl">${labels}</div><div class="ptrack"><div class="pdot" style="left:0"></div>${segs}${dots}</div><div class="paxis">${ax}</div>`;
-  const endSt = pts[pts.length-1];
-  $('#pathNote').textContent = P.note + ` Блідіші підписи мають менше ${FEW} кейсів.`;
-  layoutPathLabels();
-}
-function layoutPathLabels(){
-  const box=$('#pl'); if(!box) return; const W=box.clientWidth; if(!W) return;
-  const labs=[...box.children].sort((a,b)=>a.dataset.x-b.dataset.x); const levels=[];
-  for(const l of labs){
-    const x=+l.dataset.x/100*W, w=l.offsetWidth;
-    const left=Math.min(Math.max(x-w/2,0),Math.max(0,W-w));
-    let lv=0; while(levels[lv]!=null && levels[lv]>left-10) lv++;
-    levels[lv]=left+w; l.style.left=left+'px'; l.style.setProperty('--lv',lv); l.style.setProperty('--sx',(x-left)+'px');
-  }
-  box.style.height=(levels.length*34+10)+'px';
+  let pts=P.ms.map(k=>({k, st:segStats(list,[P.a,k])})).filter(p=>p.st).sort((x,y)=>x.st.med-y.st.med);
+  // фінальний етап завжди останній; проміжні з медіаною пізніше за фінал (зазвичай мало даних) не показуємо
+  const fin=pts.find(p=>p.k===P.end);
+  if(fin) pts = pts.filter(p=>p.k!==P.end && p.st.med<=fin.st.med).concat(fin);
+  if(!pts.length){ $('#path').innerHTML='<div class="gempty" style="padding:4px 0 12px">Поки немає таймлайнів з потрібними датами.</div>'; $('#pathNote').textContent=''; return; }
+  const rows=[{k:P.a, start:true, med:0}, ...pts.map(p=>({k:p.k, st:p.st, med:p.st.med}))];
+  $('#path').innerHTML = '<div class="route">' + rows.map((r,i)=>{
+    const nx=rows[i+1], g = nx ? nx.med-r.med : 0;
+    const cls = r.start ? 'start' : (r.k===P.end ? 'end' : (P.major.includes(r.k) ? '' : 'minor'));
+    const few = r.st && r.st.n<FEW;
+    const t = r.start ? 'старт' : `≈ ${longTxt(r.med)}`;
+    let sub = '';
+    if(r.st){
+      const rng = r.st.n>1 ? `у половини ${r.st.q3>=45?mon(r.st.q1)+'–'+mon(r.st.q3)+' міс':dd(r.st.q1)+'–'+dd(r.st.q3)+' дн'}` : '';
+      sub = [rng, cls==='minor'&&!few ? '' : plural(r.st.n,'таймлайн','таймлайни','таймлайнів')].filter(Boolean).join(' · ') + (few?' · мало даних':'');
+    }
+    return `<div class="rt ${cls}${few?' few':''}"><span class="dot"></span><span class="nm">${esc(RT_NAME[r.k]||SHORT[r.k])}</span><span class="t">${t}</span><span class="r">${sub||'&nbsp;'}</span>${nx && g>=5 ? `<span class="gap" title="Медіана між етапами (різниця медіан)">${gapTxt(g)}</span>` : ''}</div>`;
+  }).join('') + '</div>';
+  $('#pathNote').textContent = P.note + ' Жовтим — скільки зазвичай минає до наступного етапу. Блідіші рядки мають менше '+FEW+' таймлайнів.';
 }
 
 /* --- тренд --- */
