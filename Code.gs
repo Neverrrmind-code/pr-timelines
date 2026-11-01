@@ -19,7 +19,7 @@
  */
 
 const SHEET_NAME = 'cases';
-const STAGES = ['eoi','laa','mpnp','verif','nom','pr','aor','bio','sec','secdone','pal','med','fd','p1','p2','ecopr'];
+const STAGES = ['eoi','laa','mpnp','verif','nom','pr','aor','bio','elig','sec','secdone','pal','med','fd','p1','p2','ecopr'];
 const META = ['nick','stream','ee','security','notes','source'];
 const LISTS = ['adr','ghost'];           // багаторазові події, дати через пробіл
 const PRIVATE = ['srcref'];              // не віддається назовні (посилання на джерело)
@@ -462,6 +462,7 @@ const PROMPT_ = [
   '  aor = AOR, Acknowledgement of Receipt',
   '  bio = biometrics given/completed (not the date BIL letter was received)',
   '  med = medicals passed/cleared/"medical exam passed" status (not the date the exam was attended)',
+  '  elig = eligibility review completed ("Review of eligibility: completed")',
   '  sec = background/security check started (in progress)',
   '  secdone = background/security check completed',
   '  pal = PAL, Invitation to pre-arrival services',

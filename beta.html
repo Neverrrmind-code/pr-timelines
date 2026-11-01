@@ -684,6 +684,7 @@ const STAGES = [
   {k:'aor',  l:'AOR'},
   {k:'med',  l:'Medicals cleared'},
   {k:'bio',  l:'Biometrics complete'},
+  {k:'elig', l:'Eligibility completed'},
   {k:'pal',  l:'PAL'},
   {k:'sec',  l:'Security check started'},
   {k:'secdone', l:'Security check completed'},
@@ -693,7 +694,7 @@ const STAGES = [
   {k:'ecopr',l:'eCoPR'}
 ];
 const SL = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
-const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Biometrics',sec:'Security started',secdone:'Security completed',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+const SHORT = {eoi:'EOI',laa:'LAA',mpnp:'MPNP',verif:'Перевірка',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Biometrics',elig:'Eligibility',sec:'Security started',secdone:'Security completed',pal:'PAL',med:'Medicals cleared',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 const STREAMS = [['swm','Skilled Worker in Manitoba'],['swo','Skilled Worker Overseas'],['ies','International Education'],['bis','Business Investor'],['other','Інше']];
 const EES = [['base','Non-EE (паперова/base)'],['ee','Express Entry']];
 const SECS = [['no','Стандартна'],['yes','Comprehensive']];
@@ -702,10 +703,10 @@ const lookup = (arr,v)=> (arr.find(a=>a[0]===v)||[])[1] || '';
 // LAA → MPNP і Номінація → Подача на PR не показуємо: ці строки залежать від самого апліканта
 const SEG_A = [['eoi','laa'],['mpnp','nom'],['pr','aor']];
 // порядок етапів після AOR довільний, тому міряємо від AOR; security check ділимо на стандартну і Comprehensive
-const SEG_AOR = [['aor','med'],['aor','bio'],['aor','pal'],['aor','sec'],['sec','secdone','std'],['sec','secdone','comp'],['aor','secdone','std'],['aor','secdone','comp']];
+const SEG_AOR = [['aor','med'],['aor','bio'],['aor','elig'],['aor','pal'],['aor','sec'],['sec','secdone','std'],['sec','secdone','comp'],['aor','secdone','std'],['aor','secdone','comp']];
 const SEG_B = [['pal','fd'],['secdone','fd'],['fd','p1'],['p1','p2'],['p2','ecopr']];
 const SEG_STEP = [...SEG_A, ...SEG_AOR, ...SEG_B];
-const SEG_PR = [['pr','aor'],['pr','med'],['pr','bio'],['pr','pal'],['pr','fd'],['pr','p1'],['pr','ecopr'],['pr','ecopr','std'],['pr','ecopr','comp']];
+const SEG_PR = [['pr','aor'],['pr','med'],['pr','bio'],['pr','elig'],['pr','pal'],['pr','fd'],['pr','p1'],['pr','ecopr'],['pr','ecopr','std'],['pr','ecopr','comp']];
 const SEG_TOTAL = [['mpnp','nom'],['mpnp','ecopr'],['eoi','ecopr']];
 const TYPE_L = {std:'стандартна', comp:'Comprehensive'};
 const segLabel = ([a,b,t]) => SHORT[a]+' → '+SHORT[b]+(t?` · ${TYPE_L[t]}`:'');
@@ -884,11 +885,12 @@ $('#ranges').addEventListener('toggle', e=>{ const d=e.target; if(!d.matches || 
 
 /* --- маршрут: скільки чекати кожен етап --- */
 const PATHS = {
-  mpnp:{a:'eoi', ms:['laa','mpnp','verif','nom','pr'], major:['nom','pr'], end:'pr', note:'Медіана від EOI до кожного етапу.'},
-  ircc:{a:'pr',  ms:['aor','bio','med','pal','secdone','p1','p2','ecopr'], major:['aor','pal','ecopr'], end:'ecopr', note:'Медіана від подачі на PR до кожного етапу. Біометрія, Medicals, PAL і Security check у різних людей ідуть у різному порядку.'},
-  all: {a:'eoi', ms:['laa','mpnp','nom','pr','aor','bio','pal','p1','ecopr'], major:['nom','pr','aor','pal','ecopr'], end:'ecopr', note:'Медіана від EOI до кожного етапу.'}
+  mpnp:{a:'eoi', ms:['laa','mpnp','verif','nom','pr'], major:['nom','pr'], end:'pr'},
+  ircc:{a:'pr',  ms:['aor','bio','med','elig','pal','secdone','p1','p2','ecopr'], major:['aor','pal','ecopr'], end:'ecopr'},
+  all: {a:'eoi', ms:['laa','mpnp','nom','pr','aor','bio','med','elig','pal','secdone','p1','p2','ecopr'], major:['nom','pr','aor','pal','ecopr'], end:'ecopr'}
 };
-const RT_NAME = {eoi:'EOI',laa:'LAA (запрошення)',mpnp:'Заявку MPNP подано',verif:'Перевірка роботи',nom:'Номінація',pr:'Подача на PR',aor:'AOR',bio:'Біометрія',med:'Medicals cleared',pal:'PAL',secdone:'Security check завершено',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
+// назви етапів у маршруті — англійською, як у трекері IRCC і в постах спільноти
+const RT_NAME = {eoi:'EOI',laa:'LAA',mpnp:'MPNP application',verif:'Job verification',nom:'Nomination',pr:'PR application',aor:'AOR',bio:'Biometrics',med:'Medicals',elig:'Eligibility',pal:'PAL',secdone:'Security check',fd:'Final decision',p1:'Portal 1',p2:'Portal 2',ecopr:'eCoPR'};
 let pathMode = LS.get('prdash_path','ircc'); if(!PATHS[pathMode]) pathMode='ircc';
 function initPath(){
   document.querySelectorAll('[data-path]').forEach(b=>{
@@ -906,7 +908,7 @@ function renderPath(list){
   if(fin) pts = pts.filter(p=>p.k!==P.end && p.st.med<=fin.st.med).concat(fin);
   if(!pts.length){ $('#path').innerHTML='<div class="gempty" style="padding:4px 0 12px">Поки немає таймлайнів з потрібними датами.</div>'; $('#pathNote').textContent=''; return; }
   const rows=[{k:P.a, start:true, med:0}, ...pts.map(p=>({k:p.k, st:p.st, med:p.st.med}))];
-  const from = P.a==='pr' ? 'від подачі на PR' : 'від EOI';
+  const from = P.a==='pr' ? 'від PR application' : 'від EOI';
   $('#path').innerHTML = `<div class="route"><div class="rhead"><span>Етап</span><span>Скільки ${from}</span></div>` + rows.map((r,i)=>{
     const nx=rows[i+1], g = nx ? nx.med-r.med : 0;
     const cls = r.start ? 'start' : (r.k===P.end ? 'end' : (P.major.includes(r.k) ? '' : 'minor'));
@@ -921,7 +923,7 @@ function renderPath(list){
     const gap = (nx && g>=3) ? `<div class="rgap">↓ через <b>≈ ${gapTxt(g)}</b></div>` : '';
     return row+gap;
   }).join('') + '</div>';
-  $('#pathNote').textContent = `Праворуч — медіана ${from} до етапу: половина людей дійшла до нього швидше. «Через …» між етапами — скільки зазвичай минає від одного етапу до наступного.` + (P.a==='pr' ? ' Біометрія, Medicals, PAL і Security check у різних людей ідуть у різному порядку.' : '') + ` Блідіші рядки мають менше ${FEW} таймлайнів.`;
+  $('#pathNote').textContent = `Праворуч — медіана ${from} до етапу: половина людей дійшла до нього швидше. «Через …» між етапами — скільки зазвичай минає від одного етапу до наступного.` + (P.a==='pr' ? ' Biometrics, Medicals, Eligibility, PAL і Security check у різних людей ідуть у різному порядку.' : '') + ` Блідіші рядки мають менше ${FEW} таймлайнів.`;
 }
 
 /* --- тренд --- */
@@ -973,7 +975,7 @@ function events(c){
   (c.ghost||[]).forEach(d=>ev.push({d, l:'Ghost update', o:99, cls:'ev-ghost'}));
   return ev.sort((a,b)=>(D(a.d)-D(b.d))||(a.o-b.o));
 }
-const MINI_K = {aor:'', med:'small', bio:'small', pal:'', secdone:'small', fd:'', p1:'small', p2:'small'};
+const MINI_K = {aor:'', med:'small', bio:'small', elig:'small', pal:'', secdone:'small', fd:'', p1:'small', p2:'small'};
 function miniTl(c, top, ref){
   if(!c.s.pr) return '<span class="muted">—</span>';
   const pct=v=>Math.min(100,v/top*100).toFixed(2)+'%';
@@ -1152,7 +1154,7 @@ function validate(c){
   const t=D(todayISO()); for(const k of ks){ if(D(c.s[k])>t) return `Дата «${SL[k]}» у майбутньому.`; }
   let prev=null, prevK=null;
   for(const k of ['adr','ghost']){ for(const v of c[k]){ if(D(v)>t) return `Дата ${k==='adr'?'дозапиту':'ghost update'} у майбутньому.`; } }
-  for(const s of STAGES){ if(['verif','med','bio','sec','secdone'].includes(s.k)) continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
+  for(const s of STAGES){ if(['verif','med','bio','elig','sec','secdone'].includes(s.k)) continue; const v=c.s[s.k]; if(!v) continue; if(prev && D(v)<D(prev)) return `Дата «${s.l}» раніша за «${SL[prevK]}». Перевірте дати.`; prev=v; prevK=s.k; }
   return null;
 }
 $('#form').addEventListener('submit', async e=>{
@@ -1416,6 +1418,7 @@ function guessTarget(h, vals){
   if(/^pal|pre.?arr|pre.?appr/.test(t)) return 'pal';
   if(/portal.?1|^p1$|портал.?1/.test(t)) return 'p1';
   if(/portal.?2|^p2$|портал.?2/.test(t)) return 'p2';
+  if(/eligib|відповідн/.test(t)) return 'elig';
   if(/e?copr/.test(t)) return 'ecopr';
   if(/^fd$|final|рішення/.test(t)) return 'fd';
   if(/номін|nominat/.test(t)) return 'nom';
