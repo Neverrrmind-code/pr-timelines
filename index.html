@@ -473,7 +473,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <section id="admMain" hidden style="gap:16px">
     <div class="adm-tabs" role="group" aria-label="Джерело тексту">
-      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button><button type="button" data-src="csv" aria-pressed="false">Таблиця (CSV)</button>
+      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button><button type="button" data-src="csv" aria-pressed="false">Таблиця (CSV)</button><button type="button" data-src="dups" aria-pressed="false">Дублікати в базі</button>
     </div>
     <div id="admPaste">
       <textarea id="admText" class="adm-text" placeholder="Вставте один або кілька постів з таймлайнами. Пости краще розділяти порожнім рядком."></textarea>
@@ -509,6 +509,11 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
       </label>
       <div id="csvMap" hidden></div>
       <div id="csvSum" hidden></div>
+    </div>
+    <div id="admDupBox" hidden>
+      <p class="muted" style="margin:0 0 10px;font-size:13.5px;max-width:80ch">Показуються лише пари, де всі дати меншого запису точно збігаються з датами більшого, а в більшому є додаткові дати. Після об'єднання лишається запис, внесений через форму (у нього є код редагування), або, якщо таких немає, запис з більшою кількістю дат. Другий запис видаляється, його дати, дозапити й примітки переносяться.</p>
+      <div class="csvbar" style="margin-bottom:12px"><button class="btn" type="button" id="dupScan">Шукати ще раз</button><button class="btn primary" type="button" id="dupAll" hidden>Об'єднати всі</button><span class="muted" id="dupProg" style="font-size:13.5px"></span></div>
+      <div id="dupList" style="display:flex;flex-direction:column;gap:12px"></div>
     </div>
     <div class="adm-bar" id="admParseBar">
       <button class="btn primary" type="button" id="admParse">Розпізнати</button>
@@ -1184,7 +1189,9 @@ $('#admLoginForm').addEventListener('submit', async e=>{
 document.querySelectorAll('[data-src]').forEach(b=>b.addEventListener('click',()=>{
   ADM.src=b.dataset.src; document.querySelectorAll('[data-src]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
   $('#admPaste').hidden = ADM.src!=='paste'; $('#admFileBox').hidden = ADM.src!=='file'; $('#admImgBox').hidden = ADM.src!=='img';
-  $('#admCsvBox').hidden = ADM.src!=='csv'; $('#admParseBar').hidden = ADM.src==='csv';
+  $('#admCsvBox').hidden = ADM.src!=='csv'; $('#admDupBox').hidden = ADM.src!=='dups'; $('#admParseBar').hidden = ADM.src==='csv' || ADM.src==='dups';
+  $('#admResults').hidden = ADM.src==='dups'; $('#admBar').hidden = ADM.src==='dups' || !ADM.items.length;
+  if(ADM.src==='dups') renderDups();
 }));
 
 /* --- експорт Telegram --- */
@@ -1407,6 +1414,73 @@ const cdrop=$('#admCsvDrop');
 ['dragenter','dragover'].forEach(t=>cdrop.addEventListener(t,e=>{e.preventDefault(); cdrop.classList.add('over');}));
 ['dragleave','drop'].forEach(t=>cdrop.addEventListener(t,e=>{e.preventDefault(); cdrop.classList.remove('over');}));
 cdrop.addEventListener('drop', e=>handleCsv(e.dataTransfer.files[0]));
+
+/* --- пошук дублікатів у базі (дати меншого запису повністю входять у більший) --- */
+const pairKey=(a,b)=>[a.id,b.id].sort().join('|');
+function findSubsetDups(){
+  const ign=new Set(LS.get('prdash_dupignore',[]));
+  const list=CASES.map(c=>({c, keys:STAGES.map(s=>s.k).filter(k=>c.s && c.s[k])}));
+  const pairs=[];
+  for(const a of list){
+    if(a.keys.length<2) continue;
+    let best=null;
+    for(const b of list){
+      if(b===a || b.keys.length<=a.keys.length) continue;
+      if(a.keys.every(k=>b.c.s[k]===a.c.s[k]) && (!best || b.keys.length>best.keys.length)) best=b;
+    }
+    if(best && !ign.has(pairKey(a.c,best.c))) pairs.push({small:a.c, big:best.c});
+  }
+  return pairs;
+}
+function chooseKeeper(p){
+  const fs=(p.small.source||'form')==='form', fb=(p.big.source||'form')==='form';
+  if(fs && !fb) return {keep:p.small, drop:p.big, why:'внесений через форму (у нього є код редагування)'};
+  return {keep:p.big, drop:p.small, why:'у ньому більше дат'};
+}
+const recTitle=c=>`${c.nick||'Без назви'} · ${SRC_L(c)}${c.created?' · додано '+fmtDate(String(c.created).slice(0,10)):''}`;
+const nDates=c=>STAGES.filter(s=>c.s && c.s[s.k]).length;
+function renderDups(){
+  const pairs=findSubsetDups(); ADM.dups=pairs;
+  $('#dupAll').hidden=!pairs.length; $('#dupAll').textContent=`Об'єднати всі (${pairs.length})`;
+  $('#dupProg').textContent = pairs.length ? `Знайдено пар: ${pairs.length}` : '';
+  $('#dupList').innerHTML = pairs.length ? pairs.map((p,i)=>{
+    const k=chooseKeeper(p);
+    return `<div class="icard" data-dup="${i}"><div class="ihead"><span class="inum">Пара #${i+1}</span><span class="muted" style="font-size:13px">збігаються всі ${plural(nDates(p.small),'дата','дати','дат')} меншого запису</span></div>
+      ${dupCompare(p.small, p.big, recTitle(p.small)+' · '+plural(nDates(p.small),'дата','дати','дат'), recTitle(p.big)+' · '+plural(nDates(p.big),'дата','дати','дат'))}
+      <div class="mergebar"><span>Залишиться <b>«${esc(k.keep.nick||'Без назви')}» (${SRC_L(k.keep)})</b>, бо ${k.why}. Другий запис буде видалено.</span></div>
+      <div class="csvbar"><button class="btn primary" type="button" data-dupgo="${i}">Об'єднати</button><button class="btn" type="button" data-dupskip="${i}">Не дублікат</button><span class="muted" data-dupmsg="${i}" style="font-size:13px"></span></div></div>`;
+  }).join('') : '<p class="fc-empty">Дублікатів, де дати одного запису повністю входять в інший, не знайдено.</p>';
+}
+async function mergePair(p){
+  const k=chooseKeeper(p); const m=mergeInto(k.keep, k.drop);
+  await adminMerge(k.keep.id, m.c);
+  await apiPost({action:'adminDelete', id:k.drop.id, password:ADM.pw||SS.get('prdash_admpw')});
+  CASES=CASES.filter(c=>c.id!==k.drop.id);
+}
+$('#dupList').addEventListener('click', async e=>{
+  const go=e.target.closest('[data-dupgo]'), sk=e.target.closest('[data-dupskip]');
+  if(sk){ const p=ADM.dups[+sk.dataset.dupskip]; const ign=LS.get('prdash_dupignore',[]); ign.push(pairKey(p.small,p.big)); LS.set('prdash_dupignore',ign); renderDups(); return; }
+  if(!go) return; const i=+go.dataset.dupgo; go.disabled=true; go.textContent='Об\'єдную…';
+  try{ await mergePair(ADM.dups[i]); renderDups(); await load(); renderDups(); }
+  catch(ex){ go.disabled=false; go.textContent='Об\'єднати'; document.querySelector(`[data-dupmsg="${i}"]`).textContent=ex.message; }
+});
+$('#dupScan').addEventListener('click', async ()=>{ $('#dupProg').textContent='Оновлюю дані…'; await load(); renderDups(); });
+$('#dupAll').addEventListener('click', async ()=>{
+  const btn=$('#dupAll');
+  if(!btn.dataset.confirm){ btn.dataset.confirm='1'; btn.textContent=`Так, об'єднати ${plural(ADM.dups.length,'пару','пари','пар')}`; btn.classList.add('danger'); setTimeout(()=>{ if(btn.dataset.confirm){ delete btn.dataset.confirm; btn.classList.remove('danger'); renderDups(); } },8000); return; }
+  delete btn.dataset.confirm; btn.classList.remove('danger');
+  btn.disabled=true; let ok=0, fail=0;
+  for(;;){
+    const pairs=findSubsetDups(); if(!pairs.length) break;
+    const p=pairs[0];
+    $('#dupProg').textContent=`Об'єдную… готово ${ok}${fail?`, помилок ${fail}`:''}`;
+    try{ await mergePair(p); ok++; }
+    catch(ex){ fail++; const ign=LS.get('prdash_dupignore',[]); ign.push(pairKey(p.small,p.big)); LS.set('prdash_dupignore',ign); }
+    if(ok+fail>500) break;
+  }
+  btn.disabled=false; await load(); renderDups();
+  setMsg($('#admMsg'), `Об'єднано пар: ${ok}${fail?`. Не вдалося: ${fail} (їх приховано, щоб не повторювати)`:''}.`, fail?'warn':'ok');
+});
 
 function makeChunks(){
   const LIM=12000, out=[];
