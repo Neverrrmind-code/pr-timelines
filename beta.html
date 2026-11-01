@@ -231,14 +231,19 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .rt.start .dot{background:var(--accent)}
 .rt.end .dot{background:var(--good);border-color:var(--good);width:16px;height:16px;margin:3px 0 0 3px}
 .rt.minor .dot{width:10px;height:10px;margin:6px 0 0 6px;border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
-.rt::before{content:"";position:absolute;left:10px;top:18px;bottom:-4px;border-left:2px solid var(--line)}
+.rt::before{content:"";position:absolute;left:10px;top:18px;bottom:0;border-left:2px solid var(--line)}
 .rt:last-child::before{display:none}
 .rt .nm{font-weight:600;min-width:0}
 .rt.minor .nm{font-weight:400;color:var(--ink2)}
 .rt .t{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;white-space:nowrap}
 .rt.start .t{color:var(--muted);font-size:13px}
-.rt .r{grid-column:2 / -1;font-size:12.5px;color:var(--muted);padding:1px 0 16px}
-.rt .gap{position:absolute;left:24px;bottom:0;font-size:11.5px;color:var(--mark);font-family:var(--f-mono);line-height:1}
+.rt .r{grid-column:2 / -1;font-size:12.5px;color:var(--muted);padding:1px 0 4px}
+.rt:last-child .r{padding-bottom:10px}
+.rhead{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:0 12px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding-bottom:10px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.rhead span:first-child{grid-column:2}
+.rgap{position:relative;padding:5px 0 7px 34px;font-size:12.5px;color:var(--mark)}
+.rgap::before{content:"";position:absolute;left:10px;top:0;bottom:0;border-left:2px dashed color-mix(in srgb,var(--mark) 55%,var(--line))}
+.rgap b{font-family:var(--f-mono);font-weight:500}
 .rt.few{opacity:.55}
 @media (max-width:520px){.route-panel{padding:14px 14px 4px}}
 .pill.tg{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px}
@@ -286,14 +291,14 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .isrc summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
 .isrc pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--f-mono);background:var(--bg);border-radius:8px;padding:8px 10px;margin:6px 0 0;color:var(--ink2)}
 /* мотивація */
-.goal{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13.5px;color:var(--ink2);padding:0 2px;margin-top:-12px}
+.goal{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13.5px;color:var(--ink2);padding:0 2px;margin-top:-8px}
 .goal .gt b{color:var(--ink);font-family:var(--f-mono);font-weight:500}
 .goal .gbar{flex:0 0 120px}
 .goal .gr{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;margin-left:auto}
 .goal .gr .btn.link{padding:0;font-weight:500}
 .gbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;max-width:360px}
 .gbar i{display:block;height:100%;background:var(--good);border-radius:3px}
-@media (max-width:760px){.goal{margin-top:-14px}.goal .gr{margin-left:0}}
+@media (max-width:760px){.goal .gr{margin-left:0}}
 /* фільтри */
 .fbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-bottom:-16px}
 .fbtn{display:none;align-items:center;gap:6px;padding:7px 12px}
@@ -419,15 +424,6 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   <div class="banner" id="errBanner" hidden></div>
   <div class="banner adm-banner" id="admBanner" hidden><b>Режим адміністратора.</b> Можна редагувати й видаляти будь-який кейс. <a href="#import">Імпорт</a> · <button class="btn link" type="button" id="admLogout" style="padding:0">Вийти</button></div>
 
-  <section class="fc" id="fc" aria-labelledby="fcTitle">
-    <div class="fc-in">
-      <div><h2 id="fcTitle">Коли мені чекати?</h2><p class="lead">Вкажіть свої дати, і ми покажемо, коли зазвичай приходять наступні етапи.</p></div>
-      <div id="fcFields" style="display:flex;flex-direction:column;gap:10px"></div>
-      <label class="chk"><input type="checkbox" id="f_comp"> У мене Comprehensive security check</label>
-      <p class="fc-note" id="fcNote"></p>
-    </div>
-    <div class="fc-out" id="fcOut"></div>
-  </section>
 
   <div class="goal" id="goal"></div>
 
@@ -847,9 +843,9 @@ function render(){
 
 function renderTiles(list){
   const done = list.filter(c=>c.s.ecopr).length;
-  const tile=(k,st,sub)=>`<div class="tile"><span class="k">${k}</span><span class="v num">${st?dd(st.med)+'<span style="font-size:15px"> дн</span>':'—'}</span><span class="s">${st?`медіана · ≈${mon(st.med)} міс · ${plural(st.n,'кейс','кейси','кейсів')}`:sub}</span>${st&&st.n>1?`<span class="s muted" style="font-size:12px">у половини ${dd(st.q1)}–${dd(st.q3)} дн</span>`:''}</div>`;
+  const tile=(k,st,sub)=>`<div class="tile"><span class="k">${k}</span><span class="v num">${st?dd(st.med)+'<span style="font-size:15px"> дн</span>':'—'}</span><span class="s">${st?`медіана · ≈${mon(st.med)} міс · ${plural(st.n,'таймлайн','таймлайни','таймлайнів')}`:sub}</span>${st&&st.n>1?`<span class="s muted" style="font-size:12px">у половини ${dd(st.q1)}–${dd(st.q3)} дн</span>`:''}</div>`;
   $('#tiles').innerHTML =
-    `<div class="tile"><span class="k">Кейсів</span><span class="v num">${list.length}</span><span class="s">з eCoPR: <span class="num">${done}</span> · з дозапитом: <span class="num">${list.filter(c=>c.adr&&c.adr.length).length}</span></span></div>` +
+    `<div class="tile"><span class="k">Таймлайнів</span><span class="v num">${list.length}</span><span class="s">з eCoPR: <span class="num">${done}</span> · з дозапитом: <span class="num">${list.filter(c=>c.adr&&c.adr.length).length}</span></span></div>` +
     tile('MPNP → номінація', segStats(list,['mpnp','nom']), 'ще немає даних') +
     tile('Подача на PR → AOR', segStats(list,['pr','aor']), 'ще немає даних') +
     tile('Подача на PR → eCoPR', segStats(list,['pr','ecopr']), 'ще немає даних');
@@ -901,7 +897,7 @@ function initPath(){
   });
 }
 const longTxt = v => v>=45 ? `${mon(v)} міс` : `${dd(v)} дн`;
-const gapTxt = g => g>=60 ? `+${mon(g)} міс` : g>=14 ? `+${Math.round(g/7)} тиж` : `+${Math.round(g)} дн`;
+const gapTxt = g => g>=60 ? `${mon(g)} міс` : g>=14 ? `${Math.round(g/7)} тиж` : plural(Math.round(g),'день','дні','днів');
 function renderPath(list){
   const P=PATHS[pathMode];
   let pts=P.ms.map(k=>({k, st:segStats(list,[P.a,k])})).filter(p=>p.st).sort((x,y)=>x.st.med-y.st.med);
@@ -910,19 +906,22 @@ function renderPath(list){
   if(fin) pts = pts.filter(p=>p.k!==P.end && p.st.med<=fin.st.med).concat(fin);
   if(!pts.length){ $('#path').innerHTML='<div class="gempty" style="padding:4px 0 12px">Поки немає таймлайнів з потрібними датами.</div>'; $('#pathNote').textContent=''; return; }
   const rows=[{k:P.a, start:true, med:0}, ...pts.map(p=>({k:p.k, st:p.st, med:p.st.med}))];
-  $('#path').innerHTML = '<div class="route">' + rows.map((r,i)=>{
+  const from = P.a==='pr' ? 'від подачі на PR' : 'від EOI';
+  $('#path').innerHTML = `<div class="route"><div class="rhead"><span>Етап</span><span>Скільки ${from}</span></div>` + rows.map((r,i)=>{
     const nx=rows[i+1], g = nx ? nx.med-r.med : 0;
     const cls = r.start ? 'start' : (r.k===P.end ? 'end' : (P.major.includes(r.k) ? '' : 'minor'));
     const few = r.st && r.st.n<FEW;
     const t = r.start ? 'старт' : `≈ ${longTxt(r.med)}`;
     let sub = '';
     if(r.st){
-      const rng = r.st.n>1 ? `у половини ${r.st.q3>=45?mon(r.st.q1)+'–'+mon(r.st.q3)+' міс':dd(r.st.q1)+'–'+dd(r.st.q3)+' дн'}` : '';
+      const rng = r.st.n>1 ? `у половини людей ${r.med>=45?mon(r.st.q1)+'–'+mon(r.st.q3)+' міс':dd(r.st.q1)+'–'+dd(r.st.q3)+' дн'}` : '';
       sub = [rng, cls==='minor'&&!few ? '' : plural(r.st.n,'таймлайн','таймлайни','таймлайнів')].filter(Boolean).join(' · ') + (few?' · мало даних':'');
     }
-    return `<div class="rt ${cls}${few?' few':''}"><span class="dot"></span><span class="nm">${esc(RT_NAME[r.k]||SHORT[r.k])}</span><span class="t">${t}</span><span class="r">${sub||'&nbsp;'}</span>${nx && g>=5 ? `<span class="gap" title="Медіана між етапами (різниця медіан)">${gapTxt(g)}</span>` : ''}</div>`;
+    const row = `<div class="rt ${cls}${few?' few':''}"><span class="dot"></span><span class="nm">${esc(RT_NAME[r.k]||SHORT[r.k])}</span><span class="t">${t}</span>${sub?`<span class="r">${sub}</span>`:''}</div>`;
+    const gap = (nx && g>=3) ? `<div class="rgap">↓ через <b>≈ ${gapTxt(g)}</b></div>` : '';
+    return row+gap;
   }).join('') + '</div>';
-  $('#pathNote').textContent = P.note + ' Жовтим — скільки зазвичай минає до наступного етапу. Блідіші рядки мають менше '+FEW+' таймлайнів.';
+  $('#pathNote').textContent = `Праворуч — медіана ${from} до етапу: половина людей дійшла до нього швидше. «Через …» між етапами — скільки зазвичай минає від одного етапу до наступного.` + (P.a==='pr' ? ' Біометрія, Medicals, PAL і Security check у різних людей ідуть у різному порядку.' : '') + ` Блідіші рядки мають менше ${FEW} таймлайнів.`;
 }
 
 /* --- тренд --- */
@@ -1037,53 +1036,7 @@ $('#tMore').addEventListener('click',e=>{ const b=e.target.closest('[data-more]'
   if(m==='page') T.limit+=PAGE; else if(m==='all') T.limit=Infinity; else { T.limit=PAGE; renderTable(filtered()); document.querySelector('#tTabs').scrollIntoView({block:'start',behavior:'smooth'}); return; }
   renderTable(filtered()); });
 
-/* ===== Прогноз «Коли мені чекати?» ===== */
-const FC_TARGETS = ['aor','med','bio','pal','secdone','fd','p1','p2','ecopr'];
-const FC_TYPED = new Set(['secdone','fd','p1','p2','ecopr']);
-let fcTouched = false;
 function myCase(){ const ids=new Set(mine().map(m=>m.id)); return CASES.find(c=>ids.has(c.id)); }
-function initForecast(){
-  $('#fcFields').innerHTML = `<div class="field"><label for="f_pr">Подача на PR</label>${dateCtl('f_pr')}</div><div class="field"><label for="f_aor">AOR, якщо вже є</label>${dateCtl('f_aor')}</div>`;
-  const sv = LS.get('prdash_fc', null);
-  if(sv && (sv.pr||sv.aor)){ setD($('#f_pr'),sv.pr); setD($('#f_aor'),sv.aor); $('#f_comp').checked=!!sv.comp; fcTouched=true; }
-  const upd = e=>{ if(e.isTrusted) fcTouched=true; renderForecast(); };
-  $('#fc').addEventListener('input', upd); $('#fc').addEventListener('change', upd);
-}
-function prefillForecast(){
-  if(fcTouched || $('#f_pr').value || $('#f_aor').value) return;
-  const mc=myCase(); if(!mc || !mc.s.pr) return;
-  setD($('#f_pr'), mc.s.pr); setD($('#f_aor'), mc.s.aor); $('#f_comp').checked = mc.security==='yes';
-}
-function renderForecast(){
-  const pr=fromDMY($('#f_pr').value)||'', aor=fromDMY($('#f_aor').value)||'', comp=$('#f_comp').checked;
-  if(fcTouched) LS.set('prdash_fc',{pr,aor,comp});
-  const out=$('#fcOut'), note=$('#fcNote');
-  if(!pr && !aor){ out.innerHTML=`<p class="fc-empty">Введіть дату подачі на PR. Тут з'явиться, коли зазвичай приходять AOR, біометрія, PAL і eCoPR.${myCase()?'':'<span class="fc-hint">Якщо додасте свій таймлайн, тут також буде діапазон дат «у половини людей» і порівняння вашого шляху з іншими.</span>'}</p>`; note.textContent=''; return; }
-  if(!CASES.length){ out.innerHTML='<p class="fc-empty">Поки немає даних спільноти для прогнозу.</p>'; return; }
-  const mc=myCase();
-  const known = Object.assign({}, (mc && mc.s.pr && mc.s.pr===pr) ? mc.s : {}, pr?{pr}:{}, aor?{aor}:{});
-  const ak = known.aor ? 'aor' : 'pr', ad = known[ak];
-  const type = comp ? 'comp' : 'std';
-  const others = mc ? CASES.filter(c=>c.id!==mc.id) : CASES;
-  const today = D(todayISO());
-  const rows = FC_TARGETS.filter(k=>k!==ak).map(k=>{
-    if(known[k]) return {k, done:true, d:known[k]};
-    let st = FC_TYPED.has(k) ? segStats(others,[ak,k,type]) : null;
-    if(!st || st.n<3) st = segStats(others,[ak,k]);
-    if(!st) return {k, none:true};
-    return {k, st, d:addDays(ad,st.med), lo:addDays(ad,st.q1), hi:addDays(ad,st.q3)};
-  }).sort((x,y)=>(x.none?1:0)-(y.none?1:0) || (D(x.d)||0)-(D(y.d)||0));
-  out.innerHTML = rows.map(r=>{
-    const nm = esc(SL[r.k]);
-    if(r.done) return `<div class="fc-row done"><span class="dot"></span><span class="nm">${nm}</span><span class="when">${fmtDate(r.d)}</span><span class="sub">вже є</span></div>`;
-    if(r.none) return `<div class="fc-row few"><span class="dot"></span><span class="nm">${nm}</span><span class="when muted">—</span><span class="sub">ще немає даних спільноти</span></div>`;
-    const left = Math.round((D(r.d)-today)/864e5);
-    const rel = left>0 ? `через ${durTxt(left)}` : left===0 ? 'приблизно сьогодні' : `медіана минула ${durTxt(-left)} тому`;
-    const range = (mc && r.st.n>1) ? `у половини ${fmtShort(r.lo)}–${fmtDate(r.hi)} · ` : '';
-    return `<div class="fc-row${left<=0?' due':''}${r.st.n<FEW?' few':''}"><span class="dot"></span><span class="nm">${nm}</span><span class="when">≈ ${fmtDate(r.d)}</span><span class="sub">${rel} · ${range}${plural(r.st.n,'кейс','кейси','кейсів')}</span></div>`;
-  }).join('') + (mc ? '' : `<p class="fc-lock">Додайте свій таймлайн, щоб побачити діапазон дат «у половини людей» і порівняння з іншими. <button class="btn link" type="button" data-act="add" style="padding:0">Додати таймлайн</button></p>`);
-  note.textContent = `Рахуємо від ${ak==='aor'?'AOR':'подачі на PR'} (${fmtDate(ad)}) за ${plural(others.length,'кейсом','кейсами','кейсами')} спільноти.` + ((mc && mc.s.pr===pr) ? ' Дати вашого кейсу підставлено автоматично.' : '');
-}
 
 /* ===== Підказки ===== */
 const tip = $('#tip');
@@ -1910,7 +1863,7 @@ document.addEventListener('click', e=>{
 });
 
 /* ===== Завантаження ===== */
-function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); prefillForecast(); renderForecast(); renderEngage(); }
+function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); renderEngage(); }
 async function load(){
   $('#errBanner').hidden=true;
   try{ CASES = await apiGet(); }
@@ -1918,7 +1871,7 @@ async function load(){
   afterData();
 }
 
-initFilters(); initTrend(); initForm(); initForecast(); initPath();
+initFilters(); initTrend(); initForm(); initPath();
 addEventListener('hashchange', ()=>{ route(); if(location.hash!=='#import') render(); }); route(); renderAdminBanner();
 if(DEMO){ $('#demoBanner').hidden=false; CASES=demoCases(); afterData(); }
 else { afterData(); load(); }
