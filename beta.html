@@ -48,6 +48,8 @@ header p{margin:6px 0 0;color:var(--ink2);max-width:60ch}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .btn.primary:hover{filter:brightness(1.08)}
+a.btn{text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
+a.btn.link{color:var(--accent);text-decoration:underline}
 .btn.link{border:none;background:none;padding:4px 6px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .btn.danger{color:var(--bad);border-color:var(--bad)}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -285,6 +287,22 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .icard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .icard.off{opacity:.55}
 .icard.done{border-color:var(--good)}
+.casecard{gap:14px}
+.cc-head{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;padding-right:36px;position:relative}
+.cc-head h2{font-size:20px}
+.cc-close{position:absolute;right:-6px;top:-6px;border:0;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px}
+.cc-close:hover{background:var(--bg);color:var(--ink)}
+.cc-meta{font-size:13px;color:var(--muted);margin-top:-8px}
+.cc-status{background:var(--bg);border-radius:10px;padding:10px 14px;font-size:14.5px}
+.cc-status b{font-weight:600}
+.cc-status.done{background:var(--good-soft)}
+.casecard .tl{columns:2 240px}
+.casecard h3{font:500 12px var(--f-body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:2px 0 -4px}
+.cc-share{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+.cc-share .msg{flex-basis:100%}
+.cc-link{font-family:var(--f-mono);font-size:12.5px;color:var(--ink2);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;flex:1 1 260px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.idcell a{color:inherit;text-decoration:none;border-bottom:1px dashed color-mix(in srgb,var(--ink2) 45%,transparent)}
+td.idcell a:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .logcard{gap:6px;padding:10px 14px}
 .logcard.open{border-left:3px solid var(--mark)}
 .logch{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--ink2);font-family:var(--f-mono)}
@@ -678,6 +696,10 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   </form>
 </dialog>
 
+<dialog id="dlgCase" aria-labelledby="caseTitle">
+  <div class="dlg casecard" id="caseBody"></div>
+</dialog>
+
 <dialog id="dlgDone">
   <div class="dlg">
     <h2 id="doneTitle">Таймлайн збережено</h2>
@@ -687,6 +709,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div class="dlg-foot"><span id="copyMsg" class="muted" style="font-size:13px"></span>
       <div class="actions">
         <button class="btn" type="button" id="btnCopy">Скопіювати</button>
+        <button class="btn" type="button" id="btnDoneShare">Поділитись</button>
         <button class="btn primary" type="button" id="btnDoneClose">Готово</button>
       </div>
     </div>
@@ -1088,7 +1111,7 @@ function renderTable(list){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case${my.has(c.id)?' myrow':''}" data-id="${esc(c.id)}"${my.has(c.id)?' title="Ваш таймлайн"':''}>
-      <td class="idcell num">${esc(hid(c))}</td>
+      <td class="idcell num"><a href="#${esc(hid(c))}" title="Відкрити картку таймлайну">${esc(hid(c))}</a></td>
       <td>${c.nick?esc(c.nick):'<span class="anon">Таймлайн</span>'}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}</td>
       <td class="num">${fmtDate(c.s.pr)}</td>
       <td class="minicell">${miniTl(c, top, ref)}</td>
@@ -1098,7 +1121,7 @@ function renderTable(list){
     if(openId===c.id){
       let tl=''; let prev=null;
       for(const e of events(c)){ const d=prev?diff(prev,e.d):null; tl+=`<div class="${e.cls}"><span class="nm">${esc(e.l)}</span><span class="dt num">${fmtDate(e.d)}</span><span class="d num">${d!=null?'+'+d:''}</span></div>`; prev=e.d; }
-      const meta = `<div class="dmeta"><span>ID <b class="num" style="color:var(--ink)">${esc(hid(c))}</b></span><span>${isOpen(c)?'оновити може будь-хто, хто знає ID':'захищено кодом редагування'}</span>${isAdmin()?`<span>джерело: ${c.source==='telegram'?'Telegram':c.source==='csv'?'CSV':'форма'}</span>`:''}${(!my.has(c.id)&&!isAdmin())?`<button class="btn" type="button" data-upd="${esc(c.id)}">${isOpen(c)?'Це мій таймлайн — оновити':'Оновити з кодом'}</button>`:''}</div>`;
+      const meta = `<div class="dmeta"><span>ID <b class="num" style="color:var(--ink)">${esc(hid(c))}</b></span><span>${isOpen(c)?'оновити може будь-хто, хто знає ID':'захищено кодом редагування'}</span>${isAdmin()?`<span>джерело: ${c.source==='telegram'?'Telegram':c.source==='csv'?'CSV':'форма'}</span>`:''}<a class="btn" href="#${esc(hid(c))}">Картка і посилання</a>${(!my.has(c.id)&&!isAdmin())?`<button class="btn" type="button" data-upd="${esc(c.id)}">${isOpen(c)?'Це мій таймлайн — оновити':'Оновити з кодом'}</button>`:''}</div>`;
       h += `<tr class="detail"><td colspan="7"><div class="dbox">${meta}<div class="tl">${tl}</div>${c.notes?`<p class="notes">${esc(c.notes)}</p>`:''}</div></td></tr>`;
     }
   }
@@ -1139,6 +1162,7 @@ $('#trend').addEventListener('click', e=>{ const h=e.target.closest('.hit'); if(
 $('#tbody').addEventListener('click', e=>{
   const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); const m=mine().find(x=>x.id===ed.dataset.edit); if(isAdmin()) openForm(ed.dataset.edit,null,true); else if(m) openUpdate(m.id); return; }
   const up=e.target.closest('[data-upd]'); if(up){ e.stopPropagation(); openUpdate(up.dataset.upd); return; }
+  if(e.target.closest('a')) return;   // посилання на картку таймлайну
   const tr=e.target.closest('tr.case'); if(!tr) return; openId = openId===tr.dataset.id?null:tr.dataset.id; renderTable(filtered());
 });
 
@@ -1303,6 +1327,7 @@ $('#btnCopy').addEventListener('click', ()=>{
   navigator.clipboard?.writeText(code).then(()=>{$('#copyMsg').textContent='Скопійовано';}).catch(()=>{ const r=document.createRange(); r.selectNodeContents($('#doneCode')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $('#copyMsg').textContent='Виділено, натисніть Ctrl+C'; });
 });
 $('#btnDoneClose').addEventListener('click',()=>$('#dlgDone').close());
+$('#btnDoneShare').addEventListener('click',()=>{ const id=$('#doneId').textContent.trim(); $('#dlgDone').close(); location.hash='#'+id; });
 
 let codeTarget=null;
 function openCodeDlg(target){
@@ -1965,11 +1990,10 @@ function renderGoal(mc){
   }
   $('#goal').innerHTML = `<span class="gt">Вже <b>${n}</b> ${plural(n,'таймлайн','таймлайни','таймлайнів').replace(/^\d+ /,'')}${wk?` · <b>+${wk}</b> за тиждень`:''} · ціль <b>${goal}</b></span><div class="gbar" role="progressbar" aria-label="Прогрес до цілі" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${n}"><i style="width:${Math.min(100,n/goal*100).toFixed(1)}%"></i></div><div class="gr">${right}</div>`;
 }
-function renderMine(mc){
-  const box=$('#mineBox');
-  if(!mc){ box.hidden=true; box.innerHTML=''; return; }
-  box.hidden=false;
+// порівняння таймлайну з іншими; you=true — звертання «ви», інакше третя особа
+function cmpRows(mc, you){
   const others=CASES.filter(c=>c.id!==mc.id), today=todayISO(), rows=[];
+  const W = you ? 'чекаєте' : 'чекає';
   for(const [a,b] of CMP){
     if(!mc.s[a]) continue;
     let pool=others;
@@ -1977,19 +2001,91 @@ function renderMine(mc){
     const st=segStats(pool,[a,b]), label=segLabel([a,b]);
     if(mc.s[b]){
       const v=diff(mc.s[a],mc.s[b]); if(v==null) continue;
-      if(!st || st.n<3){ rows.push([label, v+' дн', '<span class="chip">мало даних для порівняння</span>']); continue; }
+      if(!st || st.n<3){ rows.push([label, longTxt(v), '<span class="chip">мало даних для порівняння</span>']); continue; }
       const longer=st.vals.filter(x=>x>v).length/st.n, shorter=st.vals.filter(x=>x<v).length/st.n;
-      rows.push([label, v+' дн', longer>=shorter ? `<span class="chip good">швидше, ніж у ${pctTxt(longer)} людей</span>` : `<span class="chip warn">довше, ніж у ${pctTxt(shorter)} людей</span>`]);
+      rows.push([label, longTxt(v), longer>=shorter ? `<span class="chip good">швидше, ніж у ${pctTxt(longer)} людей</span>` : `<span class="chip warn">довше, ніж у ${pctTxt(shorter)} людей</span>`]);
     } else if(!mc.s.ecopr){
       const el=diff(mc.s[a],today); if(el==null) continue;
-      if(!st || st.n<3){ rows.push([label, el+' дн…', '<span class="chip">чекаєте · мало даних для порівняння</span>']); continue; }
+      if(!st || st.n<3){ rows.push([label, longTxt(el)+'…', `<span class="chip">${W} · мало даних для порівняння</span>`]); continue; }
       const q=st.vals.filter(x=>x<=el).length/st.n;
-      rows.push([label, el+' дн…', q>=0.75 ? `<span class="chip warn">затримується: у ${pctTxt(q)} людей уже настав би</span>` : `<span class="chip">чекаєте · у ${pctTxt(q)} людей настав би до цього часу · медіана ${dd(st.med)} дн</span>`]);
+      rows.push([label, longTxt(el)+'…', q>=0.75 ? `<span class="chip warn">затримується: у ${pctTxt(q)} людей уже настав би</span>` : `<span class="chip">${W} · у ${pctTxt(q)} людей настав би до цього часу · зазвичай ${longTxt(st.med)}</span>`]);
     }
   }
-  box.innerHTML = `<div class="sechead"><h2 style="font-size:17px">Ваш таймлайн серед інших${mc.nick?` <span class="muted" style="font:400 14px var(--f-body)">· ${esc(mc.nick)}</span>`:''}</h2><button class="btn link" type="button" data-act="edit">Оновити дати</button></div>` +
-    (rows.length ? rows.map(r=>`<div class="mine-row"><span>${esc(r[0])}</span><span class="num">${r[1]}</span><span class="vd">${r[2]}</span></div>`).join('') : '<p class="muted" style="margin:0">Додайте у свій таймлайн дату подачі на PR та наступні етапи, щоб побачити порівняння.</p>');
+  return rows;
 }
+const cmpHtml = rows => rows.map(r=>`<div class="mine-row"><span>${esc(r[0])}</span><span class="num">${r[1]}</span><span class="vd">${r[2]}</span></div>`).join('');
+function renderMine(mc){
+  const box=$('#mineBox');
+  if(!mc){ box.hidden=true; box.innerHTML=''; return; }
+  box.hidden=false;
+  const rows=cmpRows(mc,true);
+  box.innerHTML = `<div class="sechead"><h2 style="font-size:17px">Ваш таймлайн серед інших${mc.nick?` <span class="muted" style="font:400 14px var(--f-body)">· ${esc(mc.nick)}</span>`:''} <a class="hid" href="#${esc(hid(mc))}" title="Картка і посилання">${esc(hid(mc))}</a></h2><span style="display:flex;gap:6px"><a class="btn link" href="#${esc(hid(mc))}">Поділитись</a><button class="btn link" type="button" data-act="edit">Оновити дати</button></span></div>` +
+    (rows.length ? cmpHtml(rows) : '<p class="muted" style="margin:0">Додайте у свій таймлайн дату подачі на PR та наступні етапи, щоб побачити порівняння.</p>');
+}
+
+/* ===== Картка таймлайну за посиланням #ID ===== */
+const caseUrl = c => location.origin + location.pathname + '#' + hid(c);
+function shareText(c){
+  const parts=[];
+  if(c.s.pr) parts.push(`подача на PR ${fmtDate(c.s.pr)}`);
+  for(const k of ['aor','pal','ecopr']){ const v=sdiff(c.s.pr,c.s[k]); if(c.s.pr && v!=null && v>=0) parts.push(`${SHORT[k]} через ${longTxt(v)}`); }
+  if(!c.s.ecopr && c.s.pr){ const ls=lastStage(c); const w=sdiff(c.s[ls], todayISO()); if(w!=null && ls!=='pr') parts.push(`після ${SHORT[ls]} чекає ${longTxt(w)}`); }
+  return `Таймлайн PR (MPNP) ${hid(c)}${c.nick?` «${c.nick}»`:''}: ${parts.join(', ') || 'дати етапів'}.`;
+}
+let caseOpenId=null;
+function openCase(code){
+  code=String(code||'').replace(/^#/,'').toUpperCase();
+  const c=CASES.find(x=>caseCode(x)===code);
+  const box=$('#caseBody');
+  const close=`<button class="cc-close" type="button" data-ccclose aria-label="Закрити">×</button>`;
+  if(!c){
+    caseOpenId=null;
+    box.innerHTML = `<div class="cc-head"><h2 id="caseTitle" tabindex="-1" autofocus style="outline:none">Таймлайн ${esc(code)}</h2>${close}</div><p class="muted" style="margin:0">${CASES.length?'Такого таймлайну немає в базі. Можливо, його видалили або в посиланні помилка.':'Завантажую дані…'}</p><div class="cc-share"><button class="btn" type="button" data-ccclose>До всіх таймлайнів</button></div>`;
+  } else {
+    caseOpenId=c.id;
+    const my=mine().some(m=>m.id===c.id);
+    const done=!!c.s.ecopr, ls=lastStage(c);
+    const total = c.s.pr ? sdiff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
+    const status = done ? `<div class="cc-status done">eCoPR отримано${total!=null?` через <b>${longTxt(total)}</b> після подачі на PR`:''}.</div>`
+      : `<div class="cc-status">${total!=null?`Триває <b>${longTxt(total)}</b> від подачі на PR. `:''}Останній етап: <b>${esc(SHORT[ls]||'—')}</b> ${fmtDate(c.s[ls])}.</div>`;
+    let tl='', prev=null;
+    for(const e of events(c)){ const d=prev?diff(prev,e.d):null; tl+=`<div class="${e.cls}"><span class="nm">${esc(e.l)}</span><span class="dt num">${fmtDate(e.d)}</span><span class="d num">${d!=null?'+'+d:''}</span></div>`; prev=e.d; }
+    const rows=cmpRows(c, false);
+    const meta=[lookup(STREAMS,c.stream), c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':'', isOpen(c)?'оновити може будь-хто, хто знає ID':'захищено кодом'].filter(Boolean).join(' · ');
+    box.innerHTML = `<div class="cc-head"><h2 id="caseTitle" tabindex="-1" autofocus style="outline:none">${c.nick?esc(c.nick):'Таймлайн'}</h2><span class="hid" style="font-size:13px">${esc(hid(c))}</span>${c.security==='yes'?'<span class="pill sec">Comprehensive</span>':''}${my?'<span class="mytag">ваш</span>':''}${close}</div>
+      <div class="cc-meta">${esc(meta)}</div>
+      ${status}
+      <h3>Дати етапів</h3><div class="tl">${tl}</div>
+      ${c.notes?`<p class="notes" style="margin:0">${esc(c.notes)}</p>`:''}
+      ${rows.length?`<h3>Порівняння з іншими</h3><div>${cmpHtml(rows)}</div>`:''}
+      <div class="cc-share"><span class="cc-link" title="${esc(caseUrl(c))}">${esc(caseUrl(c).replace(/^https?:\/\//,''))}</span>
+        <button class="btn primary" type="button" data-ccshare>Поділитись</button>
+        <button class="btn" type="button" data-cccopy>Скопіювати посилання</button>
+        <a class="btn" target="_blank" rel="noopener" href="https://t.me/share/url?url=${encodeURIComponent(caseUrl(c))}&text=${encodeURIComponent(shareText(c))}">Надіслати в Telegram</a>
+        ${(!isAdmin())?`<button class="btn link" type="button" data-ccupd>${my?'Оновити свій таймлайн':isOpen(c)?'Це мій таймлайн — оновити':'Оновити з кодом'}</button>`:''}
+        <div id="ccMsg" hidden></div></div>`;
+  }
+  if(!$('#dlgCase').open) $('#dlgCase').showModal();
+}
+function closeCase(){
+  if($('#dlgCase').open) $('#dlgCase').close();
+}
+$('#dlgCase').addEventListener('close',()=>{ caseOpenId=null; if(/^#[0-9A-Z]{4}$/i.test(location.hash)) history.replaceState(null,'',location.pathname+location.search); });
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(_){ return false; } }
+async function shareCase(c, msgEl){
+  const url=caseUrl(c), text=shareText(c);
+  if(navigator.share && matchMedia('(pointer:coarse)').matches){ try{ await navigator.share({title:'Таймлайн '+hid(c), text, url}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+  const ok=await copyText(text+'\n'+url);
+  if(msgEl) setMsg(msgEl, ok?'Текст із посиланням скопійовано. Вставте його в чат Telegram.':'Не вдалося скопіювати автоматично. Виділіть посилання вище й скопіюйте вручну.', ok?'ok':'warn');
+}
+$('#caseBody').addEventListener('click', async e=>{
+  if(e.target.closest('[data-ccclose]')){ closeCase(); return; }
+  const c=CASES.find(x=>x.id===caseOpenId); if(!c) return;
+  if(e.target.closest('[data-ccshare]')){ shareCase(c, $('#ccMsg')); return; }
+  if(e.target.closest('[data-cccopy]')){ const ok=await copyText(caseUrl(c)); setMsg($('#ccMsg'), ok?'Посилання скопійовано.':'Не вдалося скопіювати. Виділіть посилання вручну.', ok?'ok':'warn'); return; }
+  if(e.target.closest('[data-ccupd]')){ closeCase(); openUpdate(c.id); }
+});
+function caseFromHash(){ const m=location.hash.match(/^#([0-9A-Z]{4})$/i); if(m) openCase(m[1]); else if($('#dlgCase').open) closeCase(); }
 function renderEngage(){ const mc=myCase(); renderGoal(mc); renderMine(mc); }
 document.addEventListener('click', e=>{
   const a=e.target.closest('[data-act]'); if(!a) return;
@@ -1998,16 +2094,17 @@ document.addEventListener('click', e=>{
 });
 
 /* ===== Завантаження ===== */
-function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); renderEngage(); }
+function afterData(){ CASES.forEach(c=>{ c.s=c.s||{}; c.adr=Array.isArray(c.adr)?c.adr:[]; c.ghost=Array.isArray(c.ghost)?c.ghost:[]; }); refreshYears(); render(); renderEngage(); if(!DEMO && !LOADED) return; caseFromHash(); }
+let LOADED=false;
 async function load(){
   $('#errBanner').hidden=true;
-  try{ CASES = await apiGet(); }
+  try{ CASES = await apiGet(); LOADED=true; }
   catch(ex){ $('#errBanner').hidden=false; $('#errBanner').textContent='Не вдалося завантажити кейси: '+ex.message+'. Оновіть сторінку трохи пізніше.'; }
   afterData();
 }
 
 initFilters(); initTrend(); initForm(); initPath();
-addEventListener('hashchange', ()=>{ route(); if(location.hash!=='#import') render(); }); route(); renderAdminBanner();
+addEventListener('hashchange', ()=>{ const wasAdm=!$('#adminView').hidden; route(); if(location.hash==='#import') return; if(wasAdm) render(); caseFromHash(); }); route(); renderAdminBanner();
 if(DEMO){ $('#demoBanner').hidden=false; CASES=demoCases(); afterData(); }
 else { afterData(); load(); }
 </script>
