@@ -23,7 +23,10 @@ const STAGES = ['eoi','laa','mpnp','verif','nom','pr','aor','bio','sec','secdone
 const META = ['nick','stream','ee','security','notes','source'];
 const LISTS = ['adr','ghost'];           // багаторазові події, дати через пробіл
 const PRIVATE = ['srcref'];              // не віддається назовні (посилання на джерело)
-const HEADERS = ['id','key','created','updated'].concat(META, STAGES, LISTS, PRIVATE);
+const SYS = ['code','protect'];          // публічний короткий #ID і захист: 'yes' — лише з кодом, 'no' — будь-хто за #ID
+const HEADERS = ['id','key','created','updated'].concat(META, STAGES, LISTS, PRIVATE, SYS);
+const LOG_SHEET = 'log';                 // журнал змін: що було до і після (для відкату)
+const MAX_OPEN_UPDATES_PER_10_MIN = 60;
 const STREAMS = ['swm','swo','ies','bis','other'];
 const MAX_CREATES_PER_10_MIN = 30;
 const MAX_LIST = 20;
@@ -85,7 +88,7 @@ function rows_() {
 }
 
 function toCase_(o) {
-  const c = { id: String(o.id), created: fmt_(o.created), updated: fmt_(o.updated), s: {} };
+  const c = { id: String(o.id), code: fmt_(o.code), protect: fmt_(o.protect) || 'yes', created: fmt_(o.created), updated: fmt_(o.updated), s: {} };
   META.forEach(k => c[k] = fmt_(o[k]));
   STAGES.forEach(k => { const d = fmt_(o[k]); if (d) c.s[k] = d; });
   LISTS.forEach(k => c[k] = fmt_(o[k]).split(/[\s,;]+/).filter(Boolean));
@@ -93,7 +96,51 @@ function toCase_(o) {
 }
 
 function doGet() {
-  return json_({ ok: true, cases: rows_().map(toCase_) });
+  return json_({ ok: true, cases: ensureCodes_(rows_()).map(toCase_) });
+}
+
+/* ===== Короткі #ID і захист ===== */
+const isCode_ = c => /^[0-9A-F]{4}$/.test(c);
+function newCode_(used) {
+  for (let i = 0; i < 2000; i++) {
+    const c = Utilities.getUuid().replace(/-/g, '').slice(0, 4).toUpperCase();
+    if (!used[c]) { used[c] = true; return c; }
+  }
+  throw new Error('Не вдалося створити унікальний ID');
+}
+function usedCodes_() { const u = {}; rows_().forEach(r => { const c = fmt_(r.code).toUpperCase(); if (c) u[c] = true; }); return u; }
+// Одноразова міграція: кожному запису — унікальний 4-символьний #ID (перші 4 символи id, якщо вільні) і режим захисту
+function ensureCodes_(rows) {
+  if (!rows.some(r => !fmt_(r.code) || !fmt_(r.protect))) return rows;
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return rows;
+  try {
+    rows = rows_();
+    const sh = sheet_(), h = headers_(sh), ci = h.indexOf('code'), pi = h.indexOf('protect');
+    if (ci < 0 || pi < 0 || sh.getLastRow() < 2) return rows;
+    const n = sh.getLastRow() - 1;
+    const codes = sh.getRange(2, ci + 1, n, 1).getValues(), prot = sh.getRange(2, pi + 1, n, 1).getValues();
+    const used = {}; rows.forEach(r => { const c = fmt_(r.code).toUpperCase(); if (c) used[c] = true; });
+    rows.forEach(r => {
+      const i = r._row - 2;
+      if (!fmt_(r.code)) { let c = String(r.id).slice(0, 4).toUpperCase(); if (!isCode_(c) || used[c]) c = newCode_(used); else used[c] = true; r.code = c; codes[i][0] = c; }
+      if (!fmt_(r.protect)) { r.protect = ['telegram', 'csv'].indexOf(fmt_(r.source)) >= 0 ? 'no' : 'yes'; prot[i][0] = r.protect; }
+    });
+    sh.getRange(2, ci + 1, n, 1).setNumberFormat('@').setValues(codes);
+    sh.getRange(2, pi + 1, n, 1).setValues(prot);
+    return rows;
+  } finally { lock.releaseLock(); }
+}
+
+function log_(action, by, before, after) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sh = ss.getSheetByName(LOG_SHEET);
+    if (!sh) { sh = ss.insertSheet(LOG_SHEET); sh.appendRow(['time', 'action', 'by', 'id', 'code', 'before', 'after']); sh.getRange(1, 1, 1, 7).setFontWeight('bold'); sh.setFrozenRows(1); }
+    const cut = o => o ? JSON.stringify(o).slice(0, 45000) : '';
+    const ref = after || before || {};
+    sh.appendRow([new Date().toISOString(), action, by, String(ref.id || ''), String(ref.code || ''), cut(before), cut(after)]);
+  } catch (e) { /* журнал не повинен ламати збереження */ }
 }
 
 function doPost(e) {
@@ -113,11 +160,11 @@ function doPost(e) {
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
     try {
-      if (b.action === 'create') return json_(create_(b.case));
-      if (b.action === 'update') return json_(update_(b.id, b.key, b.case));
+      if (b.action === 'create') return json_(create_(b.case, b.protect));
+      if (b.action === 'update') return json_(update_(b.id, b.key, b.case, b.protect));
       if (b.action === 'delete') return json_(delete_(b.id, b.key));
       if (b.action === 'import') { checkAdmin_(b.password); return json_(import_(b.cases, b.source)); }
-      if (b.action === 'adminUpdate') { checkAdmin_(b.password); return json_(adminUpdate_(b.id, b.case)); }
+      if (b.action === 'adminUpdate') { checkAdmin_(b.password); return json_(adminUpdate_(b.id, b.case, b.protect)); }
       if (b.action === 'adminDelete') { checkAdmin_(b.password); return json_(adminDelete_(b.id)); }
       return json_({ ok: false, error: 'Невідома дія' });
     } finally {
@@ -171,7 +218,8 @@ function newIds_(o) {
   o.created = o.updated = new Date().toISOString();
 }
 
-function create_(c) {
+const protOf_ = p => (p === false || p === 'no') ? 'no' : (p === true || p === 'yes') ? 'yes' : '';
+function create_(c, protect) {
   const cache = CacheService.getScriptCache();
   const n = Number(cache.get('creates') || 0);
   if (n >= MAX_CREATES_PER_10_MIN) throw new Error('Забагато нових кейсів за короткий час, спробуйте пізніше');
@@ -180,8 +228,11 @@ function create_(c) {
   const o = clean_(c);
   o.source = 'form';
   newIds_(o);
+  o.code = newCode_(usedCodes_());
+  o.protect = protOf_(protect) || 'yes';   // старі версії сайту не надсилають protect — тоді як раніше, з кодом
   writeRow_(sheet_().getLastRow() + 1, o);
-  return { ok: true, id: o.id, key: o.key };
+  log_('create', 'form', null, toCase_(o));
+  return { ok: true, id: o.id, key: o.key, code: o.code, protect: o.protect };
 }
 
 function find_(id, key) {
@@ -190,17 +241,35 @@ function find_(id, key) {
   return r;
 }
 
-function update_(id, key, c) {
-  const r = find_(id, key);
+function update_(id, key, c, protect) {
+  const r = findById_(id);
+  const byKey = !!key && String(r.key) === String(key);
+  const was = fmt_(r.protect) || 'yes';
+  if (!byKey && was !== 'no') throw new Error('Цей таймлайн захищено кодом редагування. Введіть код, який ви отримали після збереження.');
+  if (!byKey) {
+    const cache = CacheService.getScriptCache();
+    const n = Number(cache.get('openupd') || 0);
+    if (n >= MAX_OPEN_UPDATES_PER_10_MIN) throw new Error('Забагато оновлень за короткий час, спробуйте пізніше');
+    cache.put('openupd', String(n + 1), 600);
+  }
   const o = clean_(c);
   o.id = String(r.id); o.key = String(r.key); o.created = fmt_(r.created); o.updated = new Date().toISOString();
-  o.source = fmt_(r.source) || 'form'; o.srcref = fmt_(r.srcref);
+  o.source = fmt_(r.source) || 'form'; o.srcref = fmt_(r.srcref); o.code = fmt_(r.code);
+  const want = protOf_(protect);
+  o.protect = was;
+  let newKey = '';
+  if (want === 'yes' && was === 'no') {                 // «закрити» таймлайн: новий код отримує той, хто закрив
+    o.protect = 'yes';
+    if (!byKey) { o.key = newKey = Utilities.getUuid().replace(/-/g, '').slice(0, 16); }
+  } else if (want === 'no' && byKey) o.protect = 'no';  // відкрити може лише власник коду
   writeRow_(r._row, o);
-  return { ok: true, id: o.id };
+  log_('update', byKey ? 'key' : 'open', toCase_(r), toCase_(o));
+  return { ok: true, id: o.id, code: o.code, protect: o.protect, key: byKey ? o.key : newKey };
 }
 
 function delete_(id, key) {
   const r = find_(id, key);
+  log_('delete', 'key', toCase_(r), null);
   sheet_().deleteRow(r._row);
   return { ok: true };
 }
@@ -225,17 +294,20 @@ function findById_(id) {
   return r;
 }
 
-function adminUpdate_(id, c) {
+function adminUpdate_(id, c, protect) {
   const r = findById_(id);
   const o = clean_(c);
   o.id = String(r.id); o.key = String(r.key); o.created = fmt_(r.created); o.updated = new Date().toISOString();
-  o.source = fmt_(r.source) || 'form'; o.srcref = fmt_(r.srcref);
+  o.source = fmt_(r.source) || 'form'; o.srcref = fmt_(r.srcref); o.code = fmt_(r.code);
+  o.protect = protOf_(protect) || fmt_(r.protect) || 'yes';
   writeRow_(r._row, o);
-  return { ok: true, id: o.id };
+  log_('update', 'admin', toCase_(r), toCase_(o));
+  return { ok: true, id: o.id, code: o.code, protect: o.protect };
 }
 
 function adminDelete_(id) {
   const r = findById_(id);
+  log_('delete', 'admin', toCase_(r), null);
   sheet_().deleteRow(r._row);
   return { ok: true };
 }
@@ -247,6 +319,7 @@ function import_(cases, source) {
   const sh = sheet_();
   const seen = {};
   rows_().forEach(r => { const ref = fmt_(r.srcref); if (ref) seen[ref] = true; });
+  const used = usedCodes_();
   const added = [], skipped = [], errors = [];
   cases.forEach((c, i) => {
     try {
@@ -256,6 +329,8 @@ function import_(cases, source) {
       o.source = source;
       o.srcref = ref;
       newIds_(o);
+      o.code = newCode_(used);
+      o.protect = 'no';                          // імпортовані без власника: оновлює будь-хто за #ID і може «закрити» кодом
       writeRow_(sh.getLastRow() + 1, o);
       if (ref) seen[ref] = true;
       added.push({ i: i, id: o.id });
