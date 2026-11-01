@@ -132,11 +132,59 @@ function ensureCodes_(rows) {
   } finally { lock.releaseLock(); }
 }
 
+function logSheet_() { return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOG_SHEET); }
+function readLog_(limit) {
+  limit = Math.min(Math.max(Number(limit) || 150, 1), 500);
+  const sh = logSheet_();
+  if (!sh || sh.getLastRow() < 2) return { ok: true, entries: [] };
+  const last = sh.getLastRow(), from = Math.max(2, last - limit + 1);
+  const v = sh.getRange(from, 1, last - from + 1, 8).getValues();
+  const parse = x => { try { return x ? JSON.parse(x) : null; } catch (e) { return null; } };
+  const entries = v.map((r, i) => ({ row: from + i, time: fmt_(r[0] instanceof Date ? r[0].toISOString() : r[0]), action: fmt_(r[1]), by: fmt_(r[2]), id: fmt_(r[3]), code: fmt_(r[4]), before: parse(r[5]), after: parse(r[6]), undone: fmt_(r[7] instanceof Date ? r[7].toISOString() : r[7]) })).reverse();
+  return { ok: true, entries: entries };
+}
+// Відкат одного запису журналу: повертає стан «до» (оновлення), видаляє створене, відновлює видалене
+function rollback_(row) {
+  const sh = logSheet_();
+  row = Number(row);
+  if (!sh || !(row >= 2) || row > sh.getLastRow()) throw new Error('Запис журналу не знайдено');
+  const r = sh.getRange(row, 1, 1, 8).getValues()[0];
+  if (fmt_(r[7])) throw new Error('Цю зміну вже відкочено');
+  let before = null, after = null;
+  try { before = r[5] ? JSON.parse(r[5]) : null; after = r[6] ? JSON.parse(r[6]) : null; } catch (e) { throw new Error('Пошкоджений запис журналу'); }
+  const id = String((after || before || {}).id || '');
+  const cur = rows_().find(o => String(o.id) === id);
+  if (before && cur) {                                   // оновлення: повернути стан «до»
+    const o = clean_(before);
+    o.id = String(cur.id); o.key = String(cur.key); o.created = fmt_(cur.created); o.updated = new Date().toISOString();
+    o.source = fmt_(cur.source) || 'form'; o.srcref = fmt_(cur.srcref); o.code = fmt_(cur.code);
+    o.protect = protOf_(before.protect) || fmt_(cur.protect) || 'yes';
+    writeRow_(cur._row, o);
+    log_('rollback', 'admin', toCase_(cur), toCase_(o));
+  } else if (before && !cur) {                           // було видалено: відновити з тим самим id
+    const o = clean_(before);
+    o.id = id; o.key = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+    o.created = String(before.created || new Date().toISOString()); o.updated = new Date().toISOString();
+    o.source = ['form', 'telegram', 'csv'].indexOf(before.source) >= 0 ? before.source : 'form';
+    const used = usedCodes_(); const c = String(before.code || '').toUpperCase();
+    o.code = (isCode_(c) && !used[c]) ? c : newCode_(used);
+    o.protect = protOf_(before.protect) || 'yes';
+    writeRow_(sheet_().getLastRow() + 1, o);
+    log_('rollback', 'admin', null, toCase_(o));
+  } else if (!before && cur) {                           // було створено: видалити
+    log_('rollback', 'admin', toCase_(cur), null);
+    sheet_().deleteRow(cur._row);
+  } else throw new Error('Таймлайну вже немає в базі, відкочувати нічого');
+  sh.getRange(row, 8).setValue(new Date().toISOString());
+  return { ok: true };
+}
+
 function log_(action, by, before, after) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sh = ss.getSheetByName(LOG_SHEET);
-    if (!sh) { sh = ss.insertSheet(LOG_SHEET); sh.appendRow(['time', 'action', 'by', 'id', 'code', 'before', 'after']); sh.getRange(1, 1, 1, 7).setFontWeight('bold'); sh.setFrozenRows(1); }
+    if (!sh) { sh = ss.insertSheet(LOG_SHEET); sh.appendRow(['time', 'action', 'by', 'id', 'code', 'before', 'after', 'undone']); sh.getRange(1, 1, 1, 8).setFontWeight('bold'); sh.setFrozenRows(1); }
+    else if (!sh.getRange(1, 8).getValue()) sh.getRange(1, 8).setValue('undone').setFontWeight('bold');
     const cut = o => o ? JSON.stringify(o).slice(0, 45000) : '';
     const ref = after || before || {};
     sh.appendRow([new Date().toISOString(), action, by, String(ref.id || ''), String(ref.code || ''), cut(before), cut(after)]);
@@ -166,6 +214,8 @@ function doPost(e) {
       if (b.action === 'import') { checkAdmin_(b.password); return json_(import_(b.cases, b.source)); }
       if (b.action === 'adminUpdate') { checkAdmin_(b.password); return json_(adminUpdate_(b.id, b.case, b.protect)); }
       if (b.action === 'adminDelete') { checkAdmin_(b.password); return json_(adminDelete_(b.id)); }
+      if (b.action === 'log') { checkAdmin_(b.password); return json_(readLog_(b.limit)); }
+      if (b.action === 'rollback') { checkAdmin_(b.password); return json_(rollback_(b.row)); }
       return json_({ ok: false, error: 'Невідома дія' });
     } finally {
       lock.releaseLock();

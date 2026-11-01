@@ -244,6 +244,17 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .rgap{position:relative;padding:5px 0 7px 34px;font-size:12.5px;color:var(--mark)}
 .rgap::before{content:"";position:absolute;left:10px;top:0;bottom:0;border-left:2px dashed color-mix(in srgb,var(--mark) 55%,var(--line))}
 .rgap b{font-family:var(--f-mono);font-weight:500}
+.rgap .gn{color:var(--muted);font-size:11.5px}
+.rgap.here{color:var(--accent);font-weight:500;padding-top:8px;padding-bottom:10px}
+.rgap.here::before{border-left:2px solid var(--accent)}
+.herepin{display:inline-block;background:var(--accent);color:var(--surface);border-radius:999px;padding:1px 9px;font-size:12px;margin-right:6px}
+.rt .rme{grid-column:2 / -1;font-size:12.5px;padding:0 0 4px}
+.rt .rme.done{color:var(--ink2)}
+.rt .rme.done b{color:var(--ink)}
+.rt .rme.next{color:var(--accent)}
+.rt .rme b{font-weight:500}
+.rt.me .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.rt.me.end .dot{background:var(--good);border-color:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
 .rt.few{opacity:.55}
 @media (max-width:520px){.route-panel{padding:14px 14px 4px}}
 .pill.tg{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px}
@@ -267,6 +278,9 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .icard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .icard.off{opacity:.55}
 .icard.done{border-color:var(--good)}
+.logcard{gap:6px;padding:10px 14px}
+.logcard.open{border-left:3px solid var(--mark)}
+.logch{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--ink2);font-family:var(--f-mono)}
 .ihead{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .ihead .isel{width:18px;height:18px;accent-color:var(--accent)}
 .ihead .inum{font-family:var(--f-mono);color:var(--muted)}
@@ -530,7 +544,7 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <section id="admMain" hidden style="gap:16px">
     <div class="adm-tabs" role="group" aria-label="Джерело тексту">
-      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button><button type="button" data-src="csv" aria-pressed="false">Таблиця (CSV)</button><button type="button" data-src="dups" aria-pressed="false">Дублікати в базі</button>
+      <button type="button" data-src="paste" aria-pressed="true">Вставити текст</button><button type="button" data-src="file" aria-pressed="false">Файл експорту (JSON)</button><button type="button" data-src="img" aria-pressed="false">Скріншоти</button><button type="button" data-src="csv" aria-pressed="false">Таблиця (CSV)</button><button type="button" data-src="dups" aria-pressed="false">Дублікати в базі</button><button type="button" data-src="log" aria-pressed="false">Журнал змін</button>
     </div>
     <div id="admPaste">
       <textarea id="admText" class="adm-text" placeholder="Вставте один або кілька постів з таймлайнами. Пости краще розділяти порожнім рядком."></textarea>
@@ -571,6 +585,11 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
       <p class="muted" style="margin:0 0 10px;font-size:13.5px;max-width:80ch">Показуються лише пари, де всі дати меншого запису точно збігаються з датами більшого, а в більшому є додаткові дати. Після об'єднання лишається запис, внесений через форму (у нього є код редагування), або, якщо таких немає, запис з більшою кількістю дат. Другий запис видаляється, його дати, дозапити й примітки переносяться.</p>
       <div class="csvbar" style="margin-bottom:12px"><button class="btn" type="button" id="dupScan">Шукати ще раз</button><button class="btn primary" type="button" id="dupAll" hidden>Об'єднати всі</button><span class="muted" id="dupProg" style="font-size:13.5px"></span></div>
       <div id="dupList" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+    <div id="admLogBox" hidden>
+      <p class="muted" style="margin:0 0 10px;font-size:13.5px;max-width:80ch">Останні 200 змін у базі, найновіші вгорі. «Відкотити» повертає таймлайн до стану перед зміною: оновлення скасовується, створений таймлайн видаляється, видалений відновлюється. Сам відкат теж записується в журнал.</p>
+      <div class="csvbar" style="margin-bottom:12px"><button class="btn" type="button" id="logReload">Оновити</button><label class="chk"><input type="checkbox" id="logOpenOnly"> Лише зміни без коду (за ID)</label><span class="muted" id="logProg" style="font-size:13.5px"></span></div>
+      <div id="logList" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
     <div class="adm-bar" id="admParseBar">
       <button class="btn primary" type="button" id="admParse">Розпізнати</button>
@@ -900,6 +919,11 @@ function initPath(){
 }
 const longTxt = v => v>=45 ? `${mon(v)} міс` : `${dd(v)} дн`;
 const gapTxt = g => g>=60 ? `${mon(g)} міс` : g>=14 ? `${Math.round(g/7)} тиж` : plural(Math.round(g),'день','дні','днів');
+const ROUTE_FEW = 20;          // у маршруті етап з меншою кількістю таймлайнів показуємо блідим
+const sdiff = (a,b) => { const x=D(a), y=D(b); return (x==null||y==null) ? null : Math.round((y-x)/864e5); };
+const medOf = v => { if(!v.length) return null; const s=[...v].sort((p,q)=>p-q); return quant(s,.5); };
+// проміжок між двома етапами — медіана реальних пар дат (у тих, хто має обидві дати)
+function pairGap(list,a,b){ const v=[]; for(const c of list){ const d=sdiff(c.s[a],c.s[b]); if(d!=null) v.push(d); } return {n:v.length, med:medOf(v)}; }
 function renderPath(list){
   const P=PATHS[pathMode];
   let pts=P.ms.map(k=>({k, st:segStats(list,[P.a,k])})).filter(p=>p.st).sort((x,y)=>x.st.med-y.st.med);
@@ -909,21 +933,52 @@ function renderPath(list){
   if(!pts.length){ $('#path').innerHTML='<div class="gempty" style="padding:4px 0 12px">Поки немає таймлайнів з потрібними датами.</div>'; $('#pathNote').textContent=''; return; }
   const rows=[{k:P.a, start:true, med:0}, ...pts.map(p=>({k:p.k, st:p.st, med:p.st.med}))];
   const from = P.a==='pr' ? 'від PR application' : 'від EOI';
+
+  // «Ви тут»: ваш таймлайн, якщо він є на цьому пристрої і має стартову дату цього режиму
+  const mc = myCase(); const me = (mc && mc.s[P.a]) ? mc : null;
+  const today = todayISO();
+  let lastIdx=-1; if(me) rows.forEach((r,i)=>{ if(me.s[r.k]) lastIdx=i; });
+  const waiting = me && !me.s[P.end] && lastIdx>=0 && lastIdx<rows.length-1;
+  const anchor = waiting ? rows[lastIdx] : null;
+  const expect = k => {           // орієнтовна дата етапу k від вашого останнього етапу
+    const pg = pairGap(list.filter(c=>!me||c.id!==me.id), anchor.k, k);
+    const g = (pg.n>=ROUTE_FEW/2 && pg.med!=null) ? pg.med : (rows.find(r=>r.k===k).med - anchor.med);
+    return addDays(me.s[anchor.k], Math.max(0,Math.round(g)));
+  };
+  let upcoming=0;
+
   $('#path').innerHTML = `<div class="route"><div class="rhead"><span>Етап</span><span>Скільки ${from}</span></div>` + rows.map((r,i)=>{
-    const nx=rows[i+1], g = nx ? nx.med-r.med : 0;
+    const nx=rows[i+1];
     const cls = r.start ? 'start' : (r.k===P.end ? 'end' : (P.major.includes(r.k) ? '' : 'minor'));
-    const few = r.st && r.st.n<FEW;
+    const few = r.st && r.st.n<ROUTE_FEW;
     const t = r.start ? 'старт' : `≈ ${longTxt(r.med)}`;
     let sub = '';
     if(r.st){
       const rng = r.st.n>1 ? `у половини людей ${r.med>=45?mon(r.st.q1)+'–'+mon(r.st.q3)+' міс':dd(r.st.q1)+'–'+dd(r.st.q3)+' дн'}` : '';
-      sub = [rng, cls==='minor'&&!few ? '' : plural(r.st.n,'таймлайн','таймлайни','таймлайнів')].filter(Boolean).join(' · ') + (few?' · мало даних':'');
+      sub = [rng, plural(r.st.n,'таймлайн','таймлайни','таймлайнів')].filter(Boolean).join(' · ') + (few?' · мало даних':'');
     }
-    const row = `<div class="rt ${cls}${few?' few':''}"><span class="dot"></span><span class="nm">${esc(RT_NAME[r.k]||SHORT[r.k])}</span><span class="t">${t}</span>${sub?`<span class="r">${sub}</span>`:''}</div>`;
-    const gap = (nx && g>=3) ? `<div class="rgap">↓ через <b>≈ ${gapTxt(g)}</b></div>` : '';
-    return row+gap;
+    // ваш рядок
+    let mine='';
+    if(me && me.s[r.k]){ const el=sdiff(me.s[P.a], me.s[r.k]); mine = `<span class="rme done">Ваша дата: <b class="num">${fmtDate(me.s[r.k])}</b>${!r.start&&el!=null?` · ${longTxt(el)}`:''}</span>`; }
+    else if(waiting && i>lastIdx && upcoming<3 && !(me.s[r.k])){ upcoming++; const e=expect(r.k); const left=sdiff(today,e);
+      mine = `<span class="rme next">Вам орієнтовно: <b class="num">≈ ${fmtDate(e)}</b>${left>0?` · через ${durTxt(left).replace('≈','≈ ')}`:' · за медіаною вже мав би настати'}</span>`; }
+    const row = `<div class="rt ${cls}${few?' few':''}${me&&me.s[r.k]?' me':''}"><span class="dot"></span><span class="nm">${esc(RT_NAME[r.k]||SHORT[r.k])}</span><span class="t">${t}</span>${sub?`<span class="r">${sub}</span>`:''}${mine}</div>`;
+    if(!nx) return row;
+    // «Ви тут» замість звичайного проміжку після вашого останнього етапу
+    if(waiting && i===lastIdx){
+      const w=sdiff(me.s[r.k], today);
+      return row + `<div class="rgap here"><span class="herepin">Ви тут</span> чекаєте ${RT_NAME[nx.k]||SHORT[nx.k]} <b>${plural(Math.max(0,w),'день','дні','днів')}</b></div>`;
+    }
+    const pg = pairGap(list, r.k, nx.k);
+    const exact = pg.n>=ROUTE_FEW/2 && pg.med!=null;
+    const g = exact ? pg.med : nx.med-r.med;
+    let txt;
+    if(exact && g<=2) txt = `↓ <b>майже одночасно</b>`;
+    else if(g<3) return row;
+    else txt = `↓ через <b>≈ ${gapTxt(g)}</b>`;
+    return row + `<div class="rgap">${txt}<span class="gn">${exact?` · ${plural(pg.n,'таймлайн','таймлайни','таймлайнів')}`:' · оцінка'}</span></div>`;
   }).join('') + '</div>';
-  $('#pathNote').textContent = `Праворуч — медіана ${from} до етапу: половина людей дійшла до нього швидше. «Через …» між етапами — скільки зазвичай минає від одного етапу до наступного.` + (P.a==='pr' ? ' Biometrics, Medicals, Eligibility, PAL і Security check у різних людей ідуть у різному порядку.' : '') + ` Блідіші рядки мають менше ${FEW} таймлайнів.`;
+  $('#pathNote').textContent = `Праворуч — медіана ${from} до етапу: половина людей дійшла до нього швидше. «Через …» — скільки зазвичай минає між сусідніми етапами в людей, які мають обидві дати («оцінка» — якщо таких мало).` + (P.a==='pr' ? ' Biometrics, Medicals, Eligibility, PAL і Security check у різних людей ідуть у різному порядку.' : '') + ` Блідіші рядки мають менше ${ROUTE_FEW} таймлайнів.` + (mc && !me ? ` Ваш таймлайн не має дати «${RT_NAME[P.a]}», тому в цьому режимі його не показано.` : '');
 }
 
 /* --- тренд --- */
@@ -1306,9 +1361,11 @@ $('#admLoginForm').addEventListener('submit', async e=>{
 document.querySelectorAll('[data-src]').forEach(b=>b.addEventListener('click',()=>{
   ADM.src=b.dataset.src; document.querySelectorAll('[data-src]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
   $('#admPaste').hidden = ADM.src!=='paste'; $('#admFileBox').hidden = ADM.src!=='file'; $('#admImgBox').hidden = ADM.src!=='img';
-  $('#admCsvBox').hidden = ADM.src!=='csv'; $('#admDupBox').hidden = ADM.src!=='dups'; $('#admParseBar').hidden = ADM.src==='csv' || ADM.src==='dups';
-  $('#admResults').hidden = ADM.src==='dups'; $('#admBar').hidden = ADM.src==='dups' || !ADM.items.length;
+  const tool = ADM.src==='dups' || ADM.src==='log';
+  $('#admCsvBox').hidden = ADM.src!=='csv'; $('#admDupBox').hidden = ADM.src!=='dups'; $('#admLogBox').hidden = ADM.src!=='log'; $('#admParseBar').hidden = ADM.src==='csv' || tool;
+  $('#admResults').hidden = tool; $('#admBar').hidden = tool || !ADM.items.length;
   if(ADM.src==='dups') renderDups();
+  if(ADM.src==='log') loadLog();
 }));
 
 /* --- експорт Telegram --- */
@@ -1557,6 +1614,59 @@ function chooseKeeper(p){
 }
 const recTitle=c=>`${c.nick||'Без назви'} · ${SRC_L(c)}${c.created?' · додано '+fmtDate(String(c.created).slice(0,10)):''}`;
 const nDates=c=>STAGES.filter(s=>c.s && c.s[s.k]).length;
+/* --- журнал змін (адмін) --- */
+const LOGX = { entries:[], confirm:null };
+const LOG_L = (e)=> e.action==='create' ? 'Додано через форму' : e.action==='rollback' ? 'Відкат' :
+  e.action==='delete' ? (e.by==='admin'?'Адмін видалив':'Видалено власником') :
+  e.by==='open' ? 'Оновлено за ID, без коду' : e.by==='key' ? 'Оновлено з кодом' : e.by==='admin' ? 'Адмін змінив' : 'Оновлено';
+const logTime = t => { const d=new Date(t); return isNaN(d) ? esc(t) : `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+function logChanges(b,a){
+  const out=[];
+  if(!b && a){ out.push(`${plural(Object.keys(a.s||{}).length,'дата','дати','дат')}`); return out; }
+  if(b && !a){ out.push(`видалено таймлайн із ${plural(Object.keys(b.s||{}).length,'датою','датами','датами')}`); return out; }
+  for(const {k} of STAGES){ const x=(b.s||{})[k]||'', y=(a.s||{})[k]||''; if(x===y) continue;
+    out.push(!x ? `+ ${SHORT[k]} ${fmtDate(y)}` : !y ? `− ${SHORT[k]} (було ${fmtDate(x)})` : `${SHORT[k]}: ${fmtDate(x)} → ${fmtDate(y)}`); }
+  for(const [k,l] of [['adr','дозапити'],['ghost','ghost']]){ const x=(b[k]||[]).join(','), y=(a[k]||[]).join(','); if(x!==y) out.push(`${l}: ${(b[k]||[]).length} → ${(a[k]||[]).length}`); }
+  if((b.nick||'')!==(a.nick||'')) out.push(`назва: «${b.nick||'—'}» → «${a.nick||'—'}»`);
+  if((b.stream||'')!==(a.stream||'')) out.push(`потік: ${lookup(STREAMS,b.stream)||'—'} → ${lookup(STREAMS,a.stream)||'—'}`);
+  if((b.ee||'')!==(a.ee||'')) out.push('тип подачі змінено');
+  if((b.security||'')!==(a.security||'')) out.push(`security: ${lookup(SECS,b.security)||'—'} → ${lookup(SECS,a.security)||'—'}`);
+  if((b.notes||'')!==(a.notes||'')) out.push('примітки змінено');
+  if((b.protect||'')!==(a.protect||'')) out.push(`захист: ${b.protect==='no'?'без коду':'з кодом'} → ${a.protect==='no'?'без коду':'з кодом'}`);
+  if(!out.length) out.push('без змін у даних');
+  return out;
+}
+async function loadLog(){
+  $('#logProg').textContent='Завантажую…'; $('#logList').innerHTML='';
+  try{ const j=await admPost({action:'log', password:ADM.pw||SS.get('prdash_admpw'), limit:200}); LOGX.entries=j.entries||[]; LOGX.confirm=null; $('#logProg').textContent=''; renderLog(); }
+  catch(ex){ $('#logProg').textContent = /Невідома дія/.test(ex.message) ? 'Журнал з’явиться після оновлення бекенду (новий Code.gs → PROD → New version).' : ex.message; }
+}
+function renderLog(){
+  const only=$('#logOpenOnly').checked;
+  const list=LOGX.entries.filter(e=>!only || e.by==='open');
+  if(!list.length){ $('#logList').innerHTML=`<p class="muted" style="margin:0">${only?'Змін без коду поки немає.':'Журнал порожній.'}</p>`; return; }
+  $('#logList').innerHTML = list.map(e=>{
+    const c = e.after||e.before||{}; const cur = CASES.find(x=>x.id===e.id);
+    const name = esc(c.nick || (cur&&cur.nick) || 'Таймлайн');
+    const ch = logChanges(e.before,e.after);
+    const btn = e.undone ? `<span class="muted" style="font-size:13px">відкочено ${logTime(e.undone)}</span>`
+      : LOGX.confirm===e.row ? `<button class="btn danger" type="button" data-rb="${e.row}" data-sure="1">Так, відкотити</button><button class="btn link" type="button" data-rbno>Скасувати</button>`
+      : `<button class="btn" type="button" data-rb="${e.row}">Відкотити</button>`;
+    return `<div class="icard logcard${e.by==='open'?' open':''}${e.undone?' off':''}"><div class="ihead"><span class="num muted" style="font-size:12.5px">${logTime(e.time)}</span><b style="font-weight:500">${esc(LOG_L(e))}</b><span>${name}<span class="hid">${esc(e.code||c.code||'')}</span></span><span style="margin-left:auto;display:flex;gap:8px;align-items:center">${btn}</span></div><div class="logch">${ch.map(x=>`<span>${esc(x)}</span>`).join('')}</div></div>`;
+  }).join('');
+}
+$('#logReload').addEventListener('click', loadLog);
+$('#logOpenOnly').addEventListener('change', renderLog);
+$('#logList').addEventListener('click', async e=>{
+  if(e.target.closest('[data-rbno]')){ LOGX.confirm=null; renderLog(); return; }
+  const b=e.target.closest('[data-rb]'); if(!b) return;
+  const row=+b.dataset.rb;
+  if(!b.dataset.sure){ LOGX.confirm=row; renderLog(); return; }
+  b.disabled=true; b.textContent='Відкочую…';
+  try{ await admPost({action:'rollback', password:ADM.pw||SS.get('prdash_admpw'), row}); await loadLog(); load(); }
+  catch(ex){ $('#logProg').textContent=ex.message; b.disabled=false; b.textContent='Так, відкотити'; }
+});
+
 function renderDups(){
   const pairs=findSubsetDups(); ADM.dups=pairs;
   $('#dupAll').hidden=!pairs.length; $('#dupAll').textContent=`Об'єднати всі (${pairs.length})`;
