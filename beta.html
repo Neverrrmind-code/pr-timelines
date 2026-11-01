@@ -217,6 +217,7 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .fc-row .sub{grid-column:2 / -1;font-size:12.5px;color:var(--muted)}
 .fc-row.few{opacity:.6}
 .fc-empty{color:var(--ink2);font-size:14px;margin:auto 0;padding:12px 0}
+.fc-hint{display:block;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
 /* шкала процесу */
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;background:none;padding:7px 12px;font-size:13.5px;cursor:pointer;color:var(--ink2)}
@@ -282,16 +283,51 @@ dialog::backdrop{background:rgba(10,16,24,.55)}
 .isrc summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
 .isrc pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--f-mono);background:var(--bg);border-radius:8px;padding:8px 10px;margin:6px 0 0;color:var(--ink2)}
 /* мотивація */
-.goal{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
-.goal .gl{display:flex;flex-direction:column;gap:6px;min-width:220px;flex:1 1 260px}
-.goal .gt{font-size:14px;color:var(--ink2)}
+.goal{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13.5px;color:var(--ink2);padding:0 2px;margin-top:-12px}
 .goal .gt b{color:var(--ink);font-family:var(--f-mono);font-weight:500}
+.goal .gbar{flex:0 0 120px}
+.goal .gr{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;margin-left:auto}
+.goal .gr .btn.link{padding:0;font-weight:500}
 .gbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;max-width:360px}
 .gbar i{display:block;height:100%;background:var(--good);border-radius:3px}
-.goal .gr{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--ink2);flex:1 1 320px;justify-content:flex-end}
-.goal .gr span{max-width:46ch}
+@media (max-width:760px){.goal{margin-top:-14px}.goal .gr{margin-left:0}}
+/* фільтри */
+.fbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-bottom:-16px}
+.fbtn{display:none;align-items:center;gap:6px;padding:7px 12px}
+.fbtn::after{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);margin-left:2px;opacity:.6}
+.fbtn[aria-expanded="true"]::after{transform:rotate(-135deg) translateY(-1px)}
+.fcnt{background:var(--accent);color:var(--surface);border-radius:999px;font-size:11.5px;padding:0 7px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.fchip{display:inline-flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:3px 6px 3px 11px;font-size:13px;cursor:pointer;max-width:100%}
+.fchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fchip b{font-weight:400;color:var(--ink2);font-size:15px;line-height:1;width:18px;height:18px;display:inline-grid;place-items:center;border-radius:50%}
+.fchip:hover b{background:var(--surface);color:var(--bad)}
+.chips .btn.link{font-size:13px;padding:2px 4px}
+.fbar .count{margin-left:auto;font-size:14px;color:var(--ink2)}
+@media (max-width:760px){
+  .fbtn{display:inline-flex}
+  .filters{display:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .filters.open{display:grid}
+  .filters select{min-width:0;width:100%}
+  .fbar{margin-bottom:-14px}
+}
+@media (max-width:380px){.filters.open{grid-template-columns:minmax(0,1fr)}}
+@media (min-width:761px){.filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}.filters select{min-width:0;width:100%}}
+/* таблиця: вкладки, сортування, «показати ще» */
+.ttools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:-2px}
+.ttools .seg{max-width:100%}
+.ttools .seg button .num{opacity:.7;font-size:12px;margin-left:2px}
+.sortb{border:0;background:none;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.sortb:hover{color:var(--accent)}
+.sortb i{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;opacity:.25}
+.sortb.on{color:var(--ink)}
+.sortb.on i{opacity:.9}
+.sortb.on.asc i{border-top:0;border-bottom:5px solid currentColor}
+.more{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center;font-size:13.5px;color:var(--muted)}
+.more:empty{display:none}
+.anon{color:var(--ink2)}
+.anon .hid{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
 .mine{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:6px}
-.mine.teaser{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border-style:dashed}
 .mine-row{display:grid;grid-template-columns:minmax(0,230px) 80px minmax(0,1fr);gap:4px 14px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
 .mine-row .num{text-align:right}
 @media (max-width:620px){.mine-row{grid-template-columns:minmax(0,1fr) auto}.mine-row .vd{grid-column:1 / -1}}
@@ -369,8 +405,6 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
   <div class="banner" id="errBanner" hidden></div>
   <div class="banner adm-banner" id="admBanner" hidden><b>Режим адміністратора.</b> Можна редагувати й видаляти будь-який кейс. <a href="#import">Імпорт</a> · <button class="btn link" type="button" id="admLogout" style="padding:0">Вийти</button></div>
 
-  <div class="goal" id="goal"></div>
-
   <section class="fc" id="fc" aria-labelledby="fcTitle">
     <div class="fc-in">
       <div><h2 id="fcTitle">Коли мені чекати?</h2><p class="lead">Вкажіть свої дати, і ми покажемо, коли зазвичай приходять наступні етапи.</p></div>
@@ -381,16 +415,22 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
     <div class="fc-out" id="fcOut"></div>
   </section>
 
-  <section class="mine teaser" id="mineBox" aria-label="Ваш кейс серед інших"></section>
+  <div class="goal" id="goal"></div>
 
-  <div class="filters">
+  <section class="mine" id="mineBox" aria-label="Ваш таймлайн серед інших" hidden></section>
+
+  <div class="fbar">
+    <button class="btn fbtn" type="button" id="fToggle" aria-expanded="false" aria-controls="filters">Фільтри<span class="fcnt num" id="fCnt" hidden></span></button>
+    <div class="chips" id="fChips"></div>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="filters" id="filters">
     <label for="fStream">Потік MPNP<select id="fStream"></select></label>
     <label for="fEe">Тип подачі<select id="fEe"></select></label>
     <label for="fSec">Тип security check<select id="fSec"></select></label>
     <label for="fAdr">Дозапити<select id="fAdr"></select></label>
     <label for="fYear">Рік подачі на PR<select id="fYear"></select></label>
     <label for="fSrc">Джерело<select id="fSrc"></select></label>
-    <span class="count" id="count"></span>
   </div>
 
   <div class="tiles" id="tiles"></div>
@@ -438,17 +478,23 @@ footer{font-size:12.5px;color:var(--muted);max-width:75ch}
 
   <section>
     <div class="sechead">
-      <h2>Кейси</h2>
+      <h2>Таймлайни</h2>
       <p>Натисніть рядок, щоб побачити всі дати. На смужці: точки є етапами, зелена точка це eCoPR, порожня це сьогодні, пунктир показує медіану до eCoPR.</p>
+    </div>
+    <div class="ttools">
+      <div class="seg" role="group" aria-label="Які таймлайни показати" id="tTabs">
+        <button type="button" data-tab="all" aria-pressed="true">Усі <span class="num" data-n="all"></span></button><button type="button" data-tab="wait" aria-pressed="false">Чекають <span class="num" data-n="wait"></span></button><button type="button" data-tab="done" aria-pressed="false">Отримали eCoPR <span class="num" data-n="done"></span></button>
+      </div>
     </div>
     <div class="tablewrap">
       <table>
         <thead><tr>
-          <th>Кейс</th><th>Потік</th><th>Подача на PR</th><th>Шлях від подачі на PR</th><th>Останній етап</th><th class="r">Днів від подачі</th><th></th>
+          <th>Таймлайн</th><th>Потік</th><th><button class="sortb" type="button" data-sort="pr">Подача на PR<i></i></button></th><th>Шлях від подачі на PR</th><th><button class="sortb" type="button" data-sort="last">Останній етап<i></i></button></th><th class="r"><button class="sortb" type="button" data-sort="days">Днів від подачі<i></i></button></th><th></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
+    <div class="more" id="tMore"></div>
   </section>
 
   <footer>Дані вносять самі учасники, вони не перевіряються. Не вказуйте ПІБ, номери заявок (UCI, application number) та інші особисті дані. Тут статистика спільноти, а не офіційні строки IRCC чи MPNP.</footer>
@@ -733,7 +779,20 @@ function initFilters(){
   fillSelect($('#fSec'), [['no','Стандартна'],['yes','Comprehensive'],['unk','Не вказано']], 'Усі');
   fillSelect($('#fAdr'), [['yes','Був дозапит'],['no','Без дозапиту']], 'Усі');
   fillSelect($('#fSrc'), [['form','Форма на сайті'],['telegram','Імпорт з Telegram'],['csv','CSV']], 'Усі');
-  [['#fStream','stream'],['#fEe','ee'],['#fSec','sec'],['#fAdr','adr'],['#fYear','year'],['#fSrc','src']].forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; render();}));
+  FSEL.forEach(([s,k])=>$(s).addEventListener('change',e=>{F[k]=e.target.value; T.limit=PAGE; render();}));
+  $('#fToggle').addEventListener('click',()=>{ const o=!$('#filters').classList.contains('open'); $('#filters').classList.toggle('open',o); $('#fToggle').setAttribute('aria-expanded',String(o)); });
+  $('#fChips').addEventListener('click',e=>{
+    const b=e.target.closest('[data-fk]'); if(!b) return;
+    const ks = b.dataset.fk==='*' ? Object.keys(F) : [b.dataset.fk];
+    ks.forEach(k=>{ F[k]=''; const sel=FSEL.find(x=>x[1]===k); if(sel) $(sel[0]).value=''; });
+    T.limit=PAGE; render();
+  });
+}
+const FSEL=[['#fStream','stream','Потік'],['#fEe','ee','Подача'],['#fSec','sec','Security'],['#fAdr','adr','Дозапит'],['#fYear','year','Рік подачі'],['#fSrc','src','Джерело']];
+function renderChips(){
+  const act=FSEL.filter(([,k])=>F[k]);
+  $('#fChips').innerHTML = act.map(([sel,k,l])=>{ const el=$(sel); const t=el.options[el.selectedIndex]?.text||F[k]; return `<button type="button" class="fchip" data-fk="${k}" title="Прибрати фільтр"><span>${esc(k==='year'?l+' '+t:t)}</span><b aria-hidden="true">×</b></button>`; }).join('') + (act.length>1?'<button type="button" class="btn link" data-fk="*">Скинути все</button>':'');
+  $('#fCnt').hidden=!act.length; $('#fCnt').textContent=act.length;
 }
 function refreshYears(){
   const ys=[...new Set(CASES.map(c=>c.s.pr&&c.s.pr.slice(0,4)).filter(Boolean))].sort().reverse();
@@ -755,7 +814,8 @@ function segStats(list, seg){ const v=[]; for(const c of byType(list, seg[2])){ 
 /* ===== Рендер ===== */
 function render(){
   const list = filtered();
-  $('#count').innerHTML = `<span class="num">${list.length}</span> з <span class="num">${CASES.length}</span> кейсів`;
+  $('#count').innerHTML = list.length===CASES.length ? `<span class="num">${CASES.length}</span> ${plural(CASES.length,'таймлайн','таймлайни','таймлайнів').replace(/^\d+ /,'')}` : `<span class="num">${list.length}</span> з <span class="num">${CASES.length}</span> таймлайнів`;
+  renderChips();
   renderTiles(list); renderPath(list); renderRanges(list); renderTrend(list); renderTable(list);
 }
 
@@ -770,7 +830,8 @@ function renderTiles(list){
 }
 
 const GROUP_DEF = {pr:true, aor:true, a:false, b:false, tot:false};
-function groupOpen(k){ const st=LS.get('prdash_groups',{}); return k in st ? !!st[k] : GROUP_DEF[k]; }
+const GROUP_KEY='prdash_groups2';
+function groupOpen(k){ const st=LS.get(GROUP_KEY,{}); return k in st ? !!st[k] : GROUP_DEF[k]; }
 function rangeGroup(gk, title, segs, list){
   const rows = segs.map(seg=>({seg, st:segStats(list,seg)})).filter(r=>r.st);
   let h='';
@@ -797,7 +858,7 @@ function renderRanges(list){
   for(const seg of [...SEG_STEP,...SEG_PR,...SEG_TOTAL]){ RANGE_DATA[seg.join('-')] = {seg, st:segStats(list,seg)}; }
   $('#ranges').innerHTML = rangeGroup('pr','Від подачі на PR', SEG_PR, list) + rangeGroup('aor','Після AOR (порядок довільний)', SEG_AOR, list) + rangeGroup('a','Від EOI до AOR', SEG_A, list) + rangeGroup('b','Від PAL до eCoPR', SEG_B, list) + rangeGroup('tot','Загальний шлях', SEG_TOTAL, list);
 }
-$('#ranges').addEventListener('toggle', e=>{ const d=e.target; if(!d.matches || !d.matches('details.grp')) return; const st=LS.get('prdash_groups',{}); st[d.dataset.g]=d.open; LS.set('prdash_groups',st); }, true);
+$('#ranges').addEventListener('toggle', e=>{ const d=e.target; if(!d.matches || !d.matches('details.grp')) return; const st=LS.get(GROUP_KEY,{}); st[d.dataset.g]=d.open; LS.set(GROUP_KEY,st); }, true);
 
 /* --- шкала процесу --- */
 const PATHS = {
@@ -879,6 +940,12 @@ function renderTrend(list){
 }
 
 /* --- таблиця --- */
+const STREAM_S={swm:'SWM',swo:'SWO',ies:'IES',bis:'BIS',other:'Інше'};
+const hid = c => '#'+String(c.id||'').slice(0,4).toUpperCase();
+function caseName(c){ return c.nick || ('Таймлайн '+hid(c)+(STREAM_S[c.stream]?' · '+STREAM_S[c.stream]:'')); }
+function caseNameHtml(c){ return c.nick ? esc(c.nick) : `<span class="anon">Таймлайн <span class="hid">${esc(hid(c))}</span>${STREAM_S[c.stream]?' · '+STREAM_S[c.stream]:''}</span>`; }
+const PAGE=25;
+const T={tab:'all', sort:'days', asc:true, limit:PAGE};
 function lastStage(c){ let best=null, bd=-Infinity; STAGES.forEach(({k})=>{ const d=D(c.s[k]); if(d!=null && d>=bd){ bd=d; best=k; } }); return best; }
 function events(c){
   const ev=[]; STAGES.forEach((s,i)=>{ if(c.s[s.k]) ev.push({d:c.s[s.k], l:s.l, o:i, cls:''}); });
@@ -898,18 +965,29 @@ function miniTl(c, top, ref){
 }
 function renderTable(list){
   const my = new Set(mine().map(m=>m.id));
-  // сортування за днями від подачі на PR: найдовші внизу, кейси без дати подачі в кінці
   const daysOf = c => c.s.pr ? diff(c.s.pr, c.s.ecopr || todayISO()) : null;
-  const rows = [...list].sort((p,q)=>{ const a=daysOf(p), b=daysOf(q); if(a==null && b==null) return 0; if(a==null) return 1; if(b==null) return -1; return a-b; });
-  if(!rows.length){ $('#tbody').innerHTML = `<tr><td colspan="7" class="empty-state">${CASES.length?'Немає кейсів за цими фільтрами.':'Поки що жодного кейсу. Натисніть «Додати свій кейс», щоб стати першим.'}</td></tr>`; return; }
+  const lastD = c => { const k=lastStage(c); return k?D(c.s[k]):null; };
+  const nWait=list.filter(c=>!c.s.ecopr).length;
+  $('#tTabs [data-n="all"]').textContent=list.length; $('#tTabs [data-n="wait"]').textContent=nWait; $('#tTabs [data-n="done"]').textContent=list.length-nWait;
+  document.querySelectorAll('#tTabs [data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===T.tab)));
+  document.querySelectorAll('.sortb').forEach(b=>{ const on=b.dataset.sort===T.sort; b.classList.toggle('on',on); b.classList.toggle('asc',on&&T.asc); b.closest('th').setAttribute('aria-sort', on?(T.asc?'ascending':'descending'):'none'); });
+  const key = T.sort==='pr' ? (c=>D(c.s.pr)) : T.sort==='last' ? lastD : daysOf;
+  const dir = T.asc?1:-1;
+  const pool = T.tab==='wait' ? list.filter(c=>!c.s.ecopr) : T.tab==='done' ? list.filter(c=>c.s.ecopr) : list;
+  // порожні значення завжди в кінці, незалежно від напрямку
+  const rows = [...pool].sort((p,q)=>{ const a=key(p), b=key(q); if(a==null && b==null) return 0; if(a==null) return 1; if(b==null) return -1; return (a-b)*dir; });
+  if(!rows.length){ $('#tbody').innerHTML = `<tr><td colspan="7" class="empty-state">${CASES.length?(pool===list?'Немає таймлайнів за цими фільтрами.':'У цій вкладці немає таймлайнів за цими фільтрами.'):'Поки що жодного таймлайну. Натисніть «Додати свій таймлайн», щоб стати першим.'}</td></tr>`; $('#tMore').innerHTML=''; return; }
+  // відкритий рядок (напр. після кліку на графіку) має бути видно
+  if(openId){ const i=rows.findIndex(c=>c.id===openId); if(i>=T.limit) T.limit=Math.ceil((i+1)/PAGE)*PAGE; }
+  const shown = rows.slice(0, T.limit);
   const top = Math.max(60, ...rows.filter(c=>c.s.pr).map(c=>diff(c.s.pr, c.s.ecopr||todayISO())||0));
   const refSt = segStats(list,['pr','ecopr']); const ref = refSt ? refSt.med : null;
   let h='';
-  for(const c of rows){
+  for(const c of shown){
     const ls=lastStage(c); const done=!!c.s.ecopr;
     const since = c.s.pr ? diff(c.s.pr, done?c.s.ecopr:todayISO()) : null;
     h += `<tr class="case" data-id="${esc(c.id)}">
-      <td>${esc(c.nick||'Без назви')}${my.has(c.id)?'<span class="mytag" title="Ваш кейс">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':c.source==='csv'?' <span class="pill tg" title="Імпортовано з таблиці CSV">CSV</span>':''}</td>
+      <td>${caseNameHtml(c)}${my.has(c.id)?'<span class="mytag" title="Ваш таймлайн">ваш</span>':''}${c.security==='yes'?' <span class="pill sec">Comprehensive</span>':''}${c.adr?.length?` <span class="pill adr">дозапит${c.adr.length>1?' ×'+c.adr.length:''}</span>`:''}${c.ghost?.length?` <span class="pill ghost">ghost${c.ghost.length>1?' ×'+c.ghost.length:''}</span>`:''}${c.source==='telegram'?' <span class="pill tg" title="Імпортовано з Telegram">TG</span>':c.source==='csv'?' <span class="pill tg" title="Імпортовано з таблиці CSV">CSV</span>':''}</td>
       <td>${esc(lookup(STREAMS,c.stream)||'—')}<span class="sub2">${c.ee==='ee'?'Express Entry':c.ee==='base'?'Non-EE':''}</span></td>
       <td class="num">${fmtDate(c.s.pr)}</td>
       <td class="minicell">${miniTl(c, top, ref)}</td>
@@ -923,7 +1001,16 @@ function renderTable(list){
     }
   }
   $('#tbody').innerHTML = h;
+  const rest = rows.length - shown.length;
+  $('#tMore').innerHTML = rest>0
+    ? `<span>Показано <span class="num">${shown.length}</span> з <span class="num">${rows.length}</span></span><button class="btn" type="button" data-more="page">Показати ще ${Math.min(PAGE,rest)}</button><button class="btn link" type="button" data-more="all">Показати всі</button>`
+    : (rows.length>PAGE ? `<span>Показано всі <span class="num">${rows.length}</span></span><button class="btn link" type="button" data-more="less">Згорнути</button>` : '');
 }
+document.querySelector('#tTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-tab]'); if(!b) return; T.tab=b.dataset.tab; T.limit=PAGE; renderTable(filtered()); });
+document.querySelector('thead').addEventListener('click',e=>{ const b=e.target.closest('.sortb'); if(!b) return; const k=b.dataset.sort; if(T.sort===k) T.asc=!T.asc; else { T.sort=k; T.asc = k==='days'; } T.limit=PAGE; renderTable(filtered()); });
+$('#tMore').addEventListener('click',e=>{ const b=e.target.closest('[data-more]'); if(!b) return; const m=b.dataset.more;
+  if(m==='page') T.limit+=PAGE; else if(m==='all') T.limit=Infinity; else { T.limit=PAGE; renderTable(filtered()); document.querySelector('#tTabs').scrollIntoView({block:'start',behavior:'smooth'}); return; }
+  renderTable(filtered()); });
 
 /* ===== Прогноз «Коли мені чекати?» ===== */
 const FC_TARGETS = ['aor','med','bio','pal','secdone','fd','p1','p2','ecopr'];
@@ -946,7 +1033,7 @@ function renderForecast(){
   const pr=fromDMY($('#f_pr').value)||'', aor=fromDMY($('#f_aor').value)||'', comp=$('#f_comp').checked;
   if(fcTouched) LS.set('prdash_fc',{pr,aor,comp});
   const out=$('#fcOut'), note=$('#fcNote');
-  if(!pr && !aor){ out.innerHTML=`<p class="fc-empty">Введіть дату подачі на PR. Тут з'явиться, коли зазвичай приходять AOR, біометрія, PAL і eCoPR.</p>`; note.textContent=''; return; }
+  if(!pr && !aor){ out.innerHTML=`<p class="fc-empty">Введіть дату подачі на PR. Тут з'явиться, коли зазвичай приходять AOR, біометрія, PAL і eCoPR.${myCase()?'':'<span class="fc-hint">Якщо додасте свій таймлайн, тут також буде діапазон дат «у половини людей» і порівняння вашого шляху з іншими.</span>'}</p>`; note.textContent=''; return; }
   if(!CASES.length){ out.innerHTML='<p class="fc-empty">Поки немає даних спільноти для прогнозу.</p>'; return; }
   const mc=myCase();
   const known = Object.assign({}, (mc && mc.s.pr && mc.s.pr===pr) ? mc.s : {}, pr?{pr}:{}, aor?{aor}:{});
@@ -969,7 +1056,7 @@ function renderForecast(){
     const rel = left>0 ? `через ${durTxt(left)}` : left===0 ? 'приблизно сьогодні' : `медіана минула ${durTxt(-left)} тому`;
     const range = (mc && r.st.n>1) ? `у половини ${fmtShort(r.lo)}–${fmtDate(r.hi)} · ` : '';
     return `<div class="fc-row${left<=0?' due':''}${r.st.n<FEW?' few':''}"><span class="dot"></span><span class="nm">${nm}</span><span class="when">≈ ${fmtDate(r.d)}</span><span class="sub">${rel} · ${range}${plural(r.st.n,'кейс','кейси','кейсів')}</span></div>`;
-  }).join('') + (mc ? '' : `<p class="fc-lock">Додайте свій кейс, щоб побачити діапазон дат «у половини людей» і порівняння з іншими. <button class="btn link" type="button" data-act="add" style="padding:0">Додати таймлайн</button></p>`);
+  }).join('') + (mc ? '' : `<p class="fc-lock">Додайте свій таймлайн, щоб побачити діапазон дат «у половини людей» і порівняння з іншими. <button class="btn link" type="button" data-act="add" style="padding:0">Додати таймлайн</button></p>`);
   note.textContent = `Рахуємо від ${ak==='aor'?'AOR':'подачі на PR'} (${fmtDate(ad)}) за ${plural(others.length,'кейсом','кейсами','кейсами')} спільноти.` + ((mc && mc.s.pr===pr) ? ' Дати вашого кейсу підставлено автоматично.' : '');
 }
 
@@ -987,10 +1074,10 @@ $('#ranges').addEventListener('mouseleave', hideTip);
 $('#trend').addEventListener('mousemove', e=>{
   const h=e.target.closest('.hit'); if(!h){ hideTip(); return; }
   const p=TREND_PTS[+h.dataset.i]; const [a,b]=$('#trendSeg').value.split('-');
-  showTip(`<b>${esc(p.c.nick||'Без назви')}</b><br>${SHORT[a]}: ${fmtDate(p.c.s[a])}<br>${SHORT[b]}: ${fmtDate(p.c.s[b])}<br><b>${p.y} дн</b> (≈${mon(p.y)} міс)`, e.clientX, e.clientY);
+  showTip(`<b>${esc(caseName(p.c))}</b><br>${SHORT[a]}: ${fmtDate(p.c.s[a])}<br>${SHORT[b]}: ${fmtDate(p.c.s[b])}<br><b>${p.y} дн</b> (≈${mon(p.y)} міс)`, e.clientX, e.clientY);
 });
 $('#trend').addEventListener('mouseleave', hideTip);
-$('#trend').addEventListener('click', e=>{ const h=e.target.closest('.hit'); if(!h) return; openId=TREND_PTS[+h.dataset.i].c.id; renderTable(filtered()); document.querySelector(`tr[data-id="${CSS.escape(openId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'}); });
+$('#trend').addEventListener('click', e=>{ const h=e.target.closest('.hit'); if(!h) return; const pc=TREND_PTS[+h.dataset.i].c; openId=pc.id; if((T.tab==='wait'&&pc.s.ecopr)||(T.tab==='done'&&!pc.s.ecopr)) T.tab='all'; renderTable(filtered()); document.querySelector(`tr[data-id="${CSS.escape(openId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'}); });
 
 $('#tbody').addEventListener('click', e=>{
   const ed=e.target.closest('[data-edit]'); if(ed){ e.stopPropagation(); const m=mine().find(x=>x.id===ed.dataset.edit); if(m) openForm(m.id,m.key); else if(isAdmin()) openForm(ed.dataset.edit,null,true); return; }
@@ -1708,21 +1795,17 @@ function renderGoal(mc){
   if(mc){
     const last=mc.updated||mc.created; const ago=last?Math.floor((Date.now()-Date.parse(last))/864e5):0;
     right = (!mc.s.ecopr && ago>=30)
-      ? `<span>Минуло ${plural(ago,'день','дні','днів')} від останнього оновлення вашого кейсу. Є нові дати?</span><button class="btn" type="button" data-act="edit">Оновити таймлайн</button>`
-      : `<span>Дякуємо, ваш кейс уже в статистиці.</span>${mc.s.ecopr?'':'<button class="btn" type="button" data-act="edit">Додати нові дати</button>'}`;
+      ? `<span>Минуло ${plural(ago,'день','дні','днів')} від останнього оновлення вашого таймлайну.</span><button class="btn link" type="button" data-act="edit">Є нові дати?</button>`
+      : (mc.s.ecopr ? '<span>Дякуємо, ваш таймлайн уже в статистиці.</span>' : '<span>Ваш таймлайн уже в статистиці.</span><button class="btn link" type="button" data-act="edit">Додати нові дати</button>');
   } else {
-    right = `<span>Вже отримали eCoPR? Завершені таймлайни найцінніші для тих, хто ще чекає.</span><button class="btn primary" type="button" data-act="add">Додати свій таймлайн</button>`;
+    right = `<span>Вже отримали eCoPR?</span><button class="btn link" type="button" data-act="add">Додайте завершений таймлайн</button>`;
   }
-  $('#goal').innerHTML = `<div class="gl"><span class="gt">Вже <b>${n}</b> ${plural(n,'кейс','кейси','кейсів').replace(/^\d+ /,'')}${wk?` · <b>+${wk}</b> за тиждень`:''} · наступна ціль <b>${goal}</b>. Що більше кейсів, то точніші прогнози.</span><div class="gbar" role="progressbar" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${n}"><i style="width:${Math.min(100,n/goal*100).toFixed(1)}%"></i></div></div><div class="gr">${right}</div>`;
+  $('#goal').innerHTML = `<span class="gt">Вже <b>${n}</b> ${plural(n,'таймлайн','таймлайни','таймлайнів').replace(/^\d+ /,'')}${wk?` · <b>+${wk}</b> за тиждень`:''} · ціль <b>${goal}</b></span><div class="gbar" role="progressbar" aria-label="Прогрес до цілі" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${n}"><i style="width:${Math.min(100,n/goal*100).toFixed(1)}%"></i></div><div class="gr">${right}</div>`;
 }
 function renderMine(mc){
   const box=$('#mineBox');
-  if(!mc){
-    box.className='mine teaser';
-    box.innerHTML=`<div><h2 style="font-size:17px">Ваш кейс серед інших</h2><p class="muted" style="margin:4px 0 0;font-size:14px;max-width:64ch">Додайте свій кейс, і тут з'явиться, чи швидше ваш шлях за інших, чи не затримується наступний етап, а прогноз покаже повний діапазон дат.</p></div><button class="btn primary" type="button" data-act="add">Додати свій таймлайн</button>`;
-    return;
-  }
-  box.className='mine';
+  if(!mc){ box.hidden=true; box.innerHTML=''; return; }
+  box.hidden=false;
   const others=CASES.filter(c=>c.id!==mc.id), today=todayISO(), rows=[];
   for(const [a,b] of CMP){
     if(!mc.s[a]) continue;
@@ -1741,8 +1824,8 @@ function renderMine(mc){
       rows.push([label, el+' дн…', q>=0.75 ? `<span class="chip warn">затримується: у ${pctTxt(q)} людей уже настав би</span>` : `<span class="chip">чекаєте · у ${pctTxt(q)} людей настав би до цього часу · медіана ${dd(st.med)} дн</span>`]);
     }
   }
-  box.innerHTML = `<div class="sechead"><h2 style="font-size:17px">Ваш кейс серед інших${mc.nick?` <span class="muted" style="font:400 14px var(--f-body)">· ${esc(mc.nick)}</span>`:''}</h2><button class="btn link" type="button" data-act="edit">Оновити дати</button></div>` +
-    (rows.length ? rows.map(r=>`<div class="mine-row"><span>${esc(r[0])}</span><span class="num">${r[1]}</span><span class="vd">${r[2]}</span></div>`).join('') : '<p class="muted" style="margin:0">Додайте у свій кейс дату подачі на PR та наступні етапи, щоб побачити порівняння.</p>');
+  box.innerHTML = `<div class="sechead"><h2 style="font-size:17px">Ваш таймлайн серед інших${mc.nick?` <span class="muted" style="font:400 14px var(--f-body)">· ${esc(mc.nick)}</span>`:''}</h2><button class="btn link" type="button" data-act="edit">Оновити дати</button></div>` +
+    (rows.length ? rows.map(r=>`<div class="mine-row"><span>${esc(r[0])}</span><span class="num">${r[1]}</span><span class="vd">${r[2]}</span></div>`).join('') : '<p class="muted" style="margin:0">Додайте у свій таймлайн дату подачі на PR та наступні етапи, щоб побачити порівняння.</p>');
 }
 function renderEngage(){ const mc=myCase(); renderGoal(mc); renderMine(mc); }
 document.addEventListener('click', e=>{
